@@ -411,7 +411,7 @@ app.post('/api/create-order', async (req, res) => {
 
 // ── Static Files serving ──
 // Serve all files from current directory
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname), { extensions: ['html'] }));
 
 // Fallback to index.html for SPA-like behavior (optional, if using client side routing)
 app.use((req, res) => {
