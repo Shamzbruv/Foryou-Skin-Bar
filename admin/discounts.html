@@ -122,7 +122,7 @@
                             <div class="col-span-2 md:col-span-1">
                                 <label class="block text-sm font-bold text-stone-700 mb-1">Discount Type</label>
                                 <select id="discountType" name="discount_type" class="w-full border border-stone-300 rounded p-2 text-sm">
-                                    <option value="percentage">Percentage (%)</option>
+                                    <option value="percent">Percentage (%)</option>
                                     <option value="fixed">Fixed Amount (JMD)</option>
                                 </select>
                             </div>
@@ -263,11 +263,11 @@
             const id = document.getElementById('discountId').value;
             const payload = {
                 code: document.getElementById('discountCode').value.toUpperCase().replace(/\s+/g, ''),
-                name: document.getElementById('discountName').value,
+                 
                 discount_type: document.getElementById('discountType').value,
                 discount_value: parseFloat(document.getElementById('discountValue').value),
-                minimum_order_total_jmd: document.getElementById('discountMin').value ? parseFloat(document.getElementById('discountMin').value) : null,
-                is_active: document.getElementById('discountStatus').value === 'true'
+                minimum_subtotal: document.getElementById('discountMin').value ? parseFloat(document.getElementById('discountMin').value) : null,
+                active: document.getElementById('discountStatus').value === 'true'
             };
 
             try {
