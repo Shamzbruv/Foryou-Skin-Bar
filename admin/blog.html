@@ -346,11 +346,10 @@
                     content: document.getElementById('postContent').value,
                     featured_image_url: featuredImageUrl,
                     status: document.getElementById('postStatus').value,
-                seo_title: document.getElementById('postSeoTitle').value,
-                seo_description: document.getElementById('postSeoDesc').value,
-            };
+                    seo_title: document.getElementById('postSeoTitle').value,
+                    seo_description: document.getElementById('postSeoDesc').value,
+                };
 
-            try {
                 if (id) {
                     const { error } = await supabase.from('blog_posts').update(payload).eq('id', id);
                     if (error) throw error;
