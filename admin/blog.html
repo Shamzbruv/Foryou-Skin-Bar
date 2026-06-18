@@ -128,14 +128,17 @@
                             <div class="col-span-2">
                                 <label class="block text-sm font-bold text-stone-700 mb-1">Content</label>
                                 <!-- Quill Editor Container -->
-                                <div id="editor-container" class="bg-white h-64 border border-stone-300 rounded-b"></div>
+                                <div id="editor-container" class="bg-white min-h-[250px] h-auto border border-stone-300 rounded-b"></div>
                                 <!-- Hidden input to hold HTML content for form submission -->
                                 <textarea id="postContent" name="content" class="hidden"></textarea>
                             </div>
 
                             <div class="col-span-2 md:col-span-1">
-                                <label class="block text-sm font-bold text-stone-700 mb-1">Featured Image URL</label>
-                                <input type="url" id="postImage" name="featured_image_url" class="w-full border border-stone-300 rounded p-2 text-sm focus:border-amber-800 focus:outline-none">
+                                <label class="block text-sm font-bold text-stone-700 mb-1">Featured Image (Upload or URL)</label>
+                                <div class="flex flex-col gap-2">
+                                    <input type="file" id="postImageUpload" accept="image/*" class="w-full text-sm border border-stone-300 rounded p-1.5 bg-stone-50">
+                                    <input type="url" id="postImage" name="featured_image_url" placeholder="Or enter image URL..." class="w-full border border-stone-300 rounded p-2 text-sm focus:border-amber-800 focus:outline-none">
+                                </div>
                             </div>
                             
                             <div class="col-span-2 md:col-span-1">
@@ -267,6 +270,7 @@
             const form = document.getElementById('postForm');
             form.reset();
             document.getElementById('postId').value = '';
+            document.getElementById('postImageUpload').value = '';
             document.getElementById('modalTitle').innerText = id ? 'Edit Post' : 'Add New Post';
             
             // Clear Quill editor
@@ -283,6 +287,7 @@
                     // Set Quill editor content
                     quill.root.innerHTML = post.content || '';
                     document.getElementById('postImage').value = post.featured_image_url || '';
+                    document.getElementById('postImageUpload').value = '';
                     document.getElementById('postStatus').value = post.status || 'draft';
                     document.getElementById('postSeoTitle').value = post.seo_title || '';
                     document.getElementById('postSeoDesc').value = post.seo_description || '';
@@ -319,13 +324,28 @@
             btn.disabled = true;
 
             const id = document.getElementById('postId').value;
-            const payload = {
-                title: document.getElementById('postTitle').value,
-                slug: document.getElementById('postSlug').value.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-                excerpt: document.getElementById('postExcerpt').value,
-                content: document.getElementById('postContent').value,
-                featured_image_url: document.getElementById('postImage').value,
-                status: document.getElementById('postStatus').value,
+            
+            let featuredImageUrl = document.getElementById('postImage').value;
+            const fileInput = document.getElementById('postImageUpload');
+            
+            try {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Math.random().toString(36).slice(2)}_${Date.now()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file, { upsert: false });
+                    if (uploadError) throw new Error('Image upload failed: ' + uploadError.message);
+                    const { data: publicUrlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
+                    featuredImageUrl = publicUrlData.publicUrl;
+                }
+
+                const payload = {
+                    title: document.getElementById('postTitle').value,
+                    slug: document.getElementById('postSlug').value.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+                    excerpt: document.getElementById('postExcerpt').value,
+                    content: document.getElementById('postContent').value,
+                    featured_image_url: featuredImageUrl,
+                    status: document.getElementById('postStatus').value,
                 seo_title: document.getElementById('postSeoTitle').value,
                 seo_description: document.getElementById('postSeoDesc').value,
             };

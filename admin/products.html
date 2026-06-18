@@ -345,7 +345,10 @@
                 <input type="number" min="0" step="0.01" data-field="price_jmd" value="${variant.price_jmd ?? ''}" placeholder="Price" class="md:col-span-2 border border-stone-200 rounded-lg p-2 text-sm">
                 <input type="text" data-field="sku" value="${escapeHtml(variant.sku || '')}" placeholder="Variant SKU" class="md:col-span-2 border border-stone-200 rounded-lg p-2 text-sm">
                 <input type="number" min="0" data-field="stock_quantity" value="${variant.stock_quantity ?? 0}" placeholder="Stock" class="md:col-span-1 border border-stone-200 rounded-lg p-2 text-sm">
-                <input type="url" data-field="image_url" value="${escapeHtml(variant.image_url || '')}" placeholder="Optional image URL" class="md:col-span-3 border border-stone-200 rounded-lg p-2 text-sm">
+                <div class="md:col-span-3 flex flex-col gap-1">
+                    <input type="file" data-field="image_upload" accept="image/*" class="text-xs border border-stone-200 rounded p-1 bg-stone-50" title="Upload Image">
+                    <input type="url" data-field="image_url" value="${escapeHtml(variant.image_url || '')}" placeholder="Or image URL" class="border border-stone-200 rounded p-1.5 text-sm">
+                </div>
                 <button type="button" class="md:col-span-1 text-red-500 hover:bg-red-50 rounded-lg p-2 text-sm" onclick="this.closest('.variant-row').remove()"><i class="fas fa-trash"></i></button>
                 <label class="md:col-span-12 flex items-center gap-2 text-xs text-sage-800 mt-1"><input type="checkbox" data-field="is_active" ${variant.is_active === false ? '' : 'checked'} class="accent-sage-700"> Show this variant on the product page</label>
             `;
@@ -364,22 +367,39 @@
             $('infoSections').appendChild(row);
         };
 
-        function collectVariants(productId) {
-            return Array.from(document.querySelectorAll('.variant-row')).map((row, index) => {
+        async function collectVariantsAsync(productId) {
+            const rows = Array.from(document.querySelectorAll('.variant-row'));
+            const variants = [];
+            for (let index = 0; index < rows.length; index++) {
+                const row = rows[index];
                 const get = (field) => row.querySelector(`[data-field="${field}"]`);
                 const name = get('name').value.trim();
-                if (!name) return null;
-                return {
+                if (!name) continue;
+                
+                let imageUrl = get('image_url').value.trim() || null;
+                const fileInput = get('image_upload');
+                if (fileInput && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `variant_${Math.random().toString(36).slice(2)}_${Date.now()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file, { upsert: false });
+                    if (uploadError) throw new Error('Variant image upload failed: ' + uploadError.message);
+                    const { data: publicUrlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
+                    imageUrl = publicUrlData.publicUrl;
+                }
+
+                variants.push({
                     product_id: productId,
                     name,
                     sku: get('sku').value.trim() || null,
                     price_jmd: numberOrNull(get('price_jmd').value),
                     stock_quantity: intOrZero(get('stock_quantity').value),
-                    image_url: get('image_url').value.trim() || null,
+                    image_url: imageUrl,
                     is_active: get('is_active').checked,
                     sort_order: index
-                };
-            }).filter(Boolean);
+                });
+            }
+            return variants;
         }
 
         function collectInfoSections(productId) {
@@ -519,7 +539,7 @@
                 }
 
                 await supabase.from('product_variants').delete().eq('product_id', savedProductId);
-                const variantRows = collectVariants(savedProductId);
+                const variantRows = await collectVariantsAsync(savedProductId);
                 if (variantRows.length > 0) {
                     const { error: variantError } = await supabase.from('product_variants').insert(variantRows);
                     if (variantError) throw new Error('Failed to save variants: ' + variantError.message);
