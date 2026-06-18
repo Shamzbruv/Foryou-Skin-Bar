@@ -2,7 +2,7 @@
   "name": "foryou-skin-bar",
   "version": "1.0.0",
   "scripts": {
-    "start": "serve -s . -p $PORT"
+    "start": "serve . -p $PORT"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",
