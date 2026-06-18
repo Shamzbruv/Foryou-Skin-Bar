@@ -414,7 +414,7 @@ app.post('/api/create-order', async (req, res) => {
 app.use(express.static(path.join(__dirname)));
 
 // Fallback to index.html for SPA-like behavior (optional, if using client side routing)
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
