@@ -12,7 +12,7 @@ window.loadProductsData = async function() {
     try {
         const { data, error } = await window.supabase
             .from('products')
-            .select('*, categories(name), product_images(image_url, sort_order, is_primary), product_tags(name, type), product_variants(*), product_info_sections(*), product_concerns(concern_slug)')
+            .select('*, categories(name), product_images(image_url, sort_order, is_primary), product_tags(name, type), product_variants(*), product_info_sections(*), product_concerns(concern_slug), product_ingredients(ingredient_name), product_recommendation_profiles(*)')
             .eq('status', 'active');
 
         if (error) throw error;
@@ -50,6 +50,10 @@ window.loadProductsData = async function() {
                     body: section.body || ''
                 }));
 
+            const recommendationProfile = (p.product_recommendation_profiles && p.product_recommendation_profiles.length > 0) 
+                ? p.product_recommendation_profiles[0] 
+                : {};
+
             return {
                 id: p.id,
                 name: p.name,
@@ -74,9 +78,14 @@ window.loadProductsData = async function() {
                 returnPolicyHtml: p.return_policy_html || '',
                 infoSections,
                 skinConcern: (p.product_concerns || []).map(c => c.concern_slug).concat(tags.filter(t => t.type === 'skin_concern').map(t => t.name)),
-                skinType: tags.filter(t => t.type === 'skin_type').map(t => t.name),
-                routineStep: p.routine_step || '',
-                ingredients: tags.filter(t => t.type === 'ingredient').map(t => t.name),
+                skinType: Array.isArray(recommendationProfile.skin_types) && recommendationProfile.skin_types.length > 0 
+                    ? recommendationProfile.skin_types 
+                    : tags.filter(t => t.type === 'skin_type').map(t => t.name),
+                avoidFor: recommendationProfile.avoid_for || [],
+                routineStep: recommendationProfile.routine_step || p.routine_step || '',
+                productUse: recommendationProfile.product_use || 'both',
+                isSensitiveFriendly: !!recommendationProfile.is_sensitive_friendly,
+                ingredients: (p.product_ingredients || []).map(i => i.ingredient_name).concat(tags.filter(t => t.type === 'ingredient').map(t => t.name)),
                 type: p.type,
                 howToUse: p.how_to_use || '',
                 whenToUse: p.when_to_use || '',

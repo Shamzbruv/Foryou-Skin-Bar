@@ -35,6 +35,7 @@
             <a href="/admin/inventory.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Inventory</a>
             <a href="/admin/customers.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Customers</a>
             <a href="/admin/discounts.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Discounts</a>
+            <a href="/admin/recommendation-rules.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Quiz Rules</a>
             <a href="/admin/blog.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Blog & Content</a>
             <a href="/admin/settings.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Settings</a>
             <div class="mt-auto border-t border-stone-800 pt-3">
@@ -242,15 +243,75 @@
                 </section>
 
                 <section class="rounded-xl border border-rose-200 p-5 bg-rose-50/50 mt-6">
-                    <h3 class="font-bold text-rose-900 mb-4"><i class="fas fa-heart mr-2"></i>Shop by Concern Mapping</h3>
-                    <p class="text-xs text-rose-700 mb-3">Select which homepage concern cards this product should appear under.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="dark-spots" class="w-4 h-4 accent-rose-800"> Dark Spots & Hyperpigmentation</label>
-                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="acne" class="w-4 h-4 accent-rose-800"> Acne & Breakouts</label>
-                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="glow" class="w-4 h-4 accent-rose-800"> Glow & Brightening</label>
-                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="body-care" class="w-4 h-4 accent-rose-800"> Body Care</label>
-                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="dryness" class="w-4 h-4 accent-rose-800"> Dry & Dehydrated Skin</label>
-                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="texture" class="w-4 h-4 accent-rose-800"> Exfoliation & Texture</label>
+                    <h3 class="font-bold text-rose-900 mb-4"><i class="fas fa-magic mr-2"></i>Recommendation Settings</h3>
+                    <p class="text-xs text-rose-700 mb-3">Controls how this product is scored in the Skin Quiz.</p>
+                    
+                    <div class="mb-4">
+                        <label class="block font-bold text-sm text-stone-700 mb-2">Skin Concerns:</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="dark-spots" class="w-4 h-4 accent-rose-800"> Dark Spots & Hyperpigmentation</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="acne" class="w-4 h-4 accent-rose-800"> Acne & Breakouts</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="glow" class="w-4 h-4 accent-rose-800"> Glow & Brightening</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="body-care" class="w-4 h-4 accent-rose-800"> Body Care</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="dryness" class="w-4 h-4 accent-rose-800"> Dry & Dehydrated Skin</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="texture" class="w-4 h-4 accent-rose-800"> Exfoliation & Texture</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block font-bold text-sm text-stone-700 mb-2">Skin Types:</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="recommendation_skin_types" value="Oily" class="w-4 h-4 accent-rose-800"> Oily</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="recommendation_skin_types" value="Dry" class="w-4 h-4 accent-rose-800"> Dry</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="recommendation_skin_types" value="Combination" class="w-4 h-4 accent-rose-800"> Combination</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="recommendation_skin_types" value="Sensitive" class="w-4 h-4 accent-rose-800"> Sensitive</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="recommendation_skin_types" value="Normal" class="w-4 h-4 accent-rose-800"> Normal</label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block font-bold text-sm text-stone-700 mb-1">Routine Step</label>
+                            <select id="recRoutineStep" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+                                <option value="">Not set</option>
+                                <option value="cleanse">Cleanse</option>
+                                <option value="tone">Tone</option>
+                                <option value="treat">Treat</option>
+                                <option value="moisturize">Moisturize</option>
+                                <option value="exfoliate">Exfoliate</option>
+                                <option value="protect">Protect</option>
+                                <option value="body-care">Body Care</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-sm text-stone-700 mb-1">Product Use Area</label>
+                            <select id="recProductUse" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
+                                <option value="both">Face & Body</option>
+                                <option value="face">Face Only</option>
+                                <option value="body">Body Only</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer">
+                            <input type="checkbox" id="recIsSensitiveFriendly" class="w-4 h-4 accent-rose-800"> 
+                            Sensitive-Friendly (Boost for sensitive skin)
+                        </label>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block font-bold text-sm text-stone-700 mb-2">Avoid For (Penalize for these skin types):</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="recommendation_avoid_for" value="Oily" class="w-4 h-4 accent-rose-800"> Oily</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="recommendation_avoid_for" value="Dry" class="w-4 h-4 accent-rose-800"> Dry</label>
+                            <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="recommendation_avoid_for" value="Sensitive" class="w-4 h-4 accent-rose-800"> Sensitive</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="block font-bold text-sm text-stone-700 mb-1">Ingredient Tags (Comma-separated)</label>
+                        <input type="text" id="recIngredientTags" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm" placeholder="niacinamide, turmeric, neem, shea butter">
                     </div>
                 </section>
 
@@ -459,11 +520,39 @@
                             if (cb) cb.checked = true;
                         });
                     }
+
+                    document.querySelectorAll('input[name="recommendation_skin_types"]').forEach(cb => cb.checked = false);
+                    document.querySelectorAll('input[name="recommendation_avoid_for"]').forEach(cb => cb.checked = false);
+                    $('recRoutineStep').value = p.routine_step || '';
+                    $('recProductUse').value = 'both';
+                    $('recIsSensitiveFriendly').checked = false;
+                    $('recIngredientTags').value = (p.product_ingredients || []).map(i => i.ingredient_name).join(', ');
+
+                    if (p.product_recommendation_profiles && p.product_recommendation_profiles.length > 0) {
+                        const rec = p.product_recommendation_profiles[0];
+                        (rec.skin_types || []).forEach(st => {
+                            const cb = document.querySelector(`input[name="recommendation_skin_types"][value="${st}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                        (rec.avoid_for || []).forEach(af => {
+                            const cb = document.querySelector(`input[name="recommendation_avoid_for"][value="${af}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                        $('recRoutineStep').value = rec.routine_step || p.routine_step || '';
+                        $('recProductUse').value = rec.product_use || 'both';
+                        $('recIsSensitiveFriendly').checked = !!rec.is_sensitive_friendly;
+                    }
                 }
             } else {
                 $('modalTitle').innerText = 'Add Product';
                 window.addInfoSectionRow({ title: 'Return Policy', body: '', is_visible: false });
                 document.querySelectorAll('input[name="product_concerns"]').forEach(cb => cb.checked = false);
+                document.querySelectorAll('input[name="recommendation_skin_types"]').forEach(cb => cb.checked = false);
+                document.querySelectorAll('input[name="recommendation_avoid_for"]').forEach(cb => cb.checked = false);
+                $('recRoutineStep').value = '';
+                $('recProductUse').value = 'both';
+                $('recIsSensitiveFriendly').checked = false;
+                $('recIngredientTags').value = '';
             }
             $('productModal').classList.remove('hidden');
         };
@@ -500,6 +589,7 @@
                     ingredients_html: $('productIngredients').value.trim() || null,
                     how_to_use_html: $('productHowToUse').value.trim() || null,
                     return_policy_html: $('returnPolicy').value.trim() || null,
+                    routine_step: $('recRoutineStep').value || null,
                     track_inventory: $('trackInventory').checked,
                     stock_quantity: intOrZero($('stockQuantity').value),
                     low_stock_threshold: intOrZero($('lowStockThreshold').value || 5),
@@ -559,6 +649,32 @@
                     if (concernError) throw new Error('Failed to save concerns: ' + concernError.message);
                 }
 
+                const recProfile = {
+                    product_id: savedProductId,
+                    skin_types: Array.from(document.querySelectorAll('input[name="recommendation_skin_types"]:checked')).map(cb => cb.value),
+                    avoid_for: Array.from(document.querySelectorAll('input[name="recommendation_avoid_for"]:checked')).map(cb => cb.value),
+                    routine_step: $('recRoutineStep').value || null,
+                    product_use: $('recProductUse').value || 'both',
+                    is_sensitive_friendly: $('recIsSensitiveFriendly').checked,
+                    updated_at: new Date().toISOString()
+                };
+                
+                const { error: recError } = await supabase.from('product_recommendation_profiles').upsert(recProfile);
+                if (recError) throw new Error('Failed to save recommendation profile: ' + recError.message);
+
+                await supabase.from('product_ingredients').delete().eq('product_id', savedProductId);
+                const rawIngredients = $('recIngredientTags').value.split(',').map(s => s.trim()).filter(Boolean);
+                if (rawIngredients.length > 0) {
+                    const ingredientRows = rawIngredients.map((ing, idx) => ({
+                        product_id: savedProductId,
+                        ingredient_name: ing,
+                        normalized_name: slugify(ing),
+                        sort_order: idx
+                    }));
+                    const { error: ingError } = await supabase.from('product_ingredients').insert(ingredientRows);
+                    if (ingError) throw new Error('Failed to save ingredient tags: ' + ingError.message);
+                }
+
                 showToast('Product saved successfully!', 'success');
                 closeProductModal();
                 await loadProducts();
@@ -581,7 +697,7 @@
             await loadCategories();
             const { data: products, error } = await supabase
                 .from('products')
-                .select('*, categories(id,name), product_images(id,image_url,sort_order,is_primary), product_variants(*), product_info_sections(*), product_concerns(concern_slug)')
+                .select('*, categories(id,name), product_images(id,image_url,sort_order,is_primary), product_variants(*), product_info_sections(*), product_concerns(concern_slug), product_recommendation_profiles(*), product_ingredients(*)')
                 .order('created_at', { ascending: false });
 
             const tbody = $('productsTableBody');

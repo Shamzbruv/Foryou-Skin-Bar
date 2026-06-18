@@ -139,8 +139,8 @@
               <div class="flex items-center gap-3"><span class="text-2xl">💧</span> <span>Deeply moisturize dry skin</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="goal" value="Build a simple routine">
-              <div class="flex items-center gap-3"><span class="text-2xl">📝</span> <span>Just build a simple, daily routine</span></div>
+              <input type="radio" name="goal" value="Build a simple daily routine">
+              <div class="flex items-center gap-3"><span class="text-2xl">📝</span> <span>Build a simple daily routine</span></div>
             </label>
           </div>
         </div>
@@ -227,38 +227,54 @@
 
         <!-- Step 5 -->
         <div class="quiz-step hidden" data-step="5">
-          <h2 class="text-2xl font-bold text-stone-800 mb-6 text-center">What is your current routine like?</h2>
+          <h2 class="text-2xl font-bold text-stone-800 mb-6 text-center">What kind of routine do you prefer?</h2>
           <div class="space-y-3">
             <label class="quiz-option">
-              <input type="radio" name="currentRoutine" value="Minimal">
-              <div class="flex items-center gap-3"><span>Minimal — just soap and water</span></div>
+              <input type="radio" name="routinePreference" value="Quick and simple">
+              <div class="flex items-center gap-3"><span>Quick and simple</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="currentRoutine" value="Basic">
-              <div class="flex items-center gap-3"><span>Basic — cleanser and moisturizer</span></div>
+              <input type="radio" name="routinePreference" value="Balanced routine">
+              <div class="flex items-center gap-3"><span>Balanced routine</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="currentRoutine" value="Advanced">
-              <div class="flex items-center gap-3"><span>Advanced — I use serums, toners, and multiple steps</span></div>
+              <input type="radio" name="routinePreference" value="Full glow routine">
+              <div class="flex items-center gap-3"><span>Full glow routine</span></div>
             </label>
           </div>
         </div>
 
         <!-- Step 6 -->
         <div class="quiz-step hidden" data-step="6">
-          <h2 class="text-2xl font-bold text-stone-800 mb-6 text-center">What is your budget range per product?</h2>
+          <h2 class="text-2xl font-bold text-stone-800 mb-6 text-center">What type of product are you looking for most?</h2>
           <div class="space-y-3">
             <label class="quiz-option">
-              <input type="radio" name="budget" value="Under J$2,000">
-              <div class="flex items-center gap-3"><span>Under J$2,000</span></div>
+              <input type="radio" name="productPreference" value="Soap / cleanser">
+              <div class="flex items-center gap-3"><span>Soap / cleanser</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="budget" value="J$2,000 - J$5,000">
-              <div class="flex items-center gap-3"><span>J$2,000 – J$5,000</span></div>
+              <input type="radio" name="productPreference" value="Serum / treatment">
+              <div class="flex items-center gap-3"><span>Serum / treatment</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="budget" value="No limit">
-              <div class="flex items-center gap-3"><span>No limit — I want the absolute best results</span></div>
+              <input type="radio" name="productPreference" value="Toner / mist">
+              <div class="flex items-center gap-3"><span>Toner / mist</span></div>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="productPreference" value="Cream / moisturizer">
+              <div class="flex items-center gap-3"><span>Cream / moisturizer</span></div>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="productPreference" value="Scrub / exfoliation">
+              <div class="flex items-center gap-3"><span>Scrub / exfoliation</span></div>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="productPreference" value="Body butter / body oil">
+              <div class="flex items-center gap-3"><span>Body butter / body oil</span></div>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="productPreference" value="No preference">
+              <div class="flex items-center gap-3"><span>No preference</span></div>
             </label>
           </div>
         </div>
@@ -388,9 +404,12 @@
   </footer>
 
   <script src="js/analytics.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-public-client.js?v=5"></script>
   <script src="js/products.js?v=6"></script>
+  <script src="js/recommendation-engine.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js"></script>
-  <script src="js/quiz.js"></script>
+  <script src="js/quiz.js?v=2"></script>
 </body>
 </html>

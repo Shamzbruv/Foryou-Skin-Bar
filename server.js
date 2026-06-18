@@ -23,12 +23,17 @@ app.post('/api/validate-discount', async (req, res) => {
     const { code, subtotal } = req.body;
     if (!code) throw new Error('Code is required');
 
-    const { data: discountData } = await supabaseAdmin
+    const { data: discountData, error } = await supabaseAdmin
       .from('discount_codes')
       .select('*')
       .eq('code', code.toUpperCase())
       .eq('active', true)
       .single();
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      throw new Error(`Database error: ${error.message} (Check Railway environment variables)`);
+    }
 
     if (!discountData) {
       throw new Error('Invalid or inactive discount code');

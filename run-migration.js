@@ -18,9 +18,10 @@ async function runMigration() {
     await client.connect();
     console.log("Connected successfully.");
     
-    const migrationSql = fs.readFileSync('supabase/migrations/20260618000001_closeout_schema.sql', 'utf8');
+    const migrationFile = process.argv[2] || 'supabase/migrations/20260618_recommendation_engine.sql';
+    const migrationSql = fs.readFileSync(migrationFile, 'utf8');
     
-    console.log("Running migration...");
+    console.log(`Running migration from ${migrationFile}...`);
     await client.query(migrationSql);
     console.log("Migration executed successfully!");
     

@@ -19,54 +19,62 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.trackEvent) window.trackEvent('quiz_start');
 
   // Handle Option Clicks
-  document.querySelectorAll('.quiz-option').forEach(option => {
-    option.addEventListener('click', function() {
-      // Get the name of the radio group
-      const input = this.querySelector('input');
-      const name = input.name;
-      
-      // Deselect siblings
+  document.querySelectorAll('.quiz-option input[type="radio"]').forEach(input => {
+    input.addEventListener('change', function () {
+      const stepEl = this.closest('.quiz-step');
+      if (!stepEl) return;
+
+      const stepNumber = Number(stepEl.dataset.step);
+
+      // Ignore anything that does not belong to the current visible step
+      if (stepNumber !== currentStep) return;
+
+      const name = this.name;
+
       document.querySelectorAll(`input[name="${name}"]`).forEach(siblingInput => {
-        siblingInput.closest('.quiz-option').classList.remove('selected');
+        siblingInput.closest('.quiz-option')?.classList.remove('selected');
       });
 
-      // Select this one
-      this.classList.add('selected');
-      input.checked = true;
-      answers[name] = input.value;
-
-      // Auto advance
-      setTimeout(() => {
-        if (currentStep < totalSteps) {
-          currentStep++;
-          updateUI();
-        }
-      }, 300);
+      this.closest('.quiz-option')?.classList.add('selected');
+      answers[name] = this.value;
     });
   });
+
+  function goToStep(step) {
+    const safeStep = Math.max(1, Math.min(totalSteps, Number(step)));
+
+    if (safeStep === currentStep) return;
+
+    currentStep = safeStep;
+    updateUI();
+
+    const quizCard = document.getElementById('quizContainer');
+    if (quizCard) {
+      quizCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   // Navigation Buttons
   if (prevBtn) {
     prevBtn.addEventListener('click', () => {
-      if (currentStep > 1) {
-        currentStep--;
-        updateUI();
-      }
+      goToStep(currentStep - 1);
     });
   }
 
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
-      // Check if current step has an answer
-      const currentInputs = document.querySelectorAll(`.quiz-step[data-step="${currentStep}"] input:checked`);
-      if (currentInputs.length === 0) {
+      const currentStepEl = document.querySelector(`.quiz-step[data-step="${currentStep}"]`);
+      const checkedInput = currentStepEl?.querySelector('input[type="radio"]:checked');
+
+      if (!checkedInput) {
         alert("Please select an option to continue.");
         return;
       }
 
+      answers[checkedInput.name] = checkedInput.value;
+
       if (currentStep < totalSteps) {
-        currentStep++;
-        updateUI();
+        goToStep(currentStep + 1);
       } else {
         generateResults();
       }
@@ -78,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const progress = (currentStep / totalSteps) * 100;
     if (progressFill) progressFill.style.width = `${progress}%`;
     if (stepCounter) stepCounter.innerText = `Step ${currentStep} of ${totalSteps}`;
+    console.log('Quiz current step:', currentStep, 'Answers:', answers);
 
     // Show/Hide steps
     document.querySelectorAll('.quiz-step').forEach(step => {
@@ -119,84 +128,99 @@ document.addEventListener('DOMContentLoaded', () => {
     // Track Complete
     if (window.trackEvent) window.trackEvent('quiz_complete', answers);
 
-    // Analyze and map answers
-    const concernMap = {
-      'Fade dark spots': 'dark-spots',
-      'Reduce acne & breakouts': 'acne',
-      'Brighten dull skin': 'glow',
-      'Smooth rough texture': 'texture',
-      'Moisturize dry skin': 'dryness',
-      'Build a simple routine': 'glow'
-    };
-    const targetConcern = concernMap[answers.goal] || 'glow';
-    
-    let targetType = answers.type.toLowerCase();
-    if (targetType === 'not sure') targetType = 'normal';
-
     // Ensure products are loaded from Supabase
     if (window.loadProductsData) await window.loadProductsData();
     const products = window.productsData || [];
 
-    // Filter helpers
-    const getProduct = (step, fallbackCategory) => {
-      let matches = products.filter(p => p.routineStep === step && p.skinType.includes(targetType));
-      
-      // Try to find exact concern match
-      let exact = matches.filter(p => p.skinConcern.includes(targetConcern));
-      if (exact.length > 0) return exact[0];
-      
-      // Fallback
-      if (matches.length > 0) return matches[0];
-      
-      // Ultimate fallback
-      return products.find(p => p.category === fallbackCategory) || products[0];
-    };
+    // Load ingredient rules
+    let ingredientRules = [];
+    if (window.supabase) {
+      try {
+        const { data } = await window.supabase.from('ingredient_rules').select('*');
+        if (data) ingredientRules = data;
+      } catch(e) {
+        console.error('Failed to load ingredient rules', e);
+      }
+    }
+
+    // Run Smart Recommendation Engine
+    const results = window.RecommendationEngine.recommend(
+      products,
+      answers,
+      ingredientRules
+    );
+
+    const topProducts = results.slice(0, 6);
 
     // Build Routine
     let routine = [];
     
+    const getProductResult = (step) => topProducts.find(r => r.product.routineStep === step);
+    
     if (answers.focus === 'Mostly face care' || answers.focus === 'Both face and body') {
-      const cleanser = getProduct('cleanse', 'Face Care');
-      const treatment = getProduct('treat', 'Serums & Oils');
-      const moisturizer = getProduct('moisturize', 'Face Care');
+      const cleanser = getProductResult('cleanse');
+      const treatment = getProductResult('treat');
+      const toner = getProductResult('tone');
+      const moisturizer = getProductResult('moisturize');
+      const exfoliator = getProductResult('exfoliate');
       
-      routine.push({ step: 'Step 1: Cleanse', desc: 'Remove impurities gently.', product: cleanser });
-      routine.push({ step: 'Step 2: Treat', desc: `Target ${targetConcern.replace('-', ' ')}.`, product: treatment });
-      routine.push({ step: 'Step 3: Moisturize', desc: 'Lock in hydration and glow.', product: moisturizer });
+      if (cleanser) routine.push({ step: 'Step 1: Cleanse', desc: 'Remove impurities gently.', result: cleanser });
+      if (toner && answers.routinePreference === 'Full glow routine') routine.push({ step: 'Step 2: Tone', desc: 'Balance and prep skin.', result: toner });
+      if (treatment && answers.routinePreference !== 'Quick and simple') routine.push({ step: 'Step 3: Treat', desc: `Target your main goal.`, result: treatment });
+      if (moisturizer) routine.push({ step: 'Step 4: Moisturize', desc: 'Lock in hydration and glow.', result: moisturizer });
+      if (exfoliator && answers.routinePreference === 'Full glow routine') routine.push({ step: 'Weekly: Exfoliate', desc: 'Smooth away texture.', result: exfoliator });
     }
 
     if (answers.focus === 'Mostly body care' || answers.focus === 'Both face and body') {
-      const bodyExfoliant = getProduct('exfoliate', 'Scrubs');
-      const bodyMoisturizer = getProduct('moisturize', 'Body Care');
+      const bodyExfoliant = topProducts.find(r => r.product.routineStep === 'exfoliate' && r.product.category === 'Body Care');
+      const bodyMoisturizer = topProducts.find(r => r.product.routineStep === 'moisturize' && r.product.category === 'Body Care');
       
-      routine.push({ step: 'Body Step 1: Polish', desc: 'Smooth away dead skin.', product: bodyExfoliant });
-      routine.push({ step: 'Body Step 2: Glow', desc: 'Deeply nourish and seal.', product: bodyMoisturizer });
+      if (bodyExfoliant) routine.push({ step: 'Body Step 1: Polish', desc: 'Smooth away dead skin.', result: bodyExfoliant });
+      if (bodyMoisturizer) routine.push({ step: 'Body Step 2: Glow', desc: 'Deeply nourish and seal.', result: bodyMoisturizer });
+    }
+
+    // Fallback if routine is empty (e.g. no products matched specific steps)
+    if (routine.length === 0) {
+      topProducts.slice(0, 3).forEach((r, idx) => {
+        routine.push({ step: `Recommendation ${idx + 1}`, desc: 'Selected specifically for you.', result: r });
+      });
     }
 
     // Render Results
     const summaryText = document.getElementById('resultSummary');
-    summaryText.innerHTML = `Based on your answers, we've built a routine specifically for <strong>${answers.type.toLowerCase()}</strong> skin to help <strong>${answers.goal.toLowerCase()}</strong>.`;
+    summaryText.innerHTML = `Based on your answers, we've built a routine to help <strong>${String(answers.goal || '').toLowerCase()}</strong> for <strong>${String(answers.type || 'Not sure').toLowerCase()}</strong> skin.`;
 
     const grid = document.getElementById('routineGrid');
     let totalValue = 0;
     
     grid.innerHTML = routine.map(r => {
-      // Safely access product properties since some could be undefined if db doesn't match expected data
-      if (!r.product) return '';
-      totalValue += r.product.price || 0;
+      if (!r.result || !r.result.product) return '';
+      const p = r.result.product;
+      totalValue += p.price || 0;
+      
+      const reasonsHtml = r.result.reasons && r.result.reasons.length > 0 
+        ? `<ul class="list-disc pl-4 text-sm mt-2 text-stone-700">${r.result.reasons.map(res => `<li>${res}</li>`).join('')}</ul>`
+        : '';
+        
+      const warningsHtml = r.result.warnings && r.result.warnings.length > 0 
+        ? `<div class="mt-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-800"><i class="fas fa-exclamation-triangle mr-2"></i>${r.result.warnings.join('<br>')}</div>`
+        : '';
+
       return `
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-amber-50 flex flex-col md:flex-row gap-6 items-center">
           <div class="w-full md:w-1/3 shrink-0 text-center">
             <h4 class="font-bold text-amber-800 mb-1">${r.step}</h4>
             <p class="text-xs text-stone-500 mb-4">${r.desc}</p>
-            <img src="${r.product.image}" class="w-full h-40 object-cover rounded-2xl" alt="${r.product.name}">
+            <img src="${p.image}" class="w-full h-40 object-cover rounded-2xl" alt="${p.name}">
           </div>
           <div class="w-full md:w-2/3">
-            <h3 class="font-bold text-xl mb-2">${r.product.name}</h3>
-            <p class="text-amber-800 font-bold mb-3">J$${(r.product.price || 0).toLocaleString()}</p>
-            <p class="text-stone-600 text-sm mb-4">${r.product.description}</p>
+            <h3 class="font-bold text-xl mb-2">${p.name}</h3>
+            <p class="text-amber-800 font-bold mb-3">J$${(p.price || 0).toLocaleString()}</p>
+            <p class="text-stone-600 text-sm mb-4">${p.description}</p>
             <div class="bg-amber-50 rounded-xl p-4">
-              <p class="text-sm"><strong>Why it's perfect for you:</strong> Formulated with ${(r.product.ingredients || []).join(', ')} to directly address ${targetConcern.replace('-', ' ')} while respecting your ${targetType} skin barrier.</p>
+              <p class="text-sm font-bold mb-1">Why we chose this for you:</p>
+              ${reasonsHtml}
+              ${warningsHtml}
             </div>
           </div>
         </div>
@@ -208,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add All Button Logic
     document.getElementById('addAllBtn').onclick = () => {
       routine.forEach(r => {
-        if (r.product && window.cartManager) window.cartManager.addItem(r.product);
+        if (r.result && r.result.product && window.cartManager) window.cartManager.addItem(r.result.product);
       });
       // Show drawer is handled by CartManager
     };
@@ -217,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sendWhatsAppBtn').onclick = () => {
       let message = `Hi For You Skin Bar! I just took the Skin Quiz and wanted to ask about my recommended routine:\n\n`;
       routine.forEach(r => {
-        if (r.product) message += `* ${r.product.name}\n`;
+        if (r.result && r.result.product) message += `* ${r.result.product.name}\n`;
       });
       window.openWhatsApp(message);
     };
