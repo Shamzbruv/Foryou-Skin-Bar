@@ -205,8 +205,8 @@
             
             tbody.innerHTML = data.map(d => {
                 const typeText = d.discount_type === 'percentage' ? `${d.discount_value}%` : `J$${d.discount_value}`;
-                const statusClass = d.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-                const statusText = d.is_active ? 'Active' : 'Inactive';
+                const statusClass = d.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                const statusText = d.active ? 'Active' : 'Inactive';
                 const created = new Date(d.created_at).toLocaleDateString();
                 
                 return `
@@ -238,8 +238,8 @@
                     document.getElementById('discountName').value = d.name || '';
                     document.getElementById('discountType').value = d.discount_type || 'percentage';
                     document.getElementById('discountValue').value = d.discount_value;
-                    document.getElementById('discountMin').value = d.minimum_order_total_jmd || '';
-                    document.getElementById('discountStatus').value = d.is_active ? 'true' : 'false';
+                    document.getElementById('discountMin').value = d.minimum_subtotal || '';
+                    document.getElementById('discountStatus').value = d.active ? 'true' : 'false';
                 }
             }
             document.getElementById('discountModal').classList.remove('hidden');

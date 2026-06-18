@@ -221,3 +221,29 @@ window.openWhatsApp = function(message) {
   const url = `https://wa.me/18763094374?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
 };
+
+  // ── Dynamic Announcement Banner ──
+  async function loadDynamicBanner() {
+    if (!window.supabase) return;
+    const banner = document.querySelector('div[class*="bg-amber-900/90"]');
+    if (!banner) return;
+
+    try {
+        const { data, error } = await window.supabase
+            .from('discount_codes')
+            .select('code, discount_type, discount_value')
+            .eq('active', true)
+            .limit(1);
+            
+        if (!error && data && data.length > 0) {
+            const promo = data[0];
+            const promoVal = promo.discount_type === 'percent' ? `${promo.discount_value}%` : `J$${promo.discount_value}`;
+            banner.innerHTML = `✨ SPECIAL OFFER: Use code <strong>${promo.code}</strong> for ${promoVal} OFF your order! &nbsp;|&nbsp; 🌿 Free Shipping over J$10,000`;
+        }
+    } catch (e) {
+        // Silently fail, keep default banner
+    }
+  }
+  
+  // Wait a tick for supabase client to init
+  setTimeout(loadDynamicBanner, 100);
