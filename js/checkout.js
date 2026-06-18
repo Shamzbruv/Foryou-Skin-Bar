@@ -176,12 +176,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const supabaseAnonKey = window.supabase.supabaseKey;
         const subtotal = getSubtotal();
 
-        const response = await fetch(`${supabaseUrl}/functions/v1/validate-discount`, {
+        const response = await fetch('/api/validate-discount', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseAnonKey}`,
-            'apikey': supabaseAnonKey
           },
           body: JSON.stringify({ code: code, subtotal: subtotal })
         });
@@ -299,16 +297,10 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error("Supabase client is not initialized.");
         }
 
-        // Use fetch directly to Supabase Edge Function
-        const supabaseUrl = window.supabase.supabaseUrl;
-        const supabaseAnonKey = window.supabase.supabaseKey;
-
-        const response = await fetch(`${supabaseUrl}/functions/v1/create-order`, {
+        const response = await fetch('/api/create-order', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseAnonKey}`,
-            'apikey': supabaseAnonKey
           },
           body: JSON.stringify(payload)
         });
