@@ -375,7 +375,7 @@
           <div class="mb-6">
             <label class="block text-sm font-bold text-stone-800 mb-2">Choose Option</label>
             <select onchange="window.updateSelectedVariant('${product.id}')" class="w-full text-sm border border-stone-200 rounded-xl p-3 text-stone-800 bg-white outline-none focus:border-amber-800 transition-colors" id="variant-${product.id}">
-              ${variants.map(v => `<option value="${escapeHTML(v.name)}" data-name="${escapeHTML(v.name)}" data-price="${v.price}" data-compare-price="${v.compareAtPrice || ''}" data-sku="${escapeHTML(v.sku || '')}" data-stock="${v.stock ?? ''}" data-image="${escapeHTML(v.image || '')}">${escapeHTML(v.name)}</option>`).join('')}
+              ${variants.map(v => `<option value="${escapeHTML(v.name)}" data-variant-id="${v.id}" data-name="${escapeHTML(v.name)}" data-price="${v.price}" data-compare-price="${v.compareAtPrice || ''}" data-sku="${escapeHTML(v.sku || '')}" data-stock="${v.stock ?? ''}" data-image="${escapeHTML(v.image || '')}">${escapeHTML(v.name)}</option>`).join('')}
             </select>
           </div>` : '';
 

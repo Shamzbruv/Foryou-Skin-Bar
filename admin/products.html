@@ -241,6 +241,19 @@
                     <div id="variantRows" class="space-y-2"></div>
                 </section>
 
+                <section class="rounded-xl border border-rose-200 p-5 bg-rose-50/50 mt-6">
+                    <h3 class="font-bold text-rose-900 mb-4"><i class="fas fa-heart mr-2"></i>Shop by Concern Mapping</h3>
+                    <p class="text-xs text-rose-700 mb-3">Select which homepage concern cards this product should appear under.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="dark-spots" class="w-4 h-4 accent-rose-800"> Dark Spots & Hyperpigmentation</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="acne" class="w-4 h-4 accent-rose-800"> Acne & Breakouts</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="glow" class="w-4 h-4 accent-rose-800"> Glow & Brightening</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="body-care" class="w-4 h-4 accent-rose-800"> Body Care</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="dryness" class="w-4 h-4 accent-rose-800"> Dry & Dehydrated Skin</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="product_concerns" value="texture" class="w-4 h-4 accent-rose-800"> Exfoliation & Texture</label>
+                    </div>
+                </section>
+
                 <section class="rounded-xl border border-stone-200 p-5 bg-white">
                     <h3 class="font-bold text-stone-800 mb-4"><i class="fas fa-images text-amber-800 mr-2"></i>Images</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -418,10 +431,19 @@
                     $('imageUrls').value = (p.product_images || []).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(img => img.image_url).join('\n');
                     (p.product_variants || []).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).forEach(window.addVariantRow);
                     (p.product_info_sections || []).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).forEach(window.addInfoSectionRow);
+                    
+                    document.querySelectorAll('input[name="product_concerns"]').forEach(cb => cb.checked = false);
+                    if (p.product_concerns) {
+                        p.product_concerns.forEach(c => {
+                            const cb = document.querySelector(`input[name="product_concerns"][value="${c.concern_slug}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                    }
                 }
             } else {
                 $('modalTitle').innerText = 'Add Product';
                 window.addInfoSectionRow({ title: 'Return Policy', body: '', is_visible: false });
+                document.querySelectorAll('input[name="product_concerns"]').forEach(cb => cb.checked = false);
             }
             $('productModal').classList.remove('hidden');
         };
@@ -510,6 +532,13 @@
                     if (sectionError) throw new Error('Failed to save page sections: ' + sectionError.message);
                 }
 
+                const selectedConcerns = Array.from(document.querySelectorAll('input[name="product_concerns"]:checked')).map(cb => ({ product_id: savedProductId, concern_slug: cb.value }));
+                await supabase.from('product_concerns').delete().eq('product_id', savedProductId);
+                if (selectedConcerns.length > 0) {
+                    const { error: concernError } = await supabase.from('product_concerns').insert(selectedConcerns);
+                    if (concernError) throw new Error('Failed to save concerns: ' + concernError.message);
+                }
+
                 showToast('Product saved successfully!', 'success');
                 closeProductModal();
                 await loadProducts();
@@ -532,7 +561,7 @@
             await loadCategories();
             const { data: products, error } = await supabase
                 .from('products')
-                .select('*, categories(id,name), product_images(id,image_url,sort_order,is_primary), product_variants(*), product_info_sections(*)')
+                .select('*, categories(id,name), product_images(id,image_url,sort_order,is_primary), product_variants(*), product_info_sections(*), product_concerns(concern_slug)')
                 .order('created_at', { ascending: false });
 
             const tbody = $('productsTableBody');

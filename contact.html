@@ -311,28 +311,84 @@
     // Handle forms by opening WhatsApp
     const WHATSAPP_NUMBER = '18763094374';
 
-    document.getElementById('contactForm').addEventListener('submit', (e) => {
+    document.getElementById('contactForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = 'Sending... <i class="fas fa-spinner fa-spin"></i>';
+      btn.disabled = true;
+
       const fd = new FormData(e.target);
       const data = Object.fromEntries(fd.entries());
       
-      const message = `*Website Contact Form*\n\n*Name:* ${data.name}\n*Email:* ${data.email}\n*Phone:* ${data.phone}\n*Inquiry Type:* ${data.type}\n\n*Message:*\n${data.message}`;
-      
-      if(window.trackEvent) window.trackEvent('contact_submit', { type: data.type });
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
-      e.target.reset();
+      try {
+        const { error } = await window.supabase.from('contact_messages').insert({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          inquiry_type: data.type,
+          message: data.message
+        });
+
+        if (error) throw error;
+        
+        if(window.trackEvent) window.trackEvent('contact_submit', { type: data.type });
+        alert('Thank you! Your message has been sent to our team.');
+        
+        // Optional WhatsApp follow-up
+        const message = `*Website Contact Form*\n\n*Name:* ${data.name}\n*Email:* ${data.email}\n*Phone:* ${data.phone}\n*Inquiry Type:* ${data.type}\n\n*Message:*\n${data.message}`;
+        if (confirm('Message saved! Would you also like to send this via WhatsApp for a faster response?')) {
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+        
+        e.target.reset();
+      } catch (err) {
+        alert('Error sending message: ' + err.message);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
     });
 
-    document.getElementById('customOrderForm').addEventListener('submit', (e) => {
+    document.getElementById('customOrderForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = 'Requesting... <i class="fas fa-spinner fa-spin"></i>';
+      btn.disabled = true;
+
       const fd = new FormData(e.target);
       const data = Object.fromEntries(fd.entries());
       
-      const message = `*Custom Order Request*\n\n*Name:* ${data.name}\n*Phone:* ${data.phone}\n*Event Type:* ${data.eventType}\n*Event Date:* ${data.eventDate}\n*Quantity:* ${data.quantity}\n*Product Interest:* ${data.product}\n\n*Notes:*\n${data.notes || 'None'}`;
-      
-      if(window.trackEvent) window.trackEvent('custom_order_request', { type: data.eventType });
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
-      e.target.reset();
+      try {
+        const { error } = await window.supabase.from('custom_order_requests').insert({
+          name: data.name,
+          phone: data.phone,
+          event_type: data.eventType,
+          event_date: data.eventDate,
+          quantity: parseInt(data.quantity, 10),
+          product_interest: data.product,
+          notes: data.notes
+        });
+
+        if (error) throw error;
+
+        if(window.trackEvent) window.trackEvent('custom_order_request', { type: data.eventType });
+        alert('Thank you! Your custom order request has been received. We will contact you soon.');
+
+        // Optional WhatsApp follow-up
+        const message = `*Custom Order Request*\n\n*Name:* ${data.name}\n*Phone:* ${data.phone}\n*Event Type:* ${data.eventType}\n*Event Date:* ${data.eventDate}\n*Quantity:* ${data.quantity}\n*Product Interest:* ${data.product}\n\n*Notes:*\n${data.notes || 'None'}`;
+        if (confirm('Request saved! Would you also like to ping us on WhatsApp for a faster quote?')) {
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+        
+        e.target.reset();
+      } catch (err) {
+        alert('Error saving request: ' + err.message);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
     });
   </script>
 </body>

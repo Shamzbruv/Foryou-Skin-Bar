@@ -189,7 +189,7 @@
         
         async function loadDiscounts() {
             const tbody = document.getElementById('discountsTableBody');
-            const { data, error } = await supabase.from('discounts').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabase.from('discount_codes').select('*').order('created_at', { ascending: false });
             
             if (error) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-red-500">Error: ${error.message}</td></tr>`;
@@ -247,7 +247,7 @@
 
         window.deleteDiscount = async (id) => {
             if(!confirm("Are you sure you want to delete this discount code?")) return;
-            const { error } = await supabase.from('discounts').delete().eq('id', id);
+            const { error } = await supabase.from('discount_codes').delete().eq('id', id);
             if (error) showToast(error.message, 'error');
             else { showToast('Discount deleted'); loadDiscounts(); }
         };
@@ -272,11 +272,11 @@
 
             try {
                 if (id) {
-                    const { error } = await supabase.from('discounts').update(payload).eq('id', id);
+                    const { error } = await supabase.from('discount_codes').update(payload).eq('id', id);
                     if (error) throw error;
                     showToast('Discount updated!');
                 } else {
-                    const { error } = await supabase.from('discounts').insert(payload);
+                    const { error } = await supabase.from('discount_codes').insert(payload);
                     if (error) throw error;
                     showToast('Discount created!');
                 }

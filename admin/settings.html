@@ -147,7 +147,7 @@
         }
         
         async function loadSettings() {
-            const { data, error } = await supabase.from('settings').select('key, value');
+            const { data, error } = await supabase.from('store_settings').select('key, value');
             if (error) {
                 showToast(error.message, 'error');
                 return;
@@ -168,7 +168,7 @@
                 // Upsert all settings
                 for (const key of KEYS) {
                     const val = document.getElementById('setting_' + key).value;
-                    const { error } = await supabase.from('settings').upsert({ key: key, value: val }, { onConflict: 'key' });
+                    const { error } = await supabase.from('store_settings').upsert({ key: key, value: val }, { onConflict: 'key' });
                     if (error) throw error;
                 }
                 showToast('Settings saved successfully!');

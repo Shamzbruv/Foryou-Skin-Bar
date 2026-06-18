@@ -357,7 +357,7 @@
             let variantHtml = '';
             if (p.variants && p.variants.length > 0) {
               variantHtml = `<select onchange="document.getElementById('price-${p.id}').innerText = 'J$' + Number(this.options[this.selectedIndex].getAttribute('data-price')).toLocaleString()" class="w-full mt-2 text-xs border border-stone-200 rounded-lg p-1.5 text-stone-800 bg-transparent outline-none focus:border-amber-800 transition-colors" id="variant-${p.id}">
-                ${p.variants.map(v => `<option value="${v.name}" data-price="${v.price}">${v.name}</option>`).join('')}
+                ${p.variants.map(v => `<option value="${v.name}" data-variant-id="${v.id}" data-price="${v.price}">${v.name}</option>`).join('')}
               </select>`;
             }
 
