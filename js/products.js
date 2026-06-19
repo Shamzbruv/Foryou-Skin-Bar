@@ -9,6 +9,22 @@ window.loadProductsData = async function() {
         return [];
     }
 
+    function isPriceChangingVariant(name) {
+        const value = String(name || '').toLowerCase();
+        const units = ['oz', 'ml', 'gram', 'grams', 'g ', 'kg', 'lb', 'lbs'];
+        const sizeWords = ['small', 'medium', 'large', 'mini', 'travel', 'jumbo'];
+        return ((/[0-9]/.test(value) && units.some(unit => value.includes(unit))) || sizeWords.some(word => value.includes(word)));
+    }
+
+    function getSafeVariantPrice(variant, basePrice) {
+        const productPrice = Number(basePrice || 0);
+        const variantPrice = Number(variant.price_jmd || 0);
+        if (!variantPrice) return productPrice;
+        if (!productPrice) return variantPrice;
+        if (!isPriceChangingVariant(variant.name) && Math.abs(variantPrice - productPrice) > 0.01) return productPrice;
+        return variantPrice;
+    }
+
     try {
         const { data, error } = await window.supabase
             .from('products')
@@ -19,6 +35,7 @@ window.loadProductsData = async function() {
 
         window.productsData = (data || []).map(p => {
             const tags = p.product_tags || [];
+            const basePrice = Number(p.price_jmd || 0);
             const images = (p.product_images || [])
                 .filter(img => img && img.image_url)
                 .sort((a, b) => {
@@ -35,7 +52,7 @@ window.loadProductsData = async function() {
                     id: v.id,
                     name: v.name,
                     sku: v.sku || '',
-                    price: Number(v.price_jmd || p.price_jmd || 0),
+                    price: getSafeVariantPrice(v, basePrice),
                     compareAtPrice: v.compare_at_price_jmd ? Number(v.compare_at_price_jmd) : null,
                     stock: v.stock_quantity,
                     trackInventory: v.track_inventory !== false,
@@ -50,8 +67,8 @@ window.loadProductsData = async function() {
                     body: section.body || ''
                 }));
 
-            const recommendationProfile = (p.product_recommendation_profiles && p.product_recommendation_profiles.length > 0) 
-                ? p.product_recommendation_profiles[0] 
+            const recommendationProfile = (p.product_recommendation_profiles && p.product_recommendation_profiles.length > 0)
+                ? p.product_recommendation_profiles[0]
                 : {};
 
             return {
@@ -60,7 +77,7 @@ window.loadProductsData = async function() {
                 slug: p.slug,
                 sku: p.sku || '',
                 brand: p.brand || '',
-                price: Number(p.price_jmd || 0),
+                price: basePrice,
                 compareAtPrice: p.compare_at_price_jmd ? Number(p.compare_at_price_jmd) : null,
                 costPrice: p.cost_price_jmd ? Number(p.cost_price_jmd) : null,
                 discountMode: p.discount_mode || '',
@@ -78,8 +95,8 @@ window.loadProductsData = async function() {
                 returnPolicyHtml: p.return_policy_html || '',
                 infoSections,
                 skinConcern: (p.product_concerns || []).map(c => c.concern_slug).concat(tags.filter(t => t.type === 'skin_concern').map(t => t.name)),
-                skinType: Array.isArray(recommendationProfile.skin_types) && recommendationProfile.skin_types.length > 0 
-                    ? recommendationProfile.skin_types 
+                skinType: Array.isArray(recommendationProfile.skin_types) && recommendationProfile.skin_types.length > 0
+                    ? recommendationProfile.skin_types
                     : tags.filter(t => t.type === 'skin_type').map(t => t.name),
                 avoidFor: recommendationProfile.avoid_for || [],
                 routineStep: recommendationProfile.routine_step || p.routine_step || '',
