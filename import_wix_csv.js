@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { parse } = require('csv-parse/sync');
 const { Client } = require('pg');
+require('dotenv').config();
 
 const DATABASE_URL = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
 const CSV_FILE = process.env.CSV_FILE || 'catalog_products (5).csv';
@@ -139,7 +140,7 @@ async function importCSV() {
   await client.connect();
   await ensureSchema(client);
 
-  const fileContent = fs.readFileSync(CSV_FILE, 'utf8');
+  const fileContent = fs.readFileSync(CSV_FILE, 'utf8').replace(/^\uFEFF/, '');
   const records = parse(fileContent, { columns: true, skip_empty_lines: true });
   const products = records.filter(r => r.fieldType === 'Product');
   const variantsByHandle = new Map();
