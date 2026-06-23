@@ -196,8 +196,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addBtn && window.cartManager) {
       if (window.loadProductsData) await window.loadProductsData();
       if (window.productsData) {
-        const id = parseInt(addBtn.dataset.addToCart);
-        const product = window.productsData.find(p => p.id === id);
+        const id = String(addBtn.dataset.addToCart);
+        const product = window.productsData.find(p => String(p.id) === id);
         if (product) {
           window.cartManager.addItem(product);
           // Button feedback
@@ -230,7 +230,7 @@ window.handleAddToCart = async function(id, btnElement) {
   if (window.cartManager) {
     if (window.loadProductsData) await window.loadProductsData();
     if (window.productsData) {
-      const product = window.productsData.find(p => p.id === id);
+      const product = window.productsData.find(p => String(p.id) === String(id));
       if (product) {
         window.cartManager.addItem(product);
         if (btnElement) window.showGlow(btnElement);
@@ -245,28 +245,28 @@ window.openWhatsApp = function(message) {
   window.open(url, '_blank');
 };
 
-  // ── Dynamic Announcement Banner ──
-  async function loadDynamicBanner() {
-    if (!window.supabase) return;
-    const banner = document.querySelector('div[class*="bg-amber-900/90"]');
-    if (!banner) return;
+// ── Dynamic Announcement Banner ──
+async function loadDynamicBanner() {
+  if (!window.supabase) return;
+  const banner = document.querySelector('div[class*="bg-amber-900/90"]');
+  if (!banner) return;
 
-    try {
-        const { data, error } = await window.supabase
-            .from('discount_codes')
-            .select('code, discount_type, discount_value')
-            .eq('active', true)
-            .limit(1);
-            
-        if (!error && data && data.length > 0) {
-            const promo = data[0];
-            const promoVal = promo.discount_type === 'percent' ? `${promo.discount_value}%` : `J$${promo.discount_value}`;
-            banner.innerHTML = `✨ SPECIAL OFFER: Use code <strong>${promo.code}</strong> for ${promoVal} OFF your order! &nbsp;|&nbsp; 🌿 Free Shipping over J$10,000`;
-        }
-    } catch (e) {
-        // Silently fail, keep default banner
+  try {
+    const { data, error } = await window.supabase
+      .from('discount_codes')
+      .select('code, discount_type, discount_value')
+      .eq('active', true)
+      .limit(1);
+
+    if (!error && data && data.length > 0) {
+      const promo = data[0];
+      const promoVal = promo.discount_type === 'percent' ? `${promo.discount_value}%` : `J$${promo.discount_value}`;
+      banner.innerHTML = `✨ SPECIAL OFFER: Use code <strong>${promo.code}</strong> for ${promoVal} OFF your order! &nbsp;|&nbsp; 🌿 Free Shipping over J$10,000`;
     }
+  } catch (e) {
+    // Silently fail, keep default banner
   }
-  
-  // Wait a tick for supabase client to init
-  setTimeout(loadDynamicBanner, 100);
+}
+
+// Wait a tick for supabase client to init
+setTimeout(loadDynamicBanner, 100);
