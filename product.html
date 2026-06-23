@@ -389,7 +389,7 @@
           .join('');
 
         const detailsBlockHtml = [
-          paragraphCard('Product Description', product.shortDescription || product.description, 'fa-align-left', 48),
+          paragraphCard('Product Description', product.description || product.shortDescription, 'fa-align-left', 48),
           buildResultsBlock(product),
           detailCard('Best For', product.bestForHtml || product.bestFor, 'fa-star', 4),
           detailCard('Key Ingredients', product.ingredientsHtml || (product.ingredients || []).join('\n'), 'fa-leaf', 6),
