@@ -4,7 +4,7 @@
       const stylesheet = document.createElement('link');
       stylesheet.id = 'clientReviewStyles';
       stylesheet.rel = 'stylesheet';
-      stylesheet.href = 'css/client-review.css?v=2';
+      stylesheet.href = 'css/client-review.css?v=7';
       document.head.appendChild(stylesheet);
     }
 

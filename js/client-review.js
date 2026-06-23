@@ -51,7 +51,7 @@
 
   function enhanceProductCards(root = document) {
     root.querySelectorAll('.product-card').forEach((card) => {
-      const desc = card.querySelector('.text-stone-500.h-\[18px\], .text-stone-500.line-clamp-1');
+      const desc = card.querySelector('.text-stone-500.h-\[18px\], .text-stone-500.line-clamp-1, .text-stone-500.line-clamp-3');
       if (desc) desc.classList.add('product-card-description');
 
       const title = card.querySelector('h3');
@@ -329,6 +329,7 @@
 
   onReady(() => {
     document.body.classList.toggle('quiz-page', pageName === 'quiz.html');
+    document.body.classList.toggle('faq-page', pageName === 'faq.html');
     setupGlobalSearch();
     layoutPageHeaders();
     addHomepageRefinements();
