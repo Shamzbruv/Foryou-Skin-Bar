@@ -1,3 +1,26 @@
+(() => {
+  const loadClientReviewLayer = () => {
+    if (!document.getElementById('clientReviewStyles')) {
+      const stylesheet = document.createElement('link');
+      stylesheet.id = 'clientReviewStyles';
+      stylesheet.rel = 'stylesheet';
+      stylesheet.href = 'css/client-review.css?v=2';
+      document.head.appendChild(stylesheet);
+    }
+
+    if (!document.getElementById('clientReviewScript')) {
+      const script = document.createElement('script');
+      script.id = 'clientReviewScript';
+      script.src = 'js/client-review.js?v=2';
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  };
+
+  if (document.head) loadClientReviewLayer();
+  else document.addEventListener('DOMContentLoaded', loadClientReviewLayer, { once: true });
+})();
+
 /**
  * main.js — Shared UI logic for For You Skin Bar
  * Handles mobile menu, nav effects, scroll reveal, newsletter, and global event delegation
