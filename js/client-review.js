@@ -7,9 +7,6 @@
   const onReady = (callback) => document.readyState === 'loading'
     ? document.addEventListener('DOMContentLoaded', callback, { once: true })
     : callback();
-  const escapeHTML = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-  }[character]));
   const normaliseId = (value) => String(value ?? '');
 
   function favourites() {
@@ -275,11 +272,14 @@
       const id = favourite.id.replace(/^fav-btn-/, '');
       favourite.dataset.favourite = id;
       favourite.removeAttribute('onclick');
-      favourite.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        toggleFavourite(id);
-      });
+      if (favourite.dataset.clientFavouriteBound !== 'true') {
+        favourite.dataset.clientFavouriteBound = 'true';
+        favourite.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          toggleFavourite(id);
+        });
+      }
     }
 
     const guide = [...container.querySelectorAll('div')].find((node) => /quick product guide/i.test(node.textContent || '') && node.querySelector('h2'));
