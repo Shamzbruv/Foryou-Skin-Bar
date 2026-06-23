@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.addToCartWithVariant = async function(productId) {
   if (window.loadProductsData) await window.loadProductsData();
-  const product = window.productsData ? window.productsData.find(p => p.id === productId) : null;
+  const product = window.productsData ? window.productsData.find(p => String(p.id) === String(productId)) : null;
   if (!product) return;
   const select = document.getElementById(`variant-${productId}`);
   const qtyInput = document.getElementById('productQuantity');

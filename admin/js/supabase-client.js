@@ -48,3 +48,10 @@ export function formatCurrency(amount) {
         currency: 'JMD'
     }).format(amount);
 }
+
+// Keep the product editor labels synchronized with the customer-facing product page.
+if (window.location.pathname.endsWith('/admin/products.html')) {
+    import('/admin/js/product-editor-assist.js').catch((error) => {
+        console.warn('Product editor guidance could not be loaded.', error);
+    });
+}
