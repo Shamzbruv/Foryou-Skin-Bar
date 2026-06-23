@@ -74,6 +74,7 @@ window.loadProductsData = async function() {
 
             return {
                 id: p.id,
+                status: p.status || 'active',
                 name: p.name,
                 slug: p.slug,
                 sku: p.sku || '',
