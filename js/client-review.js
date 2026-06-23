@@ -54,12 +54,22 @@
       const desc = card.querySelector('.text-stone-500.h-\[18px\], .text-stone-500.line-clamp-1, .text-stone-500.line-clamp-3');
       if (desc) desc.classList.add('product-card-description');
 
+      const productId = productIdFromCard(card);
+      const product = window.productsData?.find(p => p.id === productId);
+
       const title = card.querySelector('h3');
       if (title && !title.parentElement.querySelector('.product-rating')) {
         const rating = document.createElement('div');
         rating.className = 'product-rating';
-        rating.setAttribute('aria-label', 'Product ratings will appear when reviews are published');
-        rating.innerHTML = '<span class="stars" aria-hidden="true">★★★★★</span><span>Reviews coming soon</span>';
+        if (product && product.reviewCount > 0) {
+          const avg = Math.round(product.reviewAverage);
+          const starsHtml = '★'.repeat(avg) + '☆'.repeat(5 - avg);
+          rating.setAttribute('aria-label', `${product.reviewAverage} out of 5 stars from ${product.reviewCount} reviews`);
+          rating.innerHTML = `<span class="stars" aria-hidden="true">${starsHtml}</span><span>${product.reviewCount} ${product.reviewCount === 1 ? 'review' : 'reviews'}</span>`;
+        } else {
+          rating.setAttribute('aria-label', 'Product ratings will appear when reviews are published');
+          rating.innerHTML = '<span class="stars" aria-hidden="true">☆☆☆☆☆</span><span>No reviews yet</span>';
+        }
         title.insertAdjacentElement('afterend', rating);
       }
 
