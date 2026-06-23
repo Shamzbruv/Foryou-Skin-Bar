@@ -4,14 +4,14 @@
       const stylesheet = document.createElement('link');
       stylesheet.id = 'clientReviewStyles';
       stylesheet.rel = 'stylesheet';
-      stylesheet.href = 'css/client-review.css?v=7';
+      stylesheet.href = 'css/client-review.css?v=8';
       document.head.appendChild(stylesheet);
     }
 
     if (!document.getElementById('clientReviewScript')) {
       const script = document.createElement('script');
       script.id = 'clientReviewScript';
-      script.src = 'js/client-review.js?v=2';
+      script.src = 'js/client-review.js?v=4';
       script.defer = true;
       document.head.appendChild(script);
     }

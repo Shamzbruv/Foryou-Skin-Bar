@@ -80,6 +80,7 @@ window.loadProductsData = async function() {
                 image: images.length > 0 ? images[0] : 'https://placehold.co/600x400/F5EDE1/8B5A2B?text=No+Image',
                 bestFor: p.best_for || '',
                 bestForHtml: p.best_for_html || '',
+                resultsHtml: p.results_html || p.best_for_html || '',
                 ingredientsHtml: p.ingredients_html || '',
                 howToUseHtml: p.how_to_use_html || '',
                 returnPolicyHtml: p.return_policy_html || '',

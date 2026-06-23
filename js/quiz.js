@@ -145,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
       product.shortDescription,
       product.bestFor,
       product.bestForHtml,
+      product.resultsHtml,
       product.ingredientsHtml,
       product.routineStep
     ].join(' '));

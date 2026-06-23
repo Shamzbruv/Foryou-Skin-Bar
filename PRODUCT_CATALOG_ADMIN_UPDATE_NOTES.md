@@ -15,7 +15,8 @@ This ZIP has been updated so the admin Products section can manage the missing c
   - Product-level discount mode/value
   - Inventory quantity, low-stock threshold, and backorder setting
   - Short description and full description
-  - Benefits
+  - Results / What This Helps With
+  - Best For short product-fit summary
   - Ingredients
   - How To Use / Instructions
   - Return / refund policy
@@ -28,7 +29,7 @@ This ZIP has been updated so the admin Products section can manage the missing c
   - Variant selector from Supabase
   - Variant price updates
   - SKU, brand, size, and availability
-  - Benefits, ingredients, how-to-use, return/refund policy
+  - Full product description, results, best-for summary, ingredients, how-to-use, return/refund policy
   - Custom product sections from Supabase
 
 - Shop page now uses real Supabase variants instead of fake Standard/Large options.
@@ -43,7 +44,15 @@ Run this new migration before using the updated admin form:
 supabase/migrations/20260612000006_product_catalog_extensions.sql
 ```
 
+Run this follow-up migration to separate Results from Best For and migrate legacy custom Results sections:
+
+```sql
+supabase/migrations/20260623000000_product_results_field.sql
+```
+
 Without this migration, the admin page will show an error because the new variant and custom-section tables will not exist yet.
+
+Without the Results migration, the latest admin save will fail because `results_html` will not exist yet.
 
 ## CSV importer update
 

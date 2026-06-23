@@ -235,6 +235,20 @@
         return words.slice(0, wordLimit).join(' ') + '…';
       }
 
+      function safeHTML(value = '') {
+        const holder = document.createElement('div');
+        holder.innerHTML = String(value);
+        holder.querySelectorAll('script, style, iframe, object, embed').forEach(node => node.remove());
+        holder.querySelectorAll('*').forEach(node => {
+          [...node.attributes].forEach(attribute => {
+            if (/^on/i.test(attribute.name) || (/^(href|src)$/i.test(attribute.name) && /^\s*javascript:/i.test(attribute.value))) {
+              node.removeAttribute(attribute.name);
+            }
+          });
+        });
+        return holder.innerHTML;
+      }
+
       function scanItems(value = '', maxItems = 4) {
         const text = stripToText(value);
         if (!text) return [];
@@ -282,12 +296,19 @@
         </div>`;
       }
 
+      function htmlCard(title, body, icon = 'fa-align-left', span = false) {
+        if (!stripToText(body)) return '';
+        return `<div class="product-detail-card p-6 ${span ? 'lg:col-span-2' : ''}">
+          <h3 class="text-amber-800 font-bold mb-3 flex items-center gap-2 text-lg"><i class="fas ${icon}"></i>${escapeHTML(title)}</h3>
+          <div class="product-rich-text text-sm leading-relaxed">${safeHTML(body)}</div>
+        </div>`;
+      }
+
       function buildResultsBlock(product) {
-        const concernLabels = (product.skinConcern || []).map(c => c.replace(/-/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase()));
-        const resultItems = [...concernLabels, ...scanItems(product.bestForHtml || product.bestFor || product.shortDescription || product.description, 5)]
+        const resultItems = scanItems(product.resultsHtml, 7)
           .filter(Boolean)
           .filter((item, index, arr) => arr.findIndex(other => other.toLowerCase() === item.toLowerCase()) === index)
-          .slice(0, 5);
+          .slice(0, 7);
         if (!resultItems.length) return '';
         return `<div class="product-detail-card p-6">
           <h3 class="text-amber-800 font-bold mb-4 flex items-center gap-2 text-lg"><i class="fas fa-star"></i>Results</h3>
@@ -389,12 +410,12 @@
           .join('');
 
         const detailsBlockHtml = [
-          paragraphCard('Product Description', product.description || product.shortDescription, 'fa-align-left', 48),
+          htmlCard('Product Description', product.description || product.shortDescription, 'fa-align-left', true),
           buildResultsBlock(product),
-          detailCard('Best For', product.bestForHtml || product.bestFor, 'fa-star', 4),
+          detailCard('Best For', product.bestFor, 'fa-star', 4),
           detailCard('Key Ingredients', product.ingredientsHtml || (product.ingredients || []).join('\n'), 'fa-leaf', 6),
           detailCard('How To Use', product.howToUseHtml || product.howToUse, 'fa-hands-bubbles', 5),
-          detailCard('Return / Refund Policy', product.returnPolicyHtml, 'fa-rotate-left', 4),
+          htmlCard('Return / Refund Policy', product.returnPolicyHtml, 'fa-rotate-left', true),
           customSectionsHtml
         ].filter(Boolean).join('');
 
@@ -448,11 +469,10 @@
 
           <div class="md:col-span-2 mt-4">
             <div class="mb-6 text-center md:text-left">
-              <p class="text-xs uppercase tracking-[0.24em] text-amber-800 font-bold mb-2">Quick Product Guide</p>
-              <h2 class="serif-heading text-3xl md:text-4xl text-stone-900">Description, results, and how to use</h2>
+              <h2 class="serif-heading text-3xl md:text-4xl text-stone-900">Product Details</h2>
             </div>
             <div class="grid lg:grid-cols-2 gap-5">
-              ${detailsBlockHtml || paragraphCard('Product Description', product.description || product.shortDescription, 'fa-align-left', 60)}
+              ${detailsBlockHtml || htmlCard('Product Description', product.description || product.shortDescription, 'fa-align-left', true)}
             </div>
           </div>
           
@@ -528,7 +548,7 @@
           "@type": "Product",
           "name": product.name,
           "image": images.map(absoluteImageUrl),
-          "description": product.description || product.shortDescription,
+          "description": stripToText(product.description || product.shortDescription),
           "sku": product.sku || product.id.toString(),
           "brand": product.brand ? { "@type": "Brand", "name": product.brand } : undefined,
           "offers": {
