@@ -158,21 +158,13 @@ main > section[class*="from-\["] p {
   font-size: .88rem;
 }
 
-/* Homepage hero: remove blurred decorative circles and remove the clash with the strip below. */
+/* Homepage hero: remove blurred decorative circles and prevent the mini-proof boxes from colliding with the banner */
 .bliss-orb { display: none !important; }
-.bliss-hero {
-  padding-bottom: 0 !important;
-  overflow: visible !important;
+.bliss-mini-proof {
+  margin-top: 16px !important;
 }
-.bliss-hero-shell { padding-bottom: clamp(3rem, 7vw, 6rem) !important; }
-.bliss-feature-strip {
-  position: relative !important;
-  inset: auto !important;
-  transform: none !important;
-  margin: 0 auto !important;
-  width: min(100%, 82rem) !important;
-  border-radius: 1.35rem 1.35rem 0 0 !important;
-  box-shadow: 0 -10px 35px rgba(58, 46, 39, .12);
+.bliss-hero-shell {
+  padding-bottom: 200px !important;
 }
 
 .home-concern-grid > :nth-child(n + 4) { display: none !important; }
@@ -263,7 +255,6 @@ main > section[class*="from-\["] p {
 
 /* Product tiles: bigger, scan-friendly, with clean hover actions. */
 #shopGrid {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: clamp(1.1rem, 2vw, 1.6rem) !important;
 }
 .product-card {
@@ -372,11 +363,11 @@ main > section[class*="from-\["] p {
 .checkout-summary-clean #discountMessage.text-red-400 { color: #b42318 !important; }
 
 /* Quiz gets a purposeful visual frame and consistently gold next action. */
-.quiz-page main {
+body.quiz-page main.min-h-screen {
   min-height: calc(100vh - 7rem);
   background:
-    linear-gradient(135deg, rgba(248,245,239,.92), rgba(255,253,248,.94)),
-    url('../assets/products/gift_set.png') center / cover no-repeat !important;
+    linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.15)),
+    url('../assets/brand/quiz_bg_nature.png') center / cover no-repeat fixed !important;
 }
 .quiz-page #quizContainer {
   border-color: rgba(200,155,60,.36) !important;
@@ -388,12 +379,38 @@ main > section[class*="from-\["] p {
 }
 .quiz-page #nextBtn:hover { background: var(--review-gold-deep) !important; }
 
+/* FAQ page full bleed nature background */
+body.faq-page {
+  background:
+    linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.35)),
+    url('../assets/brand/faq_bg_nature.png') center / cover no-repeat fixed !important;
+}
+body.faq-page main,
+body.faq-page main.min-h-screen {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+.faq-page .text-center .serif-heading,
+.faq-page .text-center .text-stone-600,
+.faq-page section > h2.serif-heading {
+  color: #fff !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+.faq-page section > h2.serif-heading {
+  border-color: rgba(255,255,255,0.3) !important;
+}
+/* Ensure the white FAQ items look elevated over the background */
+.faq-page .faq-item {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+  border: none !important;
+}
+
 @media (max-width: 900px) {
   .page-header-wide > div { grid-template-columns: 1fr; }
   .page-header-wide p,
   .page-header-wide #productCount { grid-column: 1; }
-  .home-concern-grid,
-  #shopGrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .home-concern-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .journey-cta {
     background:
       linear-gradient(180deg, rgba(255,253,248,.96) 0%, rgba(255,253,248,.92) 68%, rgba(110,127,103,.75) 68%, rgba(110,127,103,.75) 100%),
@@ -403,8 +420,7 @@ main > section[class*="from-\["] p {
 
 @media (max-width: 640px) {
   .global-search-form { flex-direction: column; }
-  .home-concern-grid,
-  #shopGrid { grid-template-columns: 1fr !important; }
+  .home-concern-grid { grid-template-columns: 1fr !important; }
   .home-concern-grid > a { min-height: auto; }
   #shopGrid .product-card { min-height: 0; }
   #shopGrid .product-card > a:first-of-type { height: 15rem !important; }
@@ -412,6 +428,15 @@ main > section[class*="from-\["] p {
   .bliss-feature-strip { border-radius: 1rem 1rem 0 0 !important; }
   .journey-cta { text-align: center !important; }
   .journey-cta .journey-cta-actions { justify-content: center !important; }
+}
+
+
+/* Broader product-card description hide: catch all class variants including
+   the homepage inline-rendered cards that use line-clamp-3. */
+.product-card .line-clamp-3,
+.product-card .line-clamp-1,
+.product-card-description {
+  display: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
