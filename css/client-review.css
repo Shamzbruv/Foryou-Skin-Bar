@@ -346,6 +346,22 @@ main > section[class*="from-\["] p {
   font-size: 1.7rem !important;
 }
 .full-policy-text { color: var(--review-muted); line-height: 1.75; font-size: .95rem; white-space: normal; }
+.product-rich-text {
+  color: var(--review-muted);
+  line-height: 1.75;
+}
+.product-rich-text p,
+.product-rich-text ul,
+.product-rich-text ol {
+  margin: 0 0 .9rem;
+}
+.product-rich-text ul,
+.product-rich-text ol {
+  padding-left: 1.2rem;
+}
+.product-rich-text li {
+  margin-bottom: .45rem;
+}
 .migrated-results { margin-top: .9rem; color: var(--review-muted); line-height: 1.7; }
 
 /* Checkout: clear ivory summary rather than a large green slab. */

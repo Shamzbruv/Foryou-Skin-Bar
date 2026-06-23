@@ -51,7 +51,7 @@
 
   function enhanceProductCards(root = document) {
     root.querySelectorAll('.product-card').forEach((card) => {
-      const desc = card.querySelector('.text-stone-500.h-\[18px\], .text-stone-500.line-clamp-1, .text-stone-500.line-clamp-3');
+      const desc = card.querySelector('.text-stone-500.h-\\[18px\\], .text-stone-500.line-clamp-1, .text-stone-500.line-clamp-3');
       if (desc) desc.classList.add('product-card-description');
 
       const productId = productIdFromCard(card);
@@ -73,7 +73,6 @@
         title.insertAdjacentElement('afterend', rating);
       }
 
-      const productId = productIdFromCard(card);
       if (productId && !card.querySelector('[data-favourite]')) {
         const button = document.createElement('button');
         button.type = 'button';

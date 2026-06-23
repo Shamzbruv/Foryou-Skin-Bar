@@ -193,7 +193,7 @@
                             <textarea id="productDescription" rows="3" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-amber-800 focus:outline-none" placeholder="Full product description"></textarea>
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Best For (Short summary, e.g. "Oily Skin, Acne-prone skin")</label>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Best For (short product fit, e.g. "Oily skin, acne-prone skin")</label>
                             <input type="text" id="productBestFor" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:border-amber-800 focus:outline-none" placeholder="Oily Skin, Acne-prone skin">
                         </div>
                     </div>
@@ -510,7 +510,7 @@
                     $('shortDescription').value = p.short_description || '';
                     $('productDescription').value = p.description || '';
                     $('productBestFor').value = p.best_for || '';
-                    $('productBenefits').value = p.best_for_html || '';
+                    $('productBenefits').value = p.results_html || p.best_for_html || '';
                     $('productIngredients').value = p.ingredients_html || '';
                     $('productHowToUse').value = p.how_to_use_html || '';
                     $('returnPolicy').value = p.return_policy_html || '';
@@ -591,7 +591,8 @@
                     short_description: $('shortDescription').value.trim() || null,
                     description: $('productDescription').value.trim() || null,
                     best_for: $('productBestFor').value.trim() || null,
-                    best_for_html: $('productBenefits').value.trim() || null,
+                    best_for_html: null,
+                    results_html: $('productBenefits').value.trim() || null,
                     ingredients_html: $('productIngredients').value.trim() || null,
                     how_to_use_html: $('productHowToUse').value.trim() || null,
                     return_policy_html: $('returnPolicy').value.trim() || null,

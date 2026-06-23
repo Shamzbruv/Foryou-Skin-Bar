@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const WebSocket = require('ws');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -13,7 +14,8 @@ app.use(express.json());
 // Initialize Supabase Admin Client using Service Role Key
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || 'https://xftnfbeembjrhezvzquu.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '' // Railway provides this via environment variables
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '', // Railway provides this via environment variables
+  { realtime: { transport: WebSocket } }
 );
 
 // ── API Routes ──
