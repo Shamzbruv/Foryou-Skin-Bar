@@ -1,0 +1,420 @@
+/* ==========================================================
+   Client Review Refinements — For You Skin Bar
+   This layer intentionally loads after the existing brand theme.
+   ========================================================== */
+
+:root {
+  --review-ivory: #F8F5EF;
+  --review-paper: #FFFDF8;
+  --review-cocoa: #3A2E27;
+  --review-muted: #5A4C3A;
+  --review-gold: #C89B3C;
+  --review-gold-deep: #9D7427;
+  --review-sage: #6E7F67;
+  --review-sage-soft: #DDE5D7;
+  --review-line: rgba(58, 46, 39, 0.13);
+}
+
+/* Full-page contrast and accessibility reset. Sage remains a supporting accent,
+   never the full canvas behind dark copy. */
+body,
+body.bg-\[\#6E7F67\],
+body.bg-stone-50 {
+  background: var(--review-ivory) !important;
+  color: var(--review-cocoa) !important;
+}
+
+body main,
+body main.min-h-screen {
+  background:
+    radial-gradient(circle at 95% 8%, rgba(110, 127, 103, .11), transparent 25%),
+    radial-gradient(circle at 5% 22%, rgba(200, 155, 60, .09), transparent 22%),
+    var(--review-ivory) !important;
+  color: var(--review-cocoa) !important;
+}
+
+/* Replace broad green page-header treatments with a light editorial header. */
+main > section.bg-gradient-to-br,
+main > section.bg-gradient-to-r,
+main > section[class*="from-\["] {
+  background:
+    linear-gradient(110deg, rgba(255, 253, 248, .98) 0%, rgba(248, 245, 239, .98) 58%, rgba(221, 229, 215, .72) 100%) !important;
+  color: var(--review-cocoa) !important;
+  border-top: 1px solid rgba(200, 155, 60, .24) !important;
+  border-bottom: 1px solid rgba(58, 46, 39, .08) !important;
+}
+
+main > section.bg-gradient-to-br h1,
+main > section.bg-gradient-to-br h2,
+main > section.bg-gradient-to-br h3,
+main > section.bg-gradient-to-br p,
+main > section.bg-gradient-to-r h1,
+main > section.bg-gradient-to-r h2,
+main > section.bg-gradient-to-r h3,
+main > section.bg-gradient-to-r p,
+main > section[class*="from-\["] h1,
+main > section[class*="from-\["] h2,
+main > section[class*="from-\["] h3,
+main > section[class*="from-\["] p {
+  color: var(--review-cocoa) !important;
+  text-shadow: none !important;
+}
+
+/* Public page headers become deliberately wider and less centre-heavy. */
+.page-header-wide {
+  text-align: left !important;
+  padding: clamp(3rem, 7vw, 5.5rem) max(1.5rem, calc((100vw - 1280px) / 2)) !important;
+  position: relative;
+  overflow: hidden;
+}
+.page-header-wide > div {
+  max-width: 78rem !important;
+  margin: 0 auto !important;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(240px, .9fr);
+  align-items: end;
+  gap: 2rem;
+}
+.page-header-wide h1 {
+  grid-column: 1;
+  margin: 0 !important;
+  font-size: clamp(2.8rem, 6vw, 5.2rem) !important;
+  line-height: .92 !important;
+}
+.page-header-wide p {
+  grid-column: 2;
+  margin: 0 !important;
+  max-width: 32rem;
+  font-size: 1.02rem !important;
+  line-height: 1.7 !important;
+}
+.page-header-wide #productCount { grid-column: 2; }
+
+/* Global search. */
+.global-search-toggle {
+  width: 2.65rem;
+  height: 2.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(200, 155, 60, .42);
+  color: var(--review-cocoa) !important;
+  background: var(--review-paper) !important;
+  border-radius: 999px;
+  transition: transform .2s ease, border-color .2s ease, color .2s ease;
+}
+.global-search-toggle:hover,
+.global-search-toggle:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--review-gold);
+  color: var(--review-gold-deep) !important;
+}
+.global-search-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: start center;
+  padding: min(16vh, 8rem) 1.25rem 1.25rem;
+  background: rgba(45, 38, 30, .48);
+  backdrop-filter: blur(6px);
+}
+.global-search-modal[hidden] { display: none; }
+.global-search-dialog {
+  width: min(100%, 44rem);
+  background: var(--review-paper);
+  border: 1px solid rgba(200, 155, 60, .38);
+  box-shadow: 0 30px 65px rgba(45, 38, 30, .30);
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+}
+.global-search-dialog h2 {
+  margin: 0 0 .8rem;
+  color: var(--review-cocoa) !important;
+  font-size: 1.6rem;
+}
+.global-search-form { display: flex; gap: .7rem; }
+.global-search-form input {
+  flex: 1;
+  min-width: 0;
+  padding: .95rem 1rem;
+  border: 1px solid var(--review-line);
+  border-radius: .85rem;
+  background: #fff;
+  color: var(--review-cocoa);
+  outline: none;
+}
+.global-search-form input:focus { border-color: var(--review-gold); box-shadow: 0 0 0 3px rgba(200,155,60,.15); }
+.global-search-form button {
+  padding: .95rem 1.15rem;
+  border-radius: .85rem;
+  background: var(--review-gold) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+.global-search-close {
+  margin-top: .85rem;
+  color: var(--review-muted) !important;
+  font-size: .88rem;
+}
+
+/* Homepage hero: remove blurred decorative circles and remove the clash with the strip below. */
+.bliss-orb { display: none !important; }
+.bliss-hero {
+  padding-bottom: 0 !important;
+  overflow: visible !important;
+}
+.bliss-hero-shell { padding-bottom: clamp(3rem, 7vw, 6rem) !important; }
+.bliss-feature-strip {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  margin: 0 auto !important;
+  width: min(100%, 82rem) !important;
+  border-radius: 1.35rem 1.35rem 0 0 !important;
+  box-shadow: 0 -10px 35px rgba(58, 46, 39, .12);
+}
+
+.home-concern-grid > :nth-child(n + 4) { display: none !important; }
+.home-concern-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: clamp(1rem, 2.2vw, 1.65rem) !important;
+}
+.home-concern-grid > a {
+  min-height: 19rem;
+  display: grid !important;
+  align-content: center;
+  padding: 2.1rem !important;
+}
+.home-concern-grid > a img {
+  width: 8.5rem !important;
+  height: 8.5rem !important;
+  border-radius: 1.15rem !important;
+}
+.home-shop-all { text-align: center; margin-top: 2rem; }
+.home-shop-all a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .9rem 1.4rem;
+  border-radius: 999px;
+  background: var(--review-gold) !important;
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 10px 20px rgba(200, 155, 60, .22);
+}
+
+.glow-ritual-section {
+  background: rgba(255, 253, 248, .74) !important;
+  border: 1px solid rgba(200, 155, 60, .20);
+}
+.glow-ritual-section > div.grid { gap: 1.25rem !important; }
+.glow-ritual-section > div.grid > div,
+.glow-routine-card {
+  border-radius: 1.25rem !important;
+  padding: 0 !important;
+  overflow: hidden;
+  text-align: left !important;
+}
+.glow-ritual-section > div.grid > div img,
+.glow-routine-card img {
+  width: 100% !important;
+  height: 13rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  object-fit: cover !important;
+  margin: 0 !important;
+}
+.glow-ritual-section > div.grid > div h3,
+.glow-routine-card h3,
+.glow-ritual-section > div.grid > div p,
+.glow-routine-card p { display: block; margin-left: 1.55rem !important; margin-right: 1.55rem !important; }
+.glow-ritual-section > div.grid > div h3,
+.glow-routine-card h3 { margin-top: 1.35rem !important; }
+.glow-ritual-section > div.grid > div p,
+.glow-routine-card p { margin-top: .65rem !important; margin-bottom: 1.55rem !important; }
+.glow-ritual-section a[href*="quiz"] {
+  background: var(--review-gold) !important;
+  color: #fff !important;
+}
+
+.glow-journal-section #blogPreview { gap: 1.25rem !important; }
+.glow-journal-section #blogPreview > a,
+.glow-journal-section #blogPreview > div {
+  min-height: 100%;
+}
+
+.journey-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(100deg, rgba(255,253,248,.95) 0%, rgba(255,253,248,.91) 63%, rgba(110,127,103,.88) 63%, rgba(110,127,103,.88) 100%),
+    url('../assets/products/gift_set.png') center right / cover no-repeat !important;
+  border: 1px solid rgba(200, 155, 60, .34) !important;
+  text-align: left !important;
+  padding-left: clamp(1.5rem, 5vw, 4.5rem) !important;
+}
+.journey-cta h2,
+.journey-cta p { color: var(--review-cocoa) !important; max-width: 38rem !important; }
+.journey-cta .journey-cta-actions { justify-content: flex-start !important; }
+.journey-cta a:first-child { background: var(--review-gold) !important; color: #fff !important; }
+.journey-cta a:last-child { border-color: var(--review-cocoa) !important; color: var(--review-cocoa) !important; }
+
+/* Product tiles: bigger, scan-friendly, with clean hover actions. */
+#shopGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: clamp(1.1rem, 2vw, 1.6rem) !important;
+}
+.product-card {
+  overflow: hidden;
+  border-radius: 1.35rem !important;
+  position: relative;
+}
+#shopGrid .product-card { min-height: 30rem; }
+#shopGrid .product-card > a:first-of-type { height: 18rem !important; border-radius: .9rem !important; }
+#shopGrid .product-card > a:first-of-type img { height: 100% !important; }
+.product-card-description { display: none !important; }
+.product-rating {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  margin-top: .4rem;
+  font-size: .74rem;
+  color: var(--review-muted) !important;
+}
+.product-rating .stars { color: var(--review-gold) !important; letter-spacing: .08em; }
+.product-favourite {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 2.55rem;
+  height: 2.55rem;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 253, 248, .92) !important;
+  border: 1px solid rgba(58,46,39,.12) !important;
+  border-radius: 999px;
+  color: var(--review-cocoa) !important;
+  z-index: 15;
+  box-shadow: 0 6px 14px rgba(58,46,39,.13);
+}
+.product-favourite.is-favourite { color: #bd3d57 !important; border-color: rgba(189,61,87,.42) !important; }
+.product-card-actions {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .22s ease, transform .22s ease;
+}
+.product-card:hover .product-card-actions,
+.product-card:focus-within .product-card-actions { opacity: 1; transform: translateY(0); }
+.product-card-actions button,
+.product-card-actions .bg-amber-800 {
+  background: var(--review-gold) !important;
+  color: #fff !important;
+}
+
+/* Product detail page: replace the crowded tile feel with a calmer editorial layout. */
+#productDetails { align-items: stretch; gap: clamp(2rem, 5vw, 4.5rem) !important; }
+.product-media-column { display: flex; flex-direction: column; }
+.product-media-column #mainProductImage {
+  min-height: 100%;
+  max-height: none !important;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+.product-buy-panel {
+  border-radius: 1.3rem !important;
+  box-shadow: none !important;
+  border-left: 4px solid var(--review-gold) !important;
+}
+.product-buy-panel .bg-amber-50 { background: rgba(200,155,60,.08) !important; }
+.product-review-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 1.7rem;
+  margin: -.45rem 0 1.1rem;
+  font-size: .9rem;
+  color: var(--review-muted);
+}
+.product-review-summary .stars { color: var(--review-gold) !important; letter-spacing: .06em; }
+.product-detail-editorial-header { margin-bottom: .65rem !important; }
+.product-detail-editorial-header > p { display: none !important; }
+#productDetails .product-detail-card {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 1.55rem 0 !important;
+  border-bottom: 1px solid var(--review-line) !important;
+}
+#productDetails .product-detail-card:last-child { border-bottom: 0 !important; }
+#productDetails .product-detail-card h3 {
+  color: var(--review-cocoa) !important;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.7rem !important;
+}
+.full-policy-text { color: var(--review-muted); line-height: 1.75; font-size: .95rem; white-space: normal; }
+.migrated-results { margin-top: .9rem; color: var(--review-muted); line-height: 1.7; }
+
+/* Checkout: clear ivory summary rather than a large green slab. */
+.checkout-summary-clean {
+  background: var(--review-paper) !important;
+  color: var(--review-cocoa) !important;
+  border: 1px solid rgba(200,155,60,.33) !important;
+  box-shadow: 0 18px 42px rgba(58,46,39,.10);
+}
+.checkout-summary-clean h3,
+.checkout-summary-clean span,
+.checkout-summary-clean div,
+.checkout-summary-clean p { color: var(--review-cocoa) !important; }
+.checkout-summary-clean #discountMessage.text-green-400 { color: #16744a !important; }
+.checkout-summary-clean #discountMessage.text-red-400 { color: #b42318 !important; }
+
+/* Quiz gets a purposeful visual frame and consistently gold next action. */
+.quiz-page main {
+  min-height: calc(100vh - 7rem);
+  background:
+    linear-gradient(135deg, rgba(248,245,239,.92), rgba(255,253,248,.94)),
+    url('../assets/products/gift_set.png') center / cover no-repeat !important;
+}
+.quiz-page #quizContainer {
+  border-color: rgba(200,155,60,.36) !important;
+  box-shadow: 0 28px 70px rgba(58,46,39,.18) !important;
+}
+.quiz-page #nextBtn {
+  background: var(--review-gold) !important;
+  color: #fff !important;
+}
+.quiz-page #nextBtn:hover { background: var(--review-gold-deep) !important; }
+
+@media (max-width: 900px) {
+  .page-header-wide > div { grid-template-columns: 1fr; }
+  .page-header-wide p,
+  .page-header-wide #productCount { grid-column: 1; }
+  .home-concern-grid,
+  #shopGrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .journey-cta {
+    background:
+      linear-gradient(180deg, rgba(255,253,248,.96) 0%, rgba(255,253,248,.92) 68%, rgba(110,127,103,.75) 68%, rgba(110,127,103,.75) 100%),
+      url('../assets/products/gift_set.png') center / cover no-repeat !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .global-search-form { flex-direction: column; }
+  .home-concern-grid,
+  #shopGrid { grid-template-columns: 1fr !important; }
+  .home-concern-grid > a { min-height: auto; }
+  #shopGrid .product-card { min-height: 0; }
+  #shopGrid .product-card > a:first-of-type { height: 15rem !important; }
+  .product-card-actions { opacity: 1; transform: none; }
+  .bliss-feature-strip { border-radius: 1rem 1rem 0 0 !important; }
+  .journey-cta { text-align: center !important; }
+  .journey-cta .journey-cta-actions { justify-content: center !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .global-search-toggle,
+  .product-card-actions { transition: none !important; }
+}
