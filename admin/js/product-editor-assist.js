@@ -29,8 +29,8 @@
     const policy = field('returnPolicy');
 
     const benefitsLabel = labelFor(benefits);
-    if (benefitsLabel) benefitsLabel.textContent = 'Results / What This Helps With';
-    addHelpText(benefits, 'This appears near the top of the product page under “Results”. Add the clear outcomes or benefits here. Do not create a separate custom section named “Results”.', 'results-field-help');
+    if (benefitsLabel) benefitsLabel.textContent = 'Results';
+    addHelpText(benefits, 'This appears near the top of the product page under “Results”. Add the clear outcomes here. Do not create a separate custom section named “Results”.', 'results-field-help');
 
     const ingredientsLabel = labelFor(ingredients);
     if (ingredientsLabel) ingredientsLabel.textContent = 'Key Ingredients';
@@ -87,7 +87,7 @@
       if (!/^results?$/i.test(title) || row.querySelector('.legacy-results-warning')) return;
       const warning = document.createElement('p');
       warning.className = 'legacy-results-warning md:col-span-12 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2';
-      warning.textContent = '“Results” belongs in the Results / What This Helps With field above. It will be moved automatically when you save this product.';
+      warning.textContent = '“Results” belongs in the Results field above. It will be moved automatically when you save this product.';
       row.appendChild(warning);
     });
   }

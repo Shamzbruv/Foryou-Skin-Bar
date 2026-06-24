@@ -15,10 +15,10 @@ This ZIP has been updated so the admin Products section can manage the missing c
   - Product-level discount mode/value
   - Inventory quantity, low-stock threshold, and backorder setting
   - Short description and full description
-  - Results / What This Helps With
+  - Results
   - Best For short product-fit summary
   - Ingredients
-  - How To Use / Instructions
+  - How To Use
   - Return / refund policy
   - Custom product page sections
   - Multiple image URLs + uploaded image
