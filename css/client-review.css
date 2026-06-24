@@ -379,11 +379,16 @@ main > section[class*="from-\["] p {
 .checkout-summary-clean #discountMessage.text-red-400 { color: #b42318 !important; }
 
 /* Quiz gets a purposeful visual frame and consistently gold next action. */
-body.quiz-page main.min-h-screen {
-  min-height: calc(100vh - 7rem);
+body.quiz-page {
   background:
     linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.15)),
     url('../assets/brand/quiz_bg_nature.png') center / cover no-repeat fixed !important;
+}
+body.quiz-page main,
+body.quiz-page main.min-h-screen {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 .quiz-page #quizContainer {
   border-color: rgba(200,155,60,.36) !important;
