@@ -453,21 +453,66 @@
       const products = window.productsData || [];
       let activeFilter = "all";
 
+      function productFilterText(product) {
+        return {
+          category: String(product.category || '').toLowerCase(),
+          name: String(product.name || '').toLowerCase(),
+          routine: String(product.routineStep || '').toLowerCase(),
+          concerns: (product.skinConcern || []).map(value => String(value).toLowerCase())
+        };
+      }
+
+      function matchesFilter(product, filter) {
+        if (filter === "all") return true;
+        const { category, name, routine, concerns } = productFilterText(product);
+        const hasBodyConcern = concerns.includes("body-care");
+
+        if (filter === "Face Care") {
+          return /\b(face|facial|soap)\b/.test(category)
+            || /\b(skin brightening|acne|blemish)\b/.test(category)
+            || /\b(face|facial|toner|serum|elixir|acne|blemish|kojie|fade)\b/.test(name);
+        }
+
+        if (filter === "Serums & Oils") {
+          return /\b(serum|serums|toner|toners|essence|essences|elixir|elixirs)\b/.test(category)
+            || /\b(serum|toner|elixir|vitamin c)\b/.test(name)
+            || (/\boil\b/.test(name) && !/\b(body|feminine)\b/.test(category));
+        }
+
+        if (filter === "Body Care") {
+          return /\b(body|feminine)\b/.test(category)
+            || hasBodyConcern
+            || /\b(body|butter|mist|bath)\b/.test(name)
+            || routine === "body";
+        }
+
+        if (filter === "Scrubs") {
+          return /\b(scrub|scrubs|exfoliat)\b/.test(category)
+            || /\b(scrub|scrubs|exfoliat|polish)\b/.test(name)
+            || routine === "exfoliate";
+        }
+
+        return product.category === filter;
+      }
+
       function renderProductGrid() {
+        const featured = products.filter(p => p.isFeatured || p.badge);
         const filtered = (activeFilter === "all"
-          ? products.filter(p => p.isFeatured || p.badge)
-          : products.filter(p => p.category === activeFilter)
+          ? (featured.length ? featured : products)
+          : products.filter(p => matchesFilter(p, activeFilter))
         ).slice(0, 8);
 
         const grid = document.getElementById("productGrid");
         if (!grid) return;
 
         if (filtered.length === 0) {
-          // Fallback: show first 6 products
-          const fallback = products.slice(0, 6);
-          grid.innerHTML = fallback.map(p => renderProductCard(p)).join('');
+          grid.innerHTML = `
+            <div class="w-full rounded-2xl border border-amber-100 bg-white p-8 text-center text-stone-700">
+              No products found for ${activeFilter}.
+            </div>`;
         } else {
           grid.innerHTML = filtered.map(p => renderProductCard(p)).join('');
+          grid.scrollTo({ left: 0, behavior: "smooth" });
         }
       }
 
