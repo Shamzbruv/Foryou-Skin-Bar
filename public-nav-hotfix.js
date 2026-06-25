@@ -46,16 +46,23 @@ express.static = function loyaltyNavigationStatic(root, options) {
 
   return function addLoyaltyNavigation(req, res, next) {
     const pathname = (req.url || '').split('?')[0];
-    const isPublicPage = req.method === 'GET'
-      && /^\/[^/]+\.html$/.test(pathname)
-      && pathname !== '/loyalty.html';
+    const isPublicPage = req.method === 'GET' && (
+      pathname === '/'
+      || pathname === '/loyalty'
+      || /^\/[^/]+\.html$/.test(pathname)
+    );
 
     if (!isPublicPage) return fallback(req, res, next);
 
-    const pagePath = path.join(root, path.basename(pathname));
+    const pageName = pathname === '/' ? 'index.html'
+      : pathname === '/loyalty' ? 'loyalty.html'
+      : path.basename(pathname);
+    const pagePath = path.join(root, pageName);
+
     fs.readFile(pagePath, 'utf8', (error, html) => {
       if (error) return next(error);
-      const updated = html.includes('id="loyaltyNavigationScript"')
+      const isLoyaltyPage = pageName === 'loyalty.html';
+      const updated = isLoyaltyPage || html.includes('id="loyaltyNavigationScript"')
         ? html
         : html.replace('</body>', `${navigationScript}\n</body>`);
       res.status(200);
