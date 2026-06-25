@@ -37,7 +37,7 @@ function policyMarkup() {
         <button id="savePointPolicyBtn" type="button" class="px-4 py-2.5 rounded-lg bg-sage-700 hover:bg-sage-800 text-white font-semibold text-sm shadow-sm transition"><i class="fas fa-save mr-2"></i>Save points policy</button>
       </div>
       <div class="p-6">
-        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-stone-700 leading-6 mb-6"><i class="fas fa-circle-info text-amber-800 mr-2"></i>Customers earn points only after an order is marked <strong>Paid</strong>. This portal safely calculates their balance from qualifying purchases. Reward codes and automatic point redemption are not issued yet, so eligible rewards are requested through the business.</div>
+        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-stone-700 leading-6 mb-6"><i class="fas fa-circle-info text-amber-800 mr-2"></i>Customers earn points only after an order is marked <strong>Paid</strong>. Saving this policy also refreshes the matching purchase-earning text on the public loyalty page, so the customer-facing promise and actual account calculation remain aligned.</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div><label class="loyalty-policy-label" for="pointCreditLabel">Points name</label><input id="pointCreditLabel" class="loyalty-policy-input" placeholder="Glow Credits"></div>
           <div><label class="loyalty-policy-label" for="pointsPerJmd">Base points per J$1 spent</label><input id="pointsPerJmd" type="number" min="0" step="0.01" class="loyalty-policy-input" placeholder="1"></div>
@@ -54,7 +54,7 @@ function tierMultiplierMarkup(tiers, policy) {
   const target = document.getElementById('pointTierMultiplierList');
   if (!target) return;
   target.innerHTML = tiers.map((tier, index) => {
-    const multiplier = policy.tierMultipliers[index] ?? 1;
+    const multiplier = policy.tierMultipliers[index] ?? tier.pointsMultiplier ?? 1;
     return `<div class="rounded-xl border border-amber-200 bg-amber-50/50 p-4"><p class="text-xs font-bold uppercase tracking-wider text-sage-700">${safe(tier.rank || `Tier ${index + 1}`)}</p><p class="font-bold text-stone-800 mt-1">${safe(tier.name || `Tier ${index + 1}`)}</p><label class="loyalty-policy-label mt-4" for="tierMultiplier-${index}">Points multiplier</label><input id="tierMultiplier-${index}" data-tier-multiplier type="number" min="0" step="0.1" class="loyalty-policy-input" value="${safe(multiplier)}"><p class="text-xs text-stone-500 mt-1">Example: 1 = normal earning, 2 = double.</p></div>`;
   }).join('');
 }
@@ -64,6 +64,35 @@ function setStatus(message, type = 'success') {
   if (!status) return;
   status.textContent = message;
   status.className = `mt-4 text-sm ${type === 'error' ? 'text-red-600' : 'text-sage-700'}`;
+}
+
+function formatCredits(value, label) {
+  const amount = Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
+  const singular = amount === '1' ? label.replace(/s$/i, '') : label;
+  return `${amount} ${singular}`;
+}
+
+function synchronizeProgrammePolicy(programmeValue, nextPolicy) {
+  const programme = parse(programmeValue);
+  if (!Array.isArray(programme.tiers)) return programme;
+
+  programme.tiers = programme.tiers.map((tier, index) => {
+    const multiplier = nextPolicy.tierMultipliers[index] ?? 1;
+    const earnedPerJmd = nextPolicy.pointsPerJmd * multiplier;
+    const updatedTier = { ...tier, pointsMultiplier: multiplier };
+    const earnRules = Array.isArray(updatedTier.earnRules) ? [...updatedTier.earnRules] : [];
+    const purchaseRuleIndex = earnRules.findIndex((rule) => /purchase|shop|spend/i.test(String(rule?.title || '')));
+    const purchaseRule = {
+      title: purchaseRuleIndex >= 0 ? String(earnRules[purchaseRuleIndex].title || 'Purchase a product') : 'Purchase a product',
+      description: `Get ${formatCredits(earnedPerJmd, nextPolicy.creditLabel)} for every J$1 spent`
+    };
+    if (purchaseRuleIndex >= 0) earnRules[purchaseRuleIndex] = { ...earnRules[purchaseRuleIndex], ...purchaseRule };
+    else earnRules.unshift(purchaseRule);
+    updatedTier.earnRules = earnRules;
+    return updatedTier;
+  });
+
+  return programme;
 }
 
 async function initPolicyManager() {
@@ -111,9 +140,21 @@ async function initPolicyManager() {
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving…';
     try {
-      const { error: saveError } = await supabase.from('store_settings').upsert({ key: 'loyalty_point_policy', value: nextPolicy }, { onConflict: 'key' });
-      if (saveError) throw saveError;
-      setStatus('Points policy saved. Customer accounts now use this calculation.');
+      const { data: currentProgramRow, error: currentProgramError } = await supabase
+        .from('store_settings')
+        .select('value')
+        .eq('key', 'loyalty_program')
+        .maybeSingle();
+      if (currentProgramError) throw currentProgramError;
+
+      const syncedProgramme = synchronizeProgrammePolicy(currentProgramRow?.value || programme, nextPolicy);
+      const [policySave, programmeSave] = await Promise.all([
+        supabase.from('store_settings').upsert({ key: 'loyalty_point_policy', value: nextPolicy }, { onConflict: 'key' }),
+        supabase.from('store_settings').upsert({ key: 'loyalty_program', value: syncedProgramme }, { onConflict: 'key' })
+      ]);
+      if (policySave.error) throw policySave.error;
+      if (programmeSave.error) throw programmeSave.error;
+      setStatus('Points policy saved and the public loyalty earning text has been synchronized.');
     } catch (saveError) {
       setStatus(`Unable to save points policy: ${saveError.message}`, 'error');
     } finally {
