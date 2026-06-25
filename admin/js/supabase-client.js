@@ -1,7 +1,6 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
 // Initialize Supabase Client
-// Replace these with your actual Supabase project URL and anon key from the dashboard.
 const supabaseUrl = 'https://xftnfbeembjrhezvzquu.supabase.co';
 const supabaseKey = 'sb_publishable_G6Y_BilXMYBxKY99SeIARQ_rl_ZMsgt';
 
@@ -16,6 +15,30 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
         detectSessionInUrl: true
     }
 });
+
+function ensureAdminNavigation() {
+    if (!window.location.pathname.startsWith('/admin/')) return;
+
+    const links = Array.from(document.querySelectorAll('a'));
+    const existingLoyalty = links.some(link => link.getAttribute('href') === '/admin/loyalty.html');
+    if (existingLoyalty) return;
+
+    const anchor = links.find(link => link.getAttribute('href') === '/admin/recommendation-rules.html')
+        || links.find(link => link.getAttribute('href') === '/admin/discounts.html');
+    if (!anchor || !anchor.parentElement) return;
+
+    const loyaltyLink = document.createElement('a');
+    loyaltyLink.href = '/admin/loyalty.html';
+    loyaltyLink.className = 'block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition';
+    loyaltyLink.textContent = 'Loyalty Program';
+    anchor.insertAdjacentElement('afterend', loyaltyLink);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureAdminNavigation, { once: true });
+} else {
+    ensureAdminNavigation();
+}
 
 // Helper function to check if user is logged in
 export async function checkAuth() {
