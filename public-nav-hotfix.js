@@ -37,6 +37,8 @@ const drawerFix = `
 })();
 </script>`;
 
+const loyaltyContrastFix = '<link id="loyaltyContrastFix" rel="stylesheet" href="css/loyalty-contrast-fix.css?v=1">';
+
 const navigationScript = `
 <script id="loyaltyNavigationScript">
 (function () {
@@ -97,9 +99,12 @@ express.static = function loyaltyNavigationStatic(root, options) {
       const withDrawerFix = html.includes('id="drawerPositionFix"')
         ? html
         : html.replace('</head>', `${drawerFix}\n</head>`);
-      const updated = isLoyaltyPage || withDrawerFix.includes('id="loyaltyNavigationScript"')
-        ? withDrawerFix
-        : withDrawerFix.replace('</body>', `${navigationScript}\n</body>`);
+      const withLoyaltyContrast = isLoyaltyPage && !withDrawerFix.includes('id="loyaltyContrastFix"')
+        ? withDrawerFix.replace('</head>', `${loyaltyContrastFix}\n</head>`)
+        : withDrawerFix;
+      const updated = isLoyaltyPage || withLoyaltyContrast.includes('id="loyaltyNavigationScript"')
+        ? withLoyaltyContrast
+        : withLoyaltyContrast.replace('</body>', `${navigationScript}\n</body>`);
 
       res.status(200);
       res.type('html');
