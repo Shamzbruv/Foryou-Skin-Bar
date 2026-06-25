@@ -1,10 +1,41 @@
-// Adds the Glow Rewards link to existing public-page navigation without
-// duplicating the full header/footer markup across every legacy page.
+// Public storefront navigation and drawer stability fixes.
+// The mobile menu is positioned on the right side of the viewport, so its
+// closed transform must move to the right. The legacy stylesheet used a left
+// transform, which left the drawer visibly parked over the page after closing.
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
 
 const previousStatic = express.static.bind(express);
+
+const drawerFix = `
+<style id="drawerPositionFix">
+  #mobileMenuDrawer.mobile-menu-drawer {
+    transform: translateX(100%) !important;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  #mobileMenuDrawer.mobile-menu-drawer.open {
+    transform: translateX(0) !important;
+    visibility: visible;
+    pointer-events: auto;
+  }
+</style>
+<script id="drawerStateReset">
+(function () {
+  function resetDrawers() {
+    const mobileMenu = document.getElementById('mobileMenuDrawer');
+    const cartDrawer = document.getElementById('cartDrawer');
+    const overlay = document.getElementById('cartOverlay');
+    if (mobileMenu) mobileMenu.classList.remove('open');
+    if (cartDrawer) cartDrawer.classList.remove('open');
+    if (overlay) overlay.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', resetDrawers, { once: true });
+  else resetDrawers();
+})();
+</script>`;
 
 const navigationScript = `
 <script id="loyaltyNavigationScript">
@@ -61,10 +92,15 @@ express.static = function loyaltyNavigationStatic(root, options) {
 
     fs.readFile(pagePath, 'utf8', (error, html) => {
       if (error) return next(error);
+
       const isLoyaltyPage = pageName === 'loyalty.html';
-      const updated = isLoyaltyPage || html.includes('id="loyaltyNavigationScript"')
+      const withDrawerFix = html.includes('id="drawerPositionFix"')
         ? html
-        : html.replace('</body>', `${navigationScript}\n</body>`);
+        : html.replace('</head>', `${drawerFix}\n</head>`);
+      const updated = isLoyaltyPage || withDrawerFix.includes('id="loyaltyNavigationScript"')
+        ? withDrawerFix
+        : withDrawerFix.replace('</body>', `${navigationScript}\n</body>`);
+
       res.status(200);
       res.type('html');
       res.set('Cache-Control', 'no-store, max-age=0');
