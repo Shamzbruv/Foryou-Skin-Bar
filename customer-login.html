@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>My Account | For You Skin Bar</title>
+  <meta name="description" content="Sign in to your For You Skin Bar account to view purchases, delivery updates, and Glow Credits.">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/brand-theme.css">
+  <link rel="stylesheet" href="css/customer-account.css">
+</head>
+<body>
+  <div class="bg-amber-900/90 text-white text-center py-2.5 text-sm font-medium tracking-wide">🌿 Free Shipping on orders over J$10,000 &nbsp;|&nbsp; ✨ Handcrafted with Love in Jamaica</div>
+  <nav class="glass-nav px-6 md:px-12 py-4 flex items-center justify-between gap-6">
+    <a href="index.html"><img src="assets/brand/logo.png" alt="For You Skin Bar" class="h-16 md:h-20 w-auto object-contain"></a>
+    <div class="hidden sm:flex items-center gap-6 text-sm font-semibold text-stone-700">
+      <a href="shop.html" class="hover:text-amber-800 transition">Shop</a>
+      <a href="quiz.html" class="hover:text-amber-800 transition">Skin Quiz</a>
+      <a href="loyalty.html" class="hover:text-amber-800 transition">Glow Rewards</a>
+    </div>
+    <a href="shop.html" class="text-sm font-bold text-amber-800 hover:text-amber-900"><i class="fas fa-bag-shopping mr-2"></i>Shop now</a>
+  </nav>
+
+  <main class="account-shell">
+    <div class="account-auth-wrap account-card account-auth-grid">
+      <section class="account-auth-aside">
+        <span class="account-auth-kicker"><i class="fas fa-sparkles mr-2"></i>For You Skin Bar account</span>
+        <h1>Your glow,<br><em>all in one place.</em></h1>
+        <p>Sign in to keep up with your orders, check delivery progress, revisit your skincare purchases, and see the Glow Credits you have earned.</p>
+        <div class="account-auth-benefits">
+          <div class="account-auth-benefit"><i class="fas fa-bag-shopping"></i><span>See your recent purchases and order status.</span></div>
+          <div class="account-auth-benefit"><i class="fas fa-truck"></i><span>Keep up with delivery and pickup updates.</span></div>
+          <div class="account-auth-benefit"><i class="fas fa-star"></i><span>Track your Glow Credits and rewards journey.</span></div>
+        </div>
+      </section>
+
+      <section class="account-auth-panel">
+        <h2>Welcome back</h2>
+        <p>Use the same email address used at checkout and your previous purchases will appear in your account.</p>
+        <div class="auth-tabs" role="tablist">
+          <button class="auth-tab active" type="button" data-auth-tab="login">Sign in</button>
+          <button class="auth-tab" type="button" data-auth-tab="register">Create account</button>
+        </div>
+        <div id="authMessage" class="auth-message" role="status"></div>
+
+        <form id="loginForm" class="auth-panel active" data-auth-panel="login" novalidate>
+          <div class="field"><label for="loginEmail">Email address</label><input id="loginEmail" type="email" autocomplete="email" required placeholder="you@example.com"></div>
+          <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Your password"></div>
+          <button id="loginSubmitBtn" class="auth-primary" type="submit"><i class="fas fa-right-to-bracket"></i>Sign in to my account</button>
+          <button id="resetPasswordBtn" class="auth-secondary" type="button">Reset password</button>
+        </form>
+
+        <form id="registerForm" class="auth-panel" data-auth-panel="register" novalidate>
+          <div class="field"><label for="registerName">Full name</label><input id="registerName" type="text" autocomplete="name" required placeholder="Your name"></div>
+          <div class="field"><label for="registerEmail">Email address</label><input id="registerEmail" type="email" autocomplete="email" required placeholder="you@example.com"></div>
+          <div class="field"><label for="registerPassword">Password</label><input id="registerPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters"></div>
+          <div class="field"><label for="registerConfirmPassword">Confirm password</label><input id="registerConfirmPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="Repeat your password"></div>
+          <button id="registerSubmitBtn" class="auth-primary" type="submit"><i class="fas fa-user-plus"></i>Create my account</button>
+        </form>
+        <p class="auth-note">Creating an account is free. Your information is used only to manage your orders and account experience.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="bg-stone-900 text-stone-300 px-6 py-9">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row gap-4 items-center justify-between text-sm"><p>© 2026 For You Skin Bar. Handmade in Jamaica 🇯🇲</p><div class="flex gap-5"><a href="privacy.html" class="hover:text-white">Privacy</a><a href="terms.html" class="hover:text-white">Terms</a><a href="contact.html" class="hover:text-white">Contact us</a></div></div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-public-client.js?v=5"></script>
+  <script src="js/customer-auth.js?v=1"></script>
+</body>
+</html>
