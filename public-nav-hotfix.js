@@ -129,7 +129,7 @@ express.static = function loyaltyNavigationStatic(root, options) {
       const withLoyaltyContrast = isLoyaltyPage && !withDrawerFix.includes('id="loyaltyContrastFix"')
         ? withDrawerFix.replace('</head>', `${loyaltyContrastFix}\n</head>`)
         : withDrawerFix;
-      const updated = isLoyaltyPage || withLoyaltyContrast.includes('id="loyaltyNavigationScript"')
+      const updated = withLoyaltyContrast.includes('id="loyaltyNavigationScript"')
         ? withLoyaltyContrast
         : withLoyaltyContrast.replace('</body>', `${navigationScript}\n</body>`);
 
