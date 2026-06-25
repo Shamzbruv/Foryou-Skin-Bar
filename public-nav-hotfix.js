@@ -10,7 +10,7 @@ const navigationScript = `
 <script id="loyaltyNavigationScript">
 (function () {
   function addLink(anchor, mobile) {
-    if (!anchor || document.querySelector('a[href="loyalty.html"]')) return;
+    if (!anchor || !anchor.parentElement || anchor.parentElement.querySelector('a[href="loyalty.html"]')) return;
     const link = document.createElement('a');
     link.href = 'loyalty.html';
     link.className = anchor.className;
