@@ -78,3 +78,10 @@ if (window.location.pathname.endsWith('/admin/products.html')) {
         console.warn('Product editor guidance could not be loaded.', error);
     });
 }
+
+// Adds the configurable customer points policy to the Loyalty Program editor.
+if (window.location.pathname.endsWith('/admin/loyalty.html')) {
+    import('/admin/js/loyalty-policy-manager.js').catch((error) => {
+        console.warn('Customer points policy editor could not be loaded.', error);
+    });
+}
