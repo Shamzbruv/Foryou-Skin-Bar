@@ -58,15 +58,42 @@ const navigationScript = `
     anchor.closest('li') ? anchor.closest('li').insertAdjacentElement('beforebegin', item) : anchor.insertAdjacentElement('beforebegin', item);
   }
 
+  function addAccountEntry() {
+    document.querySelectorAll('.glass-nav a[href="admin/login.html"]').forEach(function (link) {
+      link.href = 'customer-login.html';
+      link.title = 'My Account';
+      link.setAttribute('aria-label', 'My Account');
+    });
+
+    const menu = document.querySelector('#mobileMenuDrawer .flex.flex-col');
+    if (menu && !menu.querySelector('a[href="customer-login.html"]')) {
+      const account = document.createElement('a');
+      account.href = 'customer-login.html';
+      account.className = 'text-lg hover:text-amber-800 transition flex items-center gap-3';
+      account.innerHTML = '<i class="fas fa-user w-5"></i>My Account';
+      const shop = Array.from(menu.querySelectorAll('a')).find(function (link) { return link.getAttribute('href') === 'shop.html'; });
+      if (shop) shop.insertAdjacentElement('beforebegin', account);
+      else menu.prepend(account);
+    }
+
+    const footerSupport = Array.from(document.querySelectorAll('footer a')).find(function (link) { return link.getAttribute('href') === 'contact.html'; });
+    if (footerSupport && !document.querySelector('footer a[href="customer-login.html"]')) {
+      const item = document.createElement('li');
+      item.innerHTML = '<a href="customer-login.html" class="hover:text-white transition">My Account</a>';
+      footerSupport.closest('li') ? footerSupport.closest('li').insertAdjacentElement('beforebegin', item) : footerSupport.insertAdjacentElement('beforebegin', item);
+    }
+  }
+
   function run() {
-    const desktopFaq = Array.from(document.querySelectorAll('.glass-nav a')).find(link => link.getAttribute('href') === 'faq.html');
+    const desktopFaq = Array.from(document.querySelectorAll('.glass-nav a')).find(function (link) { return link.getAttribute('href') === 'faq.html'; });
     addLink(desktopFaq, false);
 
-    const mobileFaq = Array.from(document.querySelectorAll('#mobileMenuDrawer a')).find(link => link.getAttribute('href') === 'faq.html');
+    const mobileFaq = Array.from(document.querySelectorAll('#mobileMenuDrawer a')).find(function (link) { return link.getAttribute('href') === 'faq.html'; });
     addLink(mobileFaq, true);
 
-    const footerFaq = Array.from(document.querySelectorAll('footer a')).find(link => link.getAttribute('href') === 'faq.html');
+    const footerFaq = Array.from(document.querySelectorAll('footer a')).find(function (link) { return link.getAttribute('href') === 'faq.html'; });
     addFooterLink(footerFaq);
+    addAccountEntry();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true });
