@@ -1,0 +1,67 @@
+/* Loyalty page contrast safeguard.
+   The global brand theme deliberately recolors generic main headings and text.
+   These scoped rules restore the light-on-sage treatment required by the
+   loyalty hero, tier headers, and closing banner. */
+
+.loyalty-page .loyalty-hero,
+.loyalty-page .loyalty-hero h1,
+.loyalty-page .loyalty-hero h2,
+.loyalty-page .loyalty-hero h3,
+.loyalty-page .loyalty-hero p,
+.loyalty-page .loyalty-hero span,
+.loyalty-page .loyalty-hero strong,
+.loyalty-page .loyalty-hero .loyalty-hero-copy,
+.loyalty-page .loyalty-hero .loyalty-hero-proof span {
+  color: #fffdf8 !important;
+}
+
+.loyalty-page .loyalty-hero h1,
+.loyalty-page .loyalty-hero h1 em {
+  color: #fffdf8 !important;
+}
+
+.loyalty-page .loyalty-hero h1 em,
+.loyalty-page .loyalty-hero .loyalty-kicker i,
+.loyalty-page .loyalty-hero-proof i {
+  color: #f4d98e !important;
+}
+
+.loyalty-page .loyalty-hero .loyalty-kicker {
+  color: #fffdf8 !important;
+}
+
+.loyalty-page .loyalty-tier-top,
+.loyalty-page .loyalty-tier-top h1,
+.loyalty-page .loyalty-tier-top h2,
+.loyalty-page .loyalty-tier-top h3,
+.loyalty-page .loyalty-tier-top h4,
+.loyalty-page .loyalty-tier-top p,
+.loyalty-page .loyalty-tier-top span,
+.loyalty-page .loyalty-tier-top strong {
+  color: #fffdf8 !important;
+}
+
+.loyalty-page .loyalty-tier-top .loyalty-tier-threshold,
+.loyalty-page .loyalty-tier-top .loyalty-tier-summary {
+  color: rgba(255, 253, 248, 0.9) !important;
+}
+
+.loyalty-page .loyalty-tier-top .loyalty-tier-icon,
+.loyalty-page .loyalty-tier-top .loyalty-tier-icon i {
+  color: #fff3c4 !important;
+}
+
+.loyalty-page .loyalty-cta,
+.loyalty-page .loyalty-cta h1,
+.loyalty-page .loyalty-cta h2,
+.loyalty-page .loyalty-cta h3,
+.loyalty-page .loyalty-cta h4,
+.loyalty-page .loyalty-cta p,
+.loyalty-page .loyalty-cta span,
+.loyalty-page .loyalty-cta strong {
+  color: #fffdf8 !important;
+}
+
+.loyalty-page .loyalty-cta p {
+  color: rgba(255, 253, 248, 0.88) !important;
+}
