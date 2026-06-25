@@ -1,7 +1,7 @@
-// Public storefront navigation and drawer stability fixes.
-// The mobile menu is positioned on the right side of the viewport, so its
-// closed transform must move to the right. The legacy stylesheet used a left
-// transform, which left the drawer visibly parked over the page after closing.
+// Shared public storefront delivery layer.
+// It keeps navigation, account entry points, drawer behaviour, checkout account
+// linkage, and page-specific presentation consistent while legacy templates are
+// being consolidated into shared components.
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -38,6 +38,8 @@ const drawerFix = `
 </script>`;
 
 const loyaltyContrastFix = '<link id="loyaltyContrastFix" rel="stylesheet" href="css/loyalty-contrast-fix.css?v=1">';
+const accountTailwind = '<script id="accountTailwind" src="https://cdn.tailwindcss.com"></script>';
+const storefrontIntegration = '<script id="storefrontIntegration" src="js/storefront-integration.js?v=1"></script>';
 
 const navigationScript = `
 <script id="loyaltyNavigationScript">
@@ -101,10 +103,10 @@ const navigationScript = `
 })();
 </script>`;
 
-express.static = function loyaltyNavigationStatic(root, options) {
+express.static = function storefrontExperienceStatic(root, options) {
   const fallback = previousStatic(root, options);
 
-  return function addLoyaltyNavigation(req, res, next) {
+  return function deliverStorefrontExperience(req, res, next) {
     const pathname = (req.url || '').split('?')[0];
     const isPublicPage = req.method === 'GET' && (
       pathname === '/'
@@ -123,15 +125,22 @@ express.static = function loyaltyNavigationStatic(root, options) {
       if (error) return next(error);
 
       const isLoyaltyPage = pageName === 'loyalty.html';
+      const isAccountPage = pageName === 'account.html' || pageName === 'customer-login.html';
       const withDrawerFix = html.includes('id="drawerPositionFix"')
         ? html
         : html.replace('</head>', `${drawerFix}\n</head>`);
       const withLoyaltyContrast = isLoyaltyPage && !withDrawerFix.includes('id="loyaltyContrastFix"')
         ? withDrawerFix.replace('</head>', `${loyaltyContrastFix}\n</head>`)
         : withDrawerFix;
-      const updated = withLoyaltyContrast.includes('id="loyaltyNavigationScript"')
-        ? withLoyaltyContrast
-        : withLoyaltyContrast.replace('</body>', `${navigationScript}\n</body>`);
+      const withAccountTailwind = isAccountPage && !withLoyaltyContrast.includes('id="accountTailwind"')
+        ? withLoyaltyContrast.replace('</head>', `${accountTailwind}\n</head>`)
+        : withLoyaltyContrast;
+      const withNavigation = withAccountTailwind.includes('id="loyaltyNavigationScript"')
+        ? withAccountTailwind
+        : withAccountTailwind.replace('</body>', `${navigationScript}\n</body>`);
+      const updated = withNavigation.includes('id="storefrontIntegration"')
+        ? withNavigation
+        : withNavigation.replace('</body>', `${storefrontIntegration}\n</body>`);
 
       res.status(200);
       res.type('html');
