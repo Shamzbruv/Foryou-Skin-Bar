@@ -1,0 +1,78 @@
+/* Customer account contrast safeguard.
+   The global brand stylesheet recolors generic paragraphs and headings. These
+   account-only overrides keep text readable on the deep sage/cocoa panels. */
+
+.account-auth-aside,
+.account-auth-aside h1,
+.account-auth-aside h2,
+.account-auth-aside h3,
+.account-auth-aside h4,
+.account-auth-aside p,
+.account-auth-aside span,
+.account-auth-aside strong,
+.account-auth-aside li,
+.account-auth-aside .account-auth-benefit {
+  color: #fffdf8 !important;
+}
+
+.account-auth-aside .account-auth-kicker,
+.account-auth-aside .account-auth-kicker i,
+.account-auth-aside h1 em,
+.account-auth-aside .account-auth-benefit i {
+  color: #f4d98e !important;
+}
+
+.account-auth-aside p,
+.account-auth-aside .account-auth-benefit {
+  color: rgba(255, 253, 248, 0.9) !important;
+}
+
+.account-hero,
+.account-hero h1,
+.account-hero h2,
+.account-hero h3,
+.account-hero h4,
+.account-hero p,
+.account-hero span,
+.account-hero strong,
+.account-hero .account-outline {
+  color: #fffdf8 !important;
+}
+
+.account-hero .account-eyebrow {
+  color: #f4d98e !important;
+}
+
+.account-hero p {
+  color: rgba(255, 253, 248, 0.88) !important;
+}
+
+.account-stat.highlight,
+.account-stat.highlight h1,
+.account-stat.highlight h2,
+.account-stat.highlight h3,
+.account-stat.highlight p,
+.account-stat.highlight span,
+.account-stat.highlight strong,
+.loyalty-summary,
+.loyalty-summary h1,
+.loyalty-summary h2,
+.loyalty-summary h3,
+.loyalty-summary h4,
+.loyalty-summary p,
+.loyalty-summary span,
+.loyalty-summary strong,
+.loyalty-summary .loyalty-tier-pill {
+  color: #fffdf8 !important;
+}
+
+.loyalty-summary .account-eyebrow,
+.loyalty-summary .loyalty-points {
+  color: #f4d98e !important;
+}
+
+.account-stat.highlight .stat-caption,
+.loyalty-summary p,
+.loyalty-summary .loyalty-next {
+  color: rgba(255, 253, 248, 0.84) !important;
+}
