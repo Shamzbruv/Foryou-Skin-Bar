@@ -4,4 +4,5 @@ require('./public-nav-hotfix.js');
 require('./quiz-layout-hotfix.js');
 require('./customer-account-contrast-hotfix.js');
 require('./customer-portal-api-v2.js');
+require('./site-route-map.js');
 require('./server.js');
