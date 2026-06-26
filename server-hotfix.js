@@ -1,69 +1,107 @@
-/**
- * Runtime compatibility fix for the Products admin page.
- *
- * A malformed newline in the currently deployed product editor script prevents
- * the browser from parsing the entire module. This intercepts the static
- * products page, repairs the two malformed string literals before sending it,
- * and adds a protected delete control until the product editor is refactored.
- */
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
 
 const originalStatic = express.static.bind(express);
 
-function injectProductDeleteControl(html) {
-  const deleteButton = "<button class=\"ml-2 bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded text-sm font-medium transition\" onclick=\"window.deleteProduct('${p.id}')\"><i class=\"fas fa-trash mr-1\"></i>Delete</button>";
-  const actionCell = /(<td class="p-4 text-right">\s*<button[^>]*onclick="window\.openProductModal\('\$\{p\.id\}'\)"[^>]*>[\s\S]*?<\/button>)(\s*<\/td>)/;
-  const withDelete = html.replace(actionCell, `$1${deleteButton}$2`);
+function injectProductControls(html) {
+  const repairedSource = html
+    .replace(/\.join\('\r?\n'\)/g, ".join('\\n')")
+    .replace(/\.split\('\r?\n'\)/g, ".split('\\n')");
 
-  const handler = `
-        // Safely remove products that have never appeared in an order. Products
-        // with order history are archived instead so historical order records stay intact.
+  const productControlScript = `
+        // Product actions are added after each rendered row so this remains
+        // reliable even when the product table markup changes.
         window.deleteProduct = async function(productId) {
-            const product = currentProducts.find(p => p.id === productId);
-            if (!product) return;
-            const confirmed = window.confirm('Permanently delete "' + product.name + '"? Products in past orders will be archived instead.');
+            const product = currentProducts.find(function(item) { return item.id === productId; });
+            if (!product) {
+                showToast('This product could not be found. Refresh the page and try again.', 'error');
+                return;
+            }
+
+            const confirmed = window.confirm('Delete "' + product.name + '"? Products tied to past orders will be archived instead to keep order history safe.');
             if (!confirmed) return;
 
             try {
-                const direct = await supabase.from('order_items').select('id', { count: 'exact', head: true }).eq('product_id', productId);
-                if (direct.error) throw new Error(direct.error.message);
+                const directHistory = await supabase
+                    .from('order_items')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('product_id', productId);
+                if (directHistory.error) throw new Error(directHistory.error.message);
 
-                let hasOrderHistory = (direct.count || 0) > 0;
-                const variantIds = (product.product_variants || []).map(v => v.id).filter(Boolean);
+                let hasOrderHistory = (directHistory.count || 0) > 0;
+                const variantIds = (product.product_variants || []).map(function(variant) { return variant.id; }).filter(Boolean);
                 if (!hasOrderHistory && variantIds.length) {
-                    const variants = await supabase.from('order_items').select('id', { count: 'exact', head: true }).in('variant_id', variantIds);
-                    if (variants.error) throw new Error(variants.error.message);
-                    hasOrderHistory = (variants.count || 0) > 0;
+                    const variantHistory = await supabase
+                        .from('order_items')
+                        .select('id', { count: 'exact', head: true })
+                        .in('variant_id', variantIds);
+                    if (variantHistory.error) throw new Error(variantHistory.error.message);
+                    hasOrderHistory = (variantHistory.count || 0) > 0;
                 }
 
                 if (hasOrderHistory) {
-                    const archived = await supabase.from('products').update({ status: 'archived' }).eq('id', productId);
+                    const archived = await supabase
+                        .from('products')
+                        .update({ status: 'archived' })
+                        .eq('id', productId);
                     if (archived.error) throw new Error(archived.error.message);
-                    showToast('This product is part of order history, so it was archived instead.');
+                    showToast('This product has past orders, so it was archived instead of deleted.');
                 } else {
                     const removed = await supabase.from('products').delete().eq('id', productId);
                     if (removed.error) {
-                        const archived = await supabase.from('products').update({ status: 'archived' }).eq('id', productId);
+                        const archived = await supabase
+                            .from('products')
+                            .update({ status: 'archived' })
+                            .eq('id', productId);
                         if (archived.error) throw new Error(removed.error.message);
                         showToast('The product could not be safely deleted, so it was archived instead.', 'error');
                     } else {
                         showToast('Product permanently deleted.');
                     }
                 }
+
                 await loadProducts();
             } catch (error) {
                 showToast('Unable to remove product: ' + error.message, 'error');
             }
         };
+
+        function installProductDeleteControls() {
+            const tableBody = $('productsTableBody');
+            if (!tableBody) return;
+
+            const addDeleteButtons = function() {
+                tableBody.querySelectorAll('button[onclick*="openProductModal"]').forEach(function(editButton) {
+                    const actionCell = editButton.closest('td');
+                    if (!actionCell || actionCell.querySelector('[data-product-delete]')) return;
+
+                    const action = String(editButton.getAttribute('onclick') || '');
+                    const match = action.match(/openProductModal\\('([^']+)'\\)/);
+                    if (!match) return;
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.dataset.productDelete = 'true';
+                    deleteButton.className = 'ml-2 bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded text-sm font-medium transition';
+                    deleteButton.innerHTML = '<i class="fas fa-trash mr-1"></i>Delete';
+                    deleteButton.addEventListener('click', function() {
+                        window.deleteProduct(match[1]);
+                    });
+                    actionCell.appendChild(deleteButton);
+                });
+            };
+
+            new MutationObserver(addDeleteButtons).observe(tableBody, { childList: true, subtree: true });
+            addDeleteButtons();
+        }
+
+        installProductDeleteControls();
 `;
 
-  const marker = '\n        loadProducts();\n    </script>';
-  const index = withDelete.lastIndexOf(marker);
-  return index === -1
-    ? withDelete
-    : `${withDelete.slice(0, index)}\n${handler}${withDelete.slice(index)}`;
+  const finalScriptIndex = repairedSource.lastIndexOf('</script>');
+  if (finalScriptIndex === -1 || repairedSource.includes('window.deleteProduct = async function')) return repairedSource;
+  return `${repairedSource.slice(0, finalScriptIndex)}${productControlScript}${repairedSource.slice(finalScriptIndex)}`;
 }
 
 express.static = function patchedStatic(root, options) {
@@ -71,20 +109,16 @@ express.static = function patchedStatic(root, options) {
 
   return function staticWithProductHotfix(req, res, next) {
     const pathname = (req.url || '').split('?')[0];
-    if (req.method !== 'GET' || pathname !== '/admin/products.html') {
-      return fallback(req, res, next);
-    }
+    const isProductsPage = req.method === 'GET' && (
+      pathname === '/admin/products.html' || pathname === '/admin/products'
+    );
+
+    if (!isProductsPage) return fallback(req, res, next);
 
     const productPagePath = path.join(root, 'admin', 'products.html');
     fs.readFile(productPagePath, 'utf8', (error, html) => {
       if (error) return next(error);
-
-      const repaired = injectProductDeleteControl(
-        html
-          .replace(/\.join\('\r?\n'\)/g, ".join('\\n')")
-          .replace(/\.split\('\r?\n'\)/g, ".split('\\n')")
-      );
-
+      const repaired = injectProductControls(html);
       res.status(200);
       res.type('html');
       res.set('Cache-Control', 'no-store, max-age=0');
