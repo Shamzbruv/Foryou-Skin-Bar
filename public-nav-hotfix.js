@@ -44,20 +44,93 @@ const storefrontIntegration = '<script id="storefrontIntegration" src="js/storef
 const navigationScript = `
 <script id="loyaltyNavigationScript">
 (function () {
-  function addLink(anchor, mobile) {
-    if (!anchor || !anchor.parentElement || anchor.parentElement.querySelector('a[href="loyalty.html"]')) return;
-    const link = document.createElement('a');
-    link.href = 'loyalty.html';
-    link.className = anchor.className;
-    link.innerHTML = mobile ? '<i class="fas fa-sparkles w-5"></i>Glow Rewards' : 'Glow Rewards';
-    anchor.insertAdjacentElement('beforebegin', link);
+  var LOYALTY_HREF = 'loyalty.html';
+
+  function normalHref(link) {
+    return String(link && link.getAttribute('href') || '')
+      .replace(/^\//, '')
+      .split('?')[0]
+      .split('#')[0]
+      .toLowerCase();
   }
 
-  function addFooterLink(anchor) {
-    if (!anchor || document.querySelector('footer a[href="loyalty.html"]')) return;
-    const item = document.createElement('li');
-    item.innerHTML = '<a href="loyalty.html" class="hover:text-white transition">Glow Rewards</a>';
-    anchor.closest('li') ? anchor.closest('li').insertAdjacentElement('beforebegin', item) : anchor.insertAdjacentElement('beforebegin', item);
+  function isLoyaltyLink(link) {
+    var href = normalHref(link);
+    return href === 'loyalty.html' || href === 'loyalty';
+  }
+
+  function hasLoyaltyLink(container) {
+    return !!container && Array.from(container.querySelectorAll('a')).some(isLoyaltyLink);
+  }
+
+  function preferredReference(container) {
+    if (!container) return null;
+    var links = Array.from(container.querySelectorAll('a'));
+    var preferred = ['quiz.html', 'faq.html', 'ingredients.html', 'contact.html', 'blog.html', 'shop.html'];
+    for (var i = 0; i < preferred.length; i += 1) {
+      var match = links.find(function (link) { return normalHref(link) === preferred[i]; });
+      if (match) return match;
+    }
+    return links[links.length - 1] || null;
+  }
+
+  function createGlowRewardsLink(reference, mobile) {
+    var link = document.createElement('a');
+    link.href = LOYALTY_HREF;
+    link.setAttribute('data-glow-rewards-link', 'true');
+    link.className = reference && reference.className
+      ? reference.className
+      : (mobile ? 'text-lg hover:text-amber-800 transition flex items-center gap-3' : 'hover:text-amber-800 transition');
+    link.innerHTML = mobile
+      ? '<i class="fas fa-sparkles w-5"></i>Glow Rewards'
+      : 'Glow Rewards';
+    return link;
+  }
+
+  function ensureGlowLink(container, mobile) {
+    if (!container || hasLoyaltyLink(container)) return;
+    var reference = preferredReference(container);
+    if (!reference) return;
+    var link = createGlowRewardsLink(reference, mobile);
+    reference.insertAdjacentElement('beforebegin', link);
+  }
+
+  function desktopNavContainers() {
+    var containers = [];
+    Array.from(document.querySelectorAll('nav, .glass-nav')).forEach(function (nav) {
+      var groups = Array.from(nav.querySelectorAll('div')).filter(function (group) {
+        return group.querySelectorAll('a').length >= 2;
+      });
+      groups.sort(function (left, right) {
+        return right.querySelectorAll('a').length - left.querySelectorAll('a').length;
+      });
+      if (groups[0]) containers.push(groups[0]);
+    });
+    return containers;
+  }
+
+  function mobileNavContainers() {
+    var drawer = document.getElementById('mobileMenuDrawer');
+    if (!drawer) return [];
+    return Array.from(drawer.querySelectorAll('div')).filter(function (group) {
+      return group.querySelectorAll('a').length >= 2;
+    });
+  }
+
+  function addFooterLoyaltyLink() {
+    var footer = document.querySelector('footer');
+    if (!footer || hasLoyaltyLink(footer)) return;
+    var links = Array.from(footer.querySelectorAll('a'));
+    var reference = links.find(function (link) { return normalHref(link) === 'faq.html'; })
+      || links.find(function (link) { return normalHref(link) === 'contact.html'; })
+      || links.find(function (link) { return normalHref(link) === 'shipping-returns.html'; });
+    if (!reference) return;
+
+    var item = document.createElement('li');
+    item.innerHTML = '<a href="loyalty.html" data-glow-rewards-link="true" class="hover:text-white transition">Glow Rewards</a>';
+    var listItem = reference.closest('li');
+    if (listItem) listItem.insertAdjacentElement('beforebegin', item);
+    else reference.insertAdjacentElement('beforebegin', item);
   }
 
   function addAccountEntry() {
@@ -67,39 +140,69 @@ const navigationScript = `
       link.setAttribute('aria-label', 'My Account');
     });
 
-    const menu = document.querySelector('#mobileMenuDrawer .flex.flex-col');
-    if (menu && !menu.querySelector('a[href="customer-login.html"]')) {
-      const account = document.createElement('a');
+    var drawer = document.getElementById('mobileMenuDrawer');
+    var menu = drawer && Array.from(drawer.querySelectorAll('div')).find(function (group) {
+      return group.querySelectorAll('a').length >= 2;
+    });
+    if (menu && !Array.from(menu.querySelectorAll('a')).some(function (link) {
+      var href = normalHref(link);
+      return href === 'customer-login.html' || href === 'account.html';
+    })) {
+      var account = document.createElement('a');
       account.href = 'customer-login.html';
       account.className = 'text-lg hover:text-amber-800 transition flex items-center gap-3';
       account.innerHTML = '<i class="fas fa-user w-5"></i>My Account';
-      const shop = Array.from(menu.querySelectorAll('a')).find(function (link) { return link.getAttribute('href') === 'shop.html'; });
+      var shop = Array.from(menu.querySelectorAll('a')).find(function (link) { return normalHref(link) === 'shop.html'; });
       if (shop) shop.insertAdjacentElement('beforebegin', account);
       else menu.prepend(account);
     }
 
-    const footerSupport = Array.from(document.querySelectorAll('footer a')).find(function (link) { return link.getAttribute('href') === 'contact.html'; });
-    if (footerSupport && !document.querySelector('footer a[href="customer-login.html"]')) {
-      const item = document.createElement('li');
+    var footer = document.querySelector('footer');
+    if (!footer || Array.from(footer.querySelectorAll('a')).some(function (link) {
+      var href = normalHref(link);
+      return href === 'customer-login.html' || href === 'account.html';
+    })) return;
+
+    var contact = Array.from(footer.querySelectorAll('a')).find(function (link) { return normalHref(link) === 'contact.html'; });
+    if (contact) {
+      var item = document.createElement('li');
       item.innerHTML = '<a href="customer-login.html" class="hover:text-white transition">My Account</a>';
-      footerSupport.closest('li') ? footerSupport.closest('li').insertAdjacentElement('beforebegin', item) : footerSupport.insertAdjacentElement('beforebegin', item);
+      var contactItem = contact.closest('li');
+      if (contactItem) contactItem.insertAdjacentElement('beforebegin', item);
+      else contact.insertAdjacentElement('beforebegin', item);
     }
   }
 
-  function run() {
-    const desktopFaq = Array.from(document.querySelectorAll('.glass-nav a')).find(function (link) { return link.getAttribute('href') === 'faq.html'; });
-    addLink(desktopFaq, false);
-
-    const mobileFaq = Array.from(document.querySelectorAll('#mobileMenuDrawer a')).find(function (link) { return link.getAttribute('href') === 'faq.html'; });
-    addLink(mobileFaq, true);
-
-    const footerFaq = Array.from(document.querySelectorAll('footer a')).find(function (link) { return link.getAttribute('href') === 'faq.html'; });
-    addFooterLink(footerFaq);
+  function ensureNavigation() {
+    desktopNavContainers().forEach(function (container) { ensureGlowLink(container, false); });
+    mobileNavContainers().forEach(function (container) { ensureGlowLink(container, true); });
+    addFooterLoyaltyLink();
     addAccountEntry();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true });
-  else run();
+  function start() {
+    ensureNavigation();
+    window.setTimeout(ensureNavigation, 150);
+    window.setTimeout(ensureNavigation, 800);
+    window.setTimeout(ensureNavigation, 1800);
+
+    if (document.body && !document.body.dataset.glowRewardsObserver) {
+      document.body.dataset.glowRewardsObserver = 'true';
+      var queued = false;
+      var observer = new MutationObserver(function () {
+        if (queued) return;
+        queued = true;
+        window.requestAnimationFrame(function () {
+          queued = false;
+          ensureNavigation();
+        });
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+  else start();
 })();
 </script>`;
 
