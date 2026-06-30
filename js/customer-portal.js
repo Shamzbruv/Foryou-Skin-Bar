@@ -17,6 +17,26 @@
     root.innerHTML = `<main class="account-shell"><div class="account-wrap loading-account"><div class="text-center"><i class="fas fa-circle-notch fa-spin"></i><p>Gathering your glow details…</p></div></div></main>`;
   }
 
+  function showLoginGate() {
+    if (!root) return;
+    root.innerHTML = `
+      <main class="account-shell">
+        <div class="account-wrap">
+          <div class="account-empty" style="max-width: 520px; margin: 60px auto; text-align: center;">
+            <i class="fas fa-lock fa-3x" style="color: #c89b3c; margin-bottom: 16px;"></i>
+            <h2 style="font-size: 1.75rem; margin-bottom: 8px;">Sign in to access your account</h2>
+            <p style="color: #6b5d50; margin-bottom: 24px;">Your orders, Glow Credits, delivery updates, and skincare journey are waiting for you.</p>
+            <a href="${loginUrl}" class="account-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; text-decoration: none;">
+              <i class="fas fa-sign-in-alt"></i> Sign in or create account
+            </a>
+            <p style="margin-top: 24px; font-size: 0.875rem; color: #8a7d6e;">
+              Use the same email you used at checkout. New here? Creating an account is free and takes 30 seconds.
+            </p>
+          </div>
+        </div>
+      </main>`;
+  }
+
   function statusClass(order) {
     const text = String(order.status || '').toLowerCase();
     const label = String(order.statusLabel || '').toLowerCase();
@@ -262,12 +282,18 @@
     showLoading();
     const { data } = await window.supabase.auth.getSession();
     session = data && data.session;
-    if (!session) return window.location.assign(loginUrl);
+    if (!session) {
+      showLoginGate();
+      return;
+    }
     try {
       const payload = await portalFetch('/api/customer-portal');
       renderPortal(payload);
     } catch (error) {
-      if (String(error.message || '').toLowerCase().includes('sign in')) return;
+      if (String(error.message || '').toLowerCase().includes('sign in')) {
+        showLoginGate();
+        return;
+      }
       root.innerHTML = `<main class="account-shell"><div class="account-wrap"><div class="account-empty"><i class="fas fa-triangle-exclamation"></i><h3>We could not open your account.</h3><p>${escapeHtml(error.message || 'Please refresh and try again.')}</p><a class="reward-request" href="customer-login.html">Return to sign in <i class="fas fa-arrow-right ml-1"></i></a></div></div></main>`;
     }
   }
