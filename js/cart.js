@@ -209,7 +209,7 @@ class CartManager {
   generateWhatsAppOrder(customerInfo = {}) {
     const { name, phone, email, deliveryMethod, address, parish, paymentMethod, notes } = customerInfo;
 
-    let message = `Hello For You Skin Bar, I would like to place an order.\n\n`;
+    let message = `Hello Foryou Skin Bar, I would like to place an order.\n\n`;
     if (name) message += `*Name:* ${name}\n`;
     if (phone) message += `*Phone:* ${phone}\n`;
     if (email) message += `*Email:* ${email}\n`;
@@ -249,13 +249,28 @@ window.addToCartWithVariant = async function(productId) {
   if (window.loadProductsData) await window.loadProductsData();
   const product = window.productsData ? window.productsData.find(p => String(p.id) === String(productId)) : null;
   if (!product) return;
+
   const select = document.getElementById(`variant-${productId}`);
   const qtyInput = document.getElementById('productQuantity');
   const quantity = qtyInput ? Math.max(1, parseInt(qtyInput.value, 10) || 1) : 1;
+
   if (select) {
     const opt = select.options[select.selectedIndex];
+    const stockAttr = opt.getAttribute('data-stock');
+    const stock = stockAttr !== null && stockAttr !== '' ? Number(stockAttr) : null;
+    const allowBackorder = !!product.allowBackorder;
+    if (stock !== null && stock <= 0 && !allowBackorder) {
+      alert('Sorry, this variant is currently out of stock. Please choose another option or check back later.');
+      return;
+    }
     window.cartManager.addItem(product, opt.getAttribute('data-variant-id'), opt.value, opt.getAttribute('data-price'), quantity);
   } else {
+    const stock = product.stockQuantity;
+    const allowBackorder = !!product.allowBackorder;
+    if (stock !== null && stock <= 0 && !allowBackorder) {
+      alert('Sorry, this product is currently out of stock. Please check back later.');
+      return;
+    }
     window.cartManager.addItem(product, null, null, null, quantity);
   }
 };
