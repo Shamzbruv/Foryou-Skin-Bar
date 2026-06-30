@@ -4,7 +4,7 @@
   let session = null;
   let portalData = null;
 
-  const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+  const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&', '<': '<', '>': '>', "'": '&#39;', '"': '"' }[character]));
   const formatCurrency = (value) => new Intl.NumberFormat('en-JM', { style: 'currency', currency: 'JMD', maximumFractionDigits: 0 }).format(Number(value || 0));
   const formatNumber = (value) => new Intl.NumberFormat('en-JM').format(Number(value || 0));
   const formatDate = (value) => {
@@ -63,7 +63,7 @@
     }
 
     return loyalty.rewards.map((reward) => {
-      const requestText = `Hi For You Skin Bar! I would like help with the ${reward.title} reward in my customer account.`;
+      const requestText = `Hi Foryou Skin Bar! I would like help with the ${reward.title} reward in my customer account.`;
       const requestHref = `https://wa.me/18763094374?text=${encodeURIComponent(requestText)}`;
       return `<article class="account-card reward-account-card">
         <span class="reward-tier">${escapeHtml(reward.tierName)}</span>
@@ -95,7 +95,7 @@
       <main class="account-shell">
         <div class="account-wrap">
           <section class="account-hero">
-            <div><span class="account-eyebrow">My For You Skin Bar</span><h1>Hi, ${escapeHtml(firstName)}.</h1><p>Everything from your skincare journey, in one calm little space.</p></div>
+            <div><span class="account-eyebrow">My Foryou Skin Bar</span><h1>Hi, ${escapeHtml(firstName)}.</h1><p>Everything from your skincare journey, in one calm little space.</p></div>
             <div class="account-hero-actions"><a href="shop.html" class="account-outline"><i class="fas fa-bag-shopping"></i>Continue shopping</a><button id="accountSignOutBtn" class="account-outline" type="button"><i class="fas fa-right-from-bracket"></i>Sign out</button></div>
           </section>
 
