@@ -311,7 +311,7 @@ function registerCustomerPortalRoutes(app) {
       const requestedName = String(req.body?.fullName || '').trim().slice(0, 120);
       const requestedPhone = String(req.body?.phone || '').trim().slice(0, 40);
       const requestedWhatsapp = String(req.body?.whatsapp || '').trim().slice(0, 40);
-      const fallbackName = String(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'For You Customer').slice(0, 120);
+      const fallbackName = String(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Foryou Customer').slice(0, 120);
       const fullName = requestedName || fallbackName;
 
       let customer = await findCustomerByEmail(user.email);

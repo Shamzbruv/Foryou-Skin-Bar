@@ -246,7 +246,7 @@ function register(app) {
   app.patch('/api/customer-portal/profile', async (req, res) => {
     try {
       const user = await authenticatedUser(req);
-      const fullName = String(req.body?.fullName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'For You Customer').trim().slice(0, 120);
+      const fullName = String(req.body?.fullName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Foryou Customer').trim().slice(0, 120);
       const phone = String(req.body?.phone || '').trim().slice(0, 40);
       const whatsapp = String(req.body?.whatsapp || '').trim().slice(0, 40);
       let customer = await customerForEmail(user.email);

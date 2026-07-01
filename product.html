@@ -364,6 +364,23 @@
           }
         }
         if (selected?.image) window.switchProductImage(selected.image);
+
+        const btn = document.getElementById('addToCartBtn');
+        if (btn) {
+          const stockAttr = selected ? selected.stock : product.stockQuantity;
+          const isOutOfStock = stockAttr !== null && stockAttr !== undefined && stockAttr !== '' && Number(stockAttr) <= 0 && !product.allowBackorder;
+          if (isOutOfStock) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-ban"></i> Out of Stock';
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.classList.remove('hover:shadow-lg');
+          } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Cart';
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.classList.add('hover:shadow-lg');
+          }
+        }
       };
 
 
@@ -442,7 +459,7 @@
               </div>
             </div>
             <div class="flex gap-4 mb-6">
-              <button onclick="window.addToCartWithVariant('${product.id}')" class="flex-1 btn-primary text-white py-4 px-8 rounded-full font-semibold text-lg shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2">
+              <button id="addToCartBtn" onclick="window.addToCartWithVariant('${product.id}')" class="flex-1 btn-primary text-white py-4 px-8 rounded-full font-semibold text-lg shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2">
                 <i class="fas fa-cart-plus"></i> Add to Cart
               </button>
               <button onclick="window.toggleFavourite('${product.id}')" id="fav-btn-${product.id}" class="w-14 h-14 rounded-full border-2 border-stone-200 flex items-center justify-center text-stone-400 hover:text-red-500 hover:border-red-500 transition-colors bg-white">
@@ -525,6 +542,25 @@
         }
 
         const relatedGrid = document.getElementById('relatedProducts');
+        
+        // Trigger initial variant state to set correct price and stock button status
+        if (variants.length > 0) {
+          window.updateSelectedVariant(product.id);
+        } else {
+          // If no variants, manually check stock for the main product button
+          const btn = document.getElementById('addToCartBtn');
+          if (btn) {
+            const stockAttr = product.stockQuantity;
+            const isOutOfStock = stockAttr !== null && stockAttr !== undefined && stockAttr !== '' && Number(stockAttr) <= 0 && !product.allowBackorder;
+            if (isOutOfStock) {
+              btn.disabled = true;
+              btn.innerHTML = '<i class="fas fa-ban"></i> Out of Stock';
+              btn.classList.add('opacity-50', 'cursor-not-allowed');
+              btn.classList.remove('hover:shadow-lg');
+            }
+          }
+        }
+
         if (related.length > 0) {
           relatedGrid.innerHTML = related.map(p => `
             <div class="product-card p-4 rounded-2xl bg-white border border-amber-50 text-stone-800">
@@ -535,7 +571,7 @@
                 <span class="text-[10px] uppercase font-bold tracking-wider text-amber-700">${escapeHTML(p.category)}</span>
                 <a href="product.html?id=${p.id}"><h3 class="font-bold mt-1 hover:text-amber-800 transition line-clamp-2">${escapeHTML(p.name)}</h3></a>
                 <p class="text-amber-800 font-bold text-lg mt-auto pb-3">${money(p.price)}</p>
-                <button onclick="window.cartManager && window.cartManager.addItem(window.productsData.find(pd=>pd.id=='${p.id}'))" class="bg-amber-800 text-white w-full py-2 rounded-xl text-sm font-bold hover:bg-amber-900 transition shadow-sm"><i class="fas fa-cart-plus mr-1"></i> Add</button>
+                <button onclick="window.addToCartWithVariant('${p.id}')" class="bg-amber-800 text-white w-full py-2 rounded-xl text-sm font-bold hover:bg-amber-900 transition shadow-sm"><i class="fas fa-cart-plus mr-1"></i> Add</button>
               </div>
             </div>
           `).join('');
