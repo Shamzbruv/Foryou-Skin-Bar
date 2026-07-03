@@ -53,6 +53,19 @@
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
+                
+                // Verify admin role before redirecting
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', data.user.id)
+                    .single();
+                    
+                if (!profile || !['owner', 'admin', 'staff'].includes(profile.role)) {
+                    await supabase.auth.signOut();
+                    throw new Error('Access denied. Admin privileges required.');
+                }
+                
                 window.location.href = '/admin/index.html';
             } catch (error) {
                 errorMsg.textContent = error.message;
