@@ -1,0 +1,10 @@
+const fs = require('fs');
+const files = fs.readdirSync('.').filter(f => f.endsWith('.html'));
+files.forEach(f => {
+  const content = fs.readFileSync(f, 'utf8');
+  const match = content.match(/<div class="flex items-center gap-4">([\s\S]*?)<button id="cartIconBtn"/);
+  if (match) {
+    console.log('--- ' + f + ' ---');
+    console.log(match[1].trim());
+  }
+});

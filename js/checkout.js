@@ -32,6 +32,51 @@ document.addEventListener('DOMContentLoaded', () => {
   const successOrderNumber = document.getElementById('successOrderNumber');
   const whatsappFollowupBtn = document.getElementById('whatsappFollowupBtn');
 
+  async function prefillUserData() {
+    try {
+      if (!window.supabase) return;
+      const { data } = await window.supabase.auth.getSession();
+      if (!data?.session) return;
+      
+      const response = await fetch('/api/customer-portal', {
+        headers: { Authorization: `Bearer ${data.session.access_token}` }
+      });
+      if (!response.ok) return;
+      
+      const { profile } = await response.json();
+      if (!profile) return;
+      
+      const safelySet = (selector, val) => {
+        const el = document.querySelector(selector);
+        if (el && !el.value && val) {
+          el.value = val;
+          el.dispatchEvent(new Event('change'));
+        }
+      };
+      
+      safelySet('input[name="fullName"]', profile.fullName);
+      safelySet('input[name="email"]', profile.email);
+      safelySet('input[name="phone"]', profile.phone);
+      
+      if (profile.country && countrySelect && !countrySelect.value) {
+        countrySelect.value = profile.country;
+        countrySelect.dispatchEvent(new Event('change'));
+      }
+      
+      safelySet('#addressLine1', profile.addressLine1);
+      safelySet('#addressLine2', profile.addressLine2);
+      safelySet('#city', profile.city);
+      safelySet('#parish', profile.parish);
+      safelySet('#stateProvince', profile.stateProvince);
+      safelySet('#postalCode', profile.postalCode);
+      
+    } catch (e) {
+      console.warn("Could not prefill user data", e);
+    }
+  }
+  
+  prefillUserData();
+
   function getSubtotal() {
     return cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
   }

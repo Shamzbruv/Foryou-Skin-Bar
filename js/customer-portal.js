@@ -169,7 +169,21 @@
                   <div class="field"><label for="profileEmail">Email address</label><input id="profileEmail" value="${escapeHtml(profile.email || '')}" type="email" disabled></div>
                   <div class="field"><label for="profilePhone">Phone number</label><input id="profilePhone" value="${escapeHtml(profile.phone || '')}" autocomplete="tel"></div>
                   <div class="field"><label for="profileWhatsapp">WhatsApp number</label><input id="profileWhatsapp" value="${escapeHtml(profile.whatsapp || '')}" autocomplete="tel"></div>
-                  <button id="profileSaveBtn" class="account-primary" type="submit"><i class="fas fa-save"></i>Save my details</button>
+              </section>
+              <section class="account-card profile-card">
+                <p class="account-eyebrow">Shipping Address</p><h2>Your default delivery address.</h2><p>Save time at checkout by keeping this updated.</p>
+                  <div class="field"><label for="profileCountry">Country</label><input id="profileCountry" value="${escapeHtml(profile.country || 'Jamaica')}" autocomplete="country"></div>
+                  <div class="field"><label for="profileAddress1">Address Line 1</label><input id="profileAddress1" value="${escapeHtml(profile.addressLine1 || '')}" autocomplete="address-line1"></div>
+                  <div class="field"><label for="profileAddress2">Address Line 2</label><input id="profileAddress2" value="${escapeHtml(profile.addressLine2 || '')}" autocomplete="address-line2"></div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="field"><label for="profileCity">City</label><input id="profileCity" value="${escapeHtml(profile.city || '')}" autocomplete="address-level2"></div>
+                    <div class="field"><label for="profileParish">Parish</label><input id="profileParish" value="${escapeHtml(profile.parish || '')}" autocomplete="address-level1"></div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="field"><label for="profileState">State / Province</label><input id="profileState" value="${escapeHtml(profile.stateProvince || '')}" autocomplete="address-level1"></div>
+                    <div class="field"><label for="profilePostal">Postal / Zip Code</label><input id="profilePostal" value="${escapeHtml(profile.postalCode || '')}" autocomplete="postal-code"></div>
+                  </div>
+                  <button id="profileSaveBtn" class="account-primary mt-4" type="submit"><i class="fas fa-save"></i>Save my details</button>
                 </form>
               </section>
               <section class="account-card profile-card">
@@ -241,11 +255,18 @@
       try {
         const response = await portalFetch('/api/customer-portal/profile', {
           method: 'PATCH',
-          body: JSON.stringify({
-            fullName: document.getElementById('profileName').value.trim(),
-            phone: document.getElementById('profilePhone').value.trim(),
-            whatsapp: document.getElementById('profileWhatsapp').value.trim()
-          })
+            body: JSON.stringify({
+              fullName: document.getElementById('profileName').value.trim(),
+              phone: document.getElementById('profilePhone').value.trim(),
+              whatsapp: document.getElementById('profileWhatsapp').value.trim(),
+              country: document.getElementById('profileCountry').value.trim(),
+              addressLine1: document.getElementById('profileAddress1').value.trim(),
+              addressLine2: document.getElementById('profileAddress2').value.trim(),
+              city: document.getElementById('profileCity').value.trim(),
+              parish: document.getElementById('profileParish').value.trim(),
+              stateProvince: document.getElementById('profileState').value.trim(),
+              postalCode: document.getElementById('profilePostal').value.trim()
+            })
         });
         if (portalData && response.profile) portalData.profile = { ...portalData.profile, ...response.profile };
         showProfileMessage('Your details have been saved.', 'success');

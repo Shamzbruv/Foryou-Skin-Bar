@@ -8,6 +8,11 @@
   --loyalty-gold: #c89b3c;
   --loyalty-gold-soft: rgba(200, 155, 60, 0.18);
   color: var(--loyalty-cocoa);
+  font-family: 'Inter', sans-serif;
+}
+
+.loyalty-page p {
+  font-family: 'Inter', sans-serif;
 }
 
 .loyalty-hero {
@@ -105,6 +110,8 @@
   color: rgba(255, 253, 248, 0.86);
   font-size: clamp(1.02rem, 2vw, 1.2rem);
   line-height: 1.75;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
 }
 
 .loyalty-hero-actions {
@@ -295,8 +302,8 @@
 }
 
 .loyalty-tier h3 { margin-top: 2.4rem; color: #fffdf8; font-family: 'Cormorant Garamond', serif; font-size: 2.15rem; line-height: 0.95; }
-.loyalty-tier-threshold { margin-top: 0.7rem; color: rgba(255, 253, 248, 0.82); font-size: 0.8rem; font-weight: 700; }
-.loyalty-tier-summary { margin-top: 0.85rem; color: rgba(255, 253, 248, 0.9); font-size: 0.9rem; line-height: 1.55; }
+.loyalty-tier-threshold { margin-top: 0.7rem; color: rgba(255, 253, 248, 0.82); font-size: 0.8rem; font-weight: 700; font-family: 'Inter', sans-serif; }
+.loyalty-tier-summary { margin-top: 0.85rem; color: rgba(255, 253, 248, 0.9); font-size: 0.9rem; line-height: 1.55; font-family: 'Inter', sans-serif; font-weight: 500; }
 
 .loyalty-tier-body { display: grid; gap: 1.35rem; padding: 1.45rem 1.55rem 1.6rem; }
 .loyalty-tier-body h4 { color: var(--loyalty-cocoa); font-size: 0.76rem; font-weight: 850; letter-spacing: 0.095em; text-transform: uppercase; }
@@ -328,7 +335,7 @@
 }
 
 .loyalty-cta h2 { max-width: 43rem; color: #fffdf8; font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 5vw, 4.4rem); line-height: 0.92; letter-spacing: -0.04em; }
-.loyalty-cta p { max-width: 38rem; margin-top: 0.85rem; color: rgba(255, 253, 248, 0.82); line-height: 1.7; }
+.loyalty-cta p { max-width: 38rem; margin-top: 0.85rem; color: rgba(255, 253, 248, 0.82); line-height: 1.7; font-family: 'Inter', sans-serif; font-weight: 500; }
 .loyalty-cta .loyalty-btn { margin-top: 1.5rem; }
 
 .loyalty-terms {

@@ -243,6 +243,45 @@ app.post('/api/create-order', async (req, res) => {
     if (shipping.stateProvince) formattedAddress += `, ${shipping.stateProvince}`;
     if (shipping.country) formattedAddress += `, ${shipping.country}`;
 
+    let pointsEarned = Math.floor(subtotalAfterDiscount);
+    try {
+        const { data: customerData } = await supabaseAdmin.from('customers').select('lifetime_earned_points').eq('id', customerId).maybeSingle();
+        const lifetimePoints = customerData ? (Number(customerData.lifetime_earned_points) || 0) : 0;
+        
+        const { data: settingsRows } = await supabaseAdmin.from('store_settings').select('key, value').in('key', ['loyalty_program', 'loyalty_point_policy']);
+        const settings = (settingsRows || []).reduce((all, row) => ({ ...all, [row.key]: row.value }), {});
+        
+        const policy = settings.loyalty_point_policy;
+        let policyObj = {};
+        if (typeof policy === 'string') { try { policyObj = JSON.parse(policy); } catch(e){} } else if (policy) { policyObj = policy; }
+        
+        const pointsPerJmd = typeof policyObj.pointsPerJmd === 'number' ? policyObj.pointsPerJmd : 1;
+        const tierMultipliers = Array.isArray(policyObj.tierMultipliers) ? policyObj.tierMultipliers : [1, 2, 3];
+
+        const prog = settings.loyalty_program;
+        let progObj = {};
+        if (typeof prog === 'string') { try { progObj = JSON.parse(prog); } catch(e){} } else if (prog) { progObj = prog; }
+        
+        const tiers = Array.isArray(progObj.tiers) ? progObj.tiers : [];
+        let tierIndex = 0;
+        
+        for (let i = 0; i < tiers.length; i++) {
+            let threshold = 0;
+            if (tiers[i].minimumLifetimePoints !== undefined) threshold = Number(tiers[i].minimumLifetimePoints);
+            else if (tiers[i].requiredPoints !== undefined) threshold = Number(tiers[i].requiredPoints);
+            else {
+                const match = String(tiers[i].threshold || '').replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+                if (match) threshold = Number(match[0]);
+            }
+            if (!isNaN(threshold) && lifetimePoints >= threshold) tierIndex = i;
+        }
+        
+        const multiplier = typeof tiers[tierIndex]?.pointsMultiplier === 'number' ? tiers[tierIndex].pointsMultiplier : (tierMultipliers[tierIndex] || 1);
+        pointsEarned = Math.floor(subtotalAfterDiscount * pointsPerJmd * multiplier);
+    } catch (e) {
+        console.error("Error calculating loyalty multiplier", e);
+    }
+
     const { data: orderData, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
@@ -264,6 +303,7 @@ app.post('/api/create-order', async (req, res) => {
         discount_total_jmd: discountAmount,
         shipping_total_jmd: shippingCost,
         grand_total_jmd: total,
+        points_earned: pointsEarned,
         payment_method: 'WiPay',
         status: 'pending',
         payment_status: 'awaiting_confirmation',

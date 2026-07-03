@@ -76,10 +76,17 @@
       <a href="blog.html" class="hover:text-amber-800 transition">Blog</a>
       <a href="ingredients.html" class="hover:text-amber-800 transition">Ingredients</a>
       <a href="quiz.html" class="hover:text-amber-800 transition">Skin Quiz</a>
+      <a href="loyalty.html" class="hover:text-amber-800 transition">Glow Rewards</a>
       <a href="faq.html" class="hover:text-amber-800 transition">FAQ</a>
       <a href="contact.html" class="hover:text-amber-800 transition">Contact</a>
     </div>
     <div class="flex items-center gap-4">
+      <a href="customer-login.html" class="text-stone-700 hover:text-amber-800 transition" title="My Account">
+        <i class="fas fa-user text-xl"></i>
+      </a>
+      <a href="admin/login.html" class="text-stone-700 hover:text-amber-800 transition" title="Admin Portal">
+        <i class="fas fa-user-shield text-xl"></i>
+      </a>
       <button id="cartIconBtn" class="relative">
         <i class="fas fa-bag-shopping text-stone-700 text-xl"></i>
         <span id="cartCount" class="absolute -top-2 -right-3 bg-amber-700 text-white text-[11px] w-5 h-5 rounded-full flex items-center justify-center" style="display:none;">0</span>
@@ -90,13 +97,21 @@
 
   <main>
     <!-- Hero -->
-    <section class="bg-gradient-to-br from-[#6E7F67] via-[#5A6B53] to-[#6E7F67] px-6 md:px-16 py-20 md:py-28 text-center scroll-reveal text-white">
-      <div class="max-w-4xl mx-auto">
-        <h1 class="serif-heading text-5xl md:text-7xl font-bold text-white mb-6">Our Mission: Embracing Inclusive Beauty Standards</h1>
-        <p class="text-xl md:text-2xl text-amber-200 mb-6 font-medium">A Leader in Beauty</p>
-        <p class="text-lg md:text-xl text-white max-w-2xl mx-auto leading-relaxed">
-          At Foryou Skin Bar, we pride ourselves on redefining the skincare experience. Through our artisanal and eco-friendly products, we bring inclusive beauty standards to the forefront of the industry. Each product is crafted with natural, ethically sourced ingredients to ensure quality and effectiveness. Our mission is to empower every individual to feel confident and embrace their unique beauty. Experience skincare that prioritizes both you and the planet, and join a movement that celebrates inclusivity and authenticity. Discover your confidence and embrace inclusive beauty standards with Foryou Skin Bar today!
-        </p>
+    <section class="bg-gradient-to-br from-[#6E7F67] via-[#5A6B53] to-[#6E7F67] px-6 md:px-16 py-20 md:py-28 text-white relative overflow-hidden">
+      <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 md:gap-20 items-center relative z-10">
+        <div class="text-left">
+          <h1 id="cms_about_title" class="serif-heading text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">Our Mission: Embracing Inclusive Beauty Standards</h1>
+          <p id="cms_about_text1" class="text-xl md:text-2xl text-amber-200 mb-6 font-medium">A Leader in Beauty</p>
+          <p id="cms_about_text2" class="text-lg text-white/90 leading-relaxed max-w-xl">
+            At Foryou Skin Bar, we pride ourselves on redefining the skincare experience. Through our artisanal and eco-friendly products, we bring inclusive beauty standards to the forefront of the industry. Each product is crafted with natural, ethically sourced ingredients to ensure quality and effectiveness. Our mission is to empower every individual to feel confident and embrace their unique beauty. Experience skincare that prioritizes both you and the planet, and join a movement that celebrates inclusivity and authenticity. Discover your confidence and embrace inclusive beauty standards with Foryou Skin Bar today!
+          </p>
+        </div>
+        
+        <!-- Smooth Hero Image -->
+        <div class="relative w-full flex justify-center md:justify-end">
+          <div class="absolute -inset-4 bg-amber-100/10 rounded-[3rem] blur-xl"></div>
+          <img id="cms_about_image" src="assets/brand/about-hero.png" alt="Embracing Inclusive Beauty Standards" class="relative w-full max-w-md md:max-w-lg h-auto object-cover rounded-[2.5rem] shadow-2xl border-4 border-white/10 transition-transform duration-[800ms] hover:scale-[1.02]">
+        </div>
       </div>
     </section>
 
@@ -104,13 +119,13 @@
     <section class="px-6 md:px-16 max-w-7xl mx-auto py-20 scroll-reveal">
       <div class="grid md:grid-cols-2 gap-12 items-center">
         <div>
-          <img src="assets/products/body-oil-jamaican-made-natural-botanical-infused.png" class="rounded-3xl shadow-lg w-full object-cover" alt="Home Products 1">
+          <img id="cms_about_image" src="assets/products/body-oil-jamaican-made-natural-botanical-infused.png" class="rounded-3xl shadow-lg w-full object-cover" alt="Home Products 1">
         </div>
         <div>
-          <h2 class="serif-heading text-4xl mb-6 text-stone-800">Our Story</h2>
+          <h2 id="cms_about_title" class="serif-heading text-4xl mb-6 text-stone-800">Our Story</h2>
           
           <h3 class="serif-heading text-2xl mb-4 text-stone-800">Our Mission</h3>
-          <p class="text-stone-600 mb-4 leading-relaxed">
+          <p id="cms_about_text1" class="text-stone-600 mb-4 leading-relaxed">
             Our mission at Foryou Skin Bar is to empower individuals to embrace their unique beauty through the use of artisanal skincare products made with care and integrity. We are committed to:
           </p>
           <ul class="list-disc list-inside text-stone-600 mb-8 leading-relaxed space-y-2 pl-4">
@@ -121,7 +136,7 @@
           </ul>
           
           <h3 class="serif-heading text-2xl mb-4 text-stone-800">Our Vision</h3>
-          <p class="text-stone-600 mb-8 leading-relaxed">
+          <p id="cms_about_text2" class="text-stone-600 mb-8 leading-relaxed">
             Our vision is to redefine beauty standards by promoting inclusivity, diversity, and authenticity. We envision a world where everyone feels empowered to embrace their imperfections and showcase their true selves with pride.
           </p>
         </div>
@@ -230,7 +245,8 @@
           <li><a href="shop.html?concern=dark-spots" class="hover:text-white transition">Dark Spot Care</a></li>
           <li><a href="shop.html?concern=acne" class="hover:text-white transition">Acne Care</a></li>
           <li><a href="shop.html?category=Body+Care" class="hover:text-white transition">Body Care</a></li>
-          <li><a href="quiz.html" class="hover:text-white transition">Skin Quiz</a></li>
+          <li><a href="quiz.html" class="hover:text-white transition">Skin Quiz</a>
+          <li><a href="loyalty.html" class="hover:text-amber-800 transition">Glow Rewards</a></li>
         </ul>
       </div>
       <div>
@@ -266,5 +282,26 @@
   <script src="js/products.js?v=6"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=2"></script>
+  <script type="module">
+    import { supabase } from '/admin/js/supabase-client.js';
+    
+    async function loadCMS() {
+      const { data, error } = await supabase.from('site_content').select('*').eq('key', 'about_us').single();
+      if (!error && data && data.value) {
+        const val = data.value;
+        const titleEl = document.getElementById('cms_about_title');
+        const text1El = document.getElementById('cms_about_text1');
+        const text2El = document.getElementById('cms_about_text2');
+        const imgEl = document.getElementById('cms_about_image');
+        
+        if (titleEl && val.title) titleEl.textContent = val.title;
+        if (text1El && val.text1) text1El.textContent = val.text1;
+        if (text2El && val.text2) text2El.textContent = val.text2;
+        if (imgEl && val.image_url) imgEl.src = val.image_url;
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', loadCMS);
+  </script>
 </body>
 </html>

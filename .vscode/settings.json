@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "supabase/migrations/*.sql": "postgres",
+    "supabase/**/*.sql": "postgres"
+  },
+  "mssql.intelliSense.enableIntelliSense": false,
+  "mssql.intelliSense.enableErrorChecking": false
+}

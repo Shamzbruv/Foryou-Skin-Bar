@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/brand-theme.css">
   <link rel="stylesheet" href="css/loyalty.css">
+  <link rel="stylesheet" href="css/loyalty-contrast-fix.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -53,7 +54,12 @@
       <a href="contact.html" class="hover:text-amber-800 transition">Contact</a>
     </div>
     <div class="flex items-center gap-4">
-      <a href="admin/login.html" class="text-stone-700 hover:text-amber-800 transition" title="Admin Portal"><i class="fas fa-user text-xl"></i></a>
+      <a href="customer-login.html" class="text-stone-700 hover:text-amber-800 transition" title="My Account">
+        <i class="fas fa-user text-xl"></i>
+      </a>
+      <a href="admin/login.html" class="text-stone-700 hover:text-amber-800 transition" title="Admin Portal">
+        <i class="fas fa-user-shield text-xl"></i>
+      </a>
       <button id="cartIconBtn" class="relative" aria-label="Open shopping bag">
         <i class="fas fa-bag-shopping text-stone-700 text-xl"></i>
         <span id="cartCount" class="absolute -top-2 -right-3 bg-amber-700 text-white text-[11px] w-5 h-5 rounded-full flex items-center justify-center">0</span>
@@ -68,7 +74,7 @@
     </main>
   </div>
 
-  <div id="mobileMenuDrawer" class="mobile-menu-drawer fixed top-0 right-0 w-[86%] max-w-sm h-full bg-white shadow-2xl z-[100] p-7 flex flex-col">
+  <div id="mobileMenuDrawer" class="mobile-menu-drawer fixed top-0 left-0 w-72 sm:w-80 h-full bg-white shadow-2xl z-[100] flex flex-col p-6 text-stone-800">
     <div class="flex justify-between items-center mb-8">
       <img src="assets/brand/logo.png" alt="Foryou Skin Bar" class="h-14 w-auto object-contain">
       <button id="closeMobileMenuBtn" class="text-stone-500 hover:text-amber-800 p-2" aria-label="Close menu"><i class="fas fa-times text-xl"></i></button>

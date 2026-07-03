@@ -80,22 +80,17 @@ function eligible(order, policy) {
   return true;
 }
 
-function loyaltyFor(orders, programme, policy) {
-  let balance = 0;
-  let lifetime = 0;
+function loyaltyFor(customer, orders, programme, policy) {
+  let balance = customer ? number(customer.loyalty_points_balance) : 0;
+  let lifetime = customer ? number(customer.lifetime_earned_points) : 0;
   let spend = 0;
   const pointsByOrder = new Map();
 
   [...orders].sort((left, right) => new Date(left.created_at) - new Date(right.created_at)).forEach((order) => {
-    if (!eligible(order, policy)) { pointsByOrder.set(order.id, 0); return; }
-    const tierIndex = programme.tiers.reduce((selected, tier, index) => lifetime >= tier.threshold ? index : selected, 0);
-    const tier = programme.tiers[tierIndex] || programme.tiers[0];
+    pointsByOrder.set(order.id, number(order.points_earned));
+    if (!eligible(order, policy)) return;
     const orderSpend = Math.max(0, number(order.subtotal_jmd, number(order.grand_total_jmd)));
-    const points = Math.floor(orderSpend * policy.pointsPerJmd * tier.multiplier);
     spend += orderSpend;
-    lifetime += points;
-    balance += points;
-    pointsByOrder.set(order.id, points);
   });
 
   const tierIndex = programme.tiers.reduce((selected, tier, index) => lifetime >= tier.threshold ? index : selected, 0);
@@ -142,19 +137,34 @@ async function authenticatedUser(req) {
   return data.user;
 }
 
-async function customerForEmail(email) {
+async function customerForEmail(email, user = null) {
   if (!email) return null;
-  const { data, error } = await db.from('customers').select('id, full_name, email, phone, whatsapp, created_at').ilike('email', email).order('created_at', { ascending: true }).limit(1);
+  const { data, error } = await db.from('customers').select('id, full_name, email, phone, whatsapp, created_at, loyalty_points_balance, lifetime_earned_points, default_country, default_address_line1, default_address_line2, default_city, default_parish, default_state_province, default_postal_code').ilike('email', email).order('created_at', { ascending: true }).limit(1);
   if (error) throw error;
+  
+  if (!data?.[0] && user) {
+    // Lazily insert customer record so they appear in Admin
+    const fullName = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0];
+    const phone = user.user_metadata?.phone || null;
+    const { data: newData, error: insertError } = await db.from('customers').insert({
+      email: email,
+      full_name: fullName,
+      phone: phone,
+      created_at: user.created_at
+    }).select('id, full_name, email, phone, whatsapp, created_at, loyalty_points_balance, lifetime_earned_points, default_country, default_address_line1, default_address_line2, default_city, default_parish, default_state_province, default_postal_code').single();
+    
+    if (!insertError && newData) return newData;
+  }
+  
   return data?.[0] || null;
 }
 
 async function dashboardFor(user) {
-  const customer = await customerForEmail(user.email);
+  const customer = await customerForEmail(user.email, user);
   let orders = [];
   if (customer) {
     const { data, error } = await db.from('orders')
-      .select('id, order_number, status, payment_status, fulfillment_status, delivery_method, delivery_service, shipping_address, parish, city, country, subtotal_jmd, discount_total_jmd, shipping_total_jmd, grand_total_jmd, created_at')
+      .select('id, order_number, status, payment_status, fulfillment_status, delivery_method, delivery_service, shipping_address, parish, city, country, subtotal_jmd, discount_total_jmd, shipping_total_jmd, grand_total_jmd, created_at, points_earned')
       .eq('customer_id', customer.id).order('created_at', { ascending: false }).limit(100);
     if (error) throw error;
     orders = data || [];
@@ -175,7 +185,7 @@ async function dashboardFor(user) {
   const settings = (settingsRows || []).reduce((all, row) => ({ ...all, [row.key]: row.value }), {});
   const policy = policyFrom(settings.loyalty_point_policy);
   const programme = programmeFrom(settings.loyalty_program, policy);
-  const loyalty = loyaltyFor(orders, programme, policy);
+  const loyalty = loyaltyFor(customer, orders, programme, policy);
 
   const itemsByOrder = items.reduce((all, item) => {
     if (!all[item.order_id]) all[item.order_id] = [];
@@ -211,6 +221,13 @@ async function dashboardFor(user) {
       email: user.email || '',
       phone: customer?.phone || user.user_metadata?.phone || '',
       whatsapp: customer?.whatsapp || '',
+      country: customer?.default_country || 'Jamaica',
+      addressLine1: customer?.default_address_line1 || '',
+      addressLine2: customer?.default_address_line2 || '',
+      city: customer?.default_city || '',
+      parish: customer?.default_parish || '',
+      stateProvince: customer?.default_state_province || '',
+      postalCode: customer?.default_postal_code || '',
       joinedAt: customer?.created_at || user.created_at || ''
     },
     summary: {
@@ -249,19 +266,42 @@ function register(app) {
       const fullName = String(req.body?.fullName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Foryou Customer').trim().slice(0, 120);
       const phone = String(req.body?.phone || '').trim().slice(0, 40);
       const whatsapp = String(req.body?.whatsapp || '').trim().slice(0, 40);
-      let customer = await customerForEmail(user.email);
-      const record = { full_name: fullName, phone: phone || null, whatsapp: whatsapp || null, updated_at: new Date().toISOString() };
+      const country = String(req.body?.country || '').trim().slice(0, 60);
+      const addressLine1 = String(req.body?.addressLine1 || '').trim().slice(0, 150);
+      const addressLine2 = String(req.body?.addressLine2 || '').trim().slice(0, 150);
+      const city = String(req.body?.city || '').trim().slice(0, 100);
+      const parish = String(req.body?.parish || '').trim().slice(0, 100);
+      const stateProvince = String(req.body?.stateProvince || '').trim().slice(0, 100);
+      const postalCode = String(req.body?.postalCode || '').trim().slice(0, 40);
+      let customer = await customerForEmail(user.email, user);
+      const record = { 
+        full_name: fullName, 
+        phone: phone || null, 
+        whatsapp: whatsapp || null, 
+        default_country: country || null,
+        default_address_line1: addressLine1 || null,
+        default_address_line2: addressLine2 || null,
+        default_city: city || null,
+        default_parish: parish || null,
+        default_state_province: stateProvince || null,
+        default_postal_code: postalCode || null,
+        updated_at: new Date().toISOString() 
+      };
       if (customer) {
-        const { data, error } = await db.from('customers').update(record).eq('id', customer.id).select('id, full_name, email, phone, whatsapp, created_at').single();
+        const { data, error } = await db.from('customers').update(record).eq('id', customer.id).select('id').single();
         if (error) throw error;
-        customer = data;
       } else {
-        const { data, error } = await db.from('customers').insert({ ...record, email: user.email }).select('id, full_name, email, phone, whatsapp, created_at').single();
+        const { data, error } = await db.from('customers').insert({ ...record, email: user.email }).select('id').single();
         if (error) throw error;
-        customer = data;
       }
+      customer = await customerForEmail(user.email);
       await db.auth.admin.updateUserById(user.id, { user_metadata: { ...user.user_metadata, full_name: customer.full_name, phone: customer.phone || '' } });
-      return res.status(200).json({ profile: { fullName: customer.full_name, email: user.email, phone: customer.phone || '', whatsapp: customer.whatsapp || '', joinedAt: customer.created_at || user.created_at } });
+      return res.status(200).json({ profile: { 
+        fullName: customer.full_name, email: user.email, phone: customer.phone || '', whatsapp: customer.whatsapp || '', 
+        country: customer.default_country || 'Jamaica', addressLine1: customer.default_address_line1 || '', addressLine2: customer.default_address_line2 || '',
+        city: customer.default_city || '', parish: customer.default_parish || '', stateProvince: customer.default_state_province || '', postalCode: customer.default_postal_code || '',
+        joinedAt: customer.created_at || user.created_at 
+      } });
     } catch (error) { return res.status(error.status || 500).json({ error: error.message || 'Unable to update your profile.' }); }
   });
 }

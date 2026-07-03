@@ -100,12 +100,16 @@
       <a href="blog.html" class="hover:text-amber-800 transition">Blog</a>
       <a href="ingredients.html" class="hover:text-amber-800 transition">Ingredients</a>
       <a href="quiz.html" class="hover:text-amber-800 transition">Skin Quiz</a>
+      <a href="loyalty.html" class="hover:text-amber-800 transition">Glow Rewards</a>
       <a href="faq.html" class="hover:text-amber-800 transition">FAQ</a>
       <a href="contact.html" class="hover:text-amber-800 transition">Contact</a>
     </div>
     <div class="flex items-center gap-4">
-      <a href="admin/login.html" class="text-stone-700 hover:text-amber-800 transition" title="Admin Portal">
+      <a href="customer-login.html" class="text-stone-700 hover:text-amber-800 transition" title="My Account">
         <i class="fas fa-user text-xl"></i>
+      </a>
+      <a href="admin/login.html" class="text-stone-700 hover:text-amber-800 transition" title="Admin Portal">
+        <i class="fas fa-user-shield text-xl"></i>
       </a>
       <button id="cartIconBtn" class="relative">
         <i class="fas fa-bag-shopping text-stone-700 text-xl"></i>
@@ -128,19 +132,19 @@
             Plant-powered. Results-driven.
           </span>
 
-          <h1>
+          <h1 id="cms_home_title">
             Skincare made<br>
             for <em>your</em> glow.
           </h1>
 
-          <p>
+          <p id="cms_home_subtitle">
             Handmade in Jamaica with powerful natural ingredients that help target
             acne, hyperpigmentation, dark spots, uneven tone, and reveal healthy,
             radiant skin.
           </p>
 
           <div class="bliss-hero-actions">
-            <a href="shop.html" class="bliss-btn bliss-btn-primary">
+            <a href="shop.html" id="cms_home_btn" class="bliss-btn bliss-btn-primary">
               Shop Now
               <i class="fas fa-arrow-right"></i>
             </a>
@@ -166,7 +170,7 @@
 
       <!-- Right Image Area (Absolute Bleed) -->
       <div class="bliss-hero-visual" aria-label="ForYou Skin Bar skincare products">
-        <div class="bliss-image-card"></div>
+        <div id="cms_home_image" class="bliss-image-card"></div>
         <div class="bliss-orb bliss-orb-one"></div>
         <div class="bliss-orb bliss-orb-two"></div>
       </div>
@@ -404,7 +408,8 @@
           <li><a href="shop.html?concern=dark-spots" class="hover:text-white transition">Dark Spot Care</a></li>
           <li><a href="shop.html?concern=acne" class="hover:text-white transition">Acne Care</a></li>
           <li><a href="shop.html?concern=body-care" class="hover:text-white transition">Body Care</a></li>
-          <li><a href="quiz.html" class="hover:text-white transition">Skin Quiz</a></li>
+          <li><a href="quiz.html" class="hover:text-white transition">Skin Quiz</a>
+          <li><a href="loyalty.html" class="hover:text-amber-800 transition">Glow Rewards</a></li>
         </ul>
       </div>
       <div>
@@ -444,6 +449,33 @@
   <script src="js/blog.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=2"></script>
+  <script src="js/quiz-integration.js"></script>
+  
+  <script type="module">
+    import { supabase } from '/admin/js/supabase-client.js';
+    
+    async function loadCMS() {
+      const { data, error } = await supabase.from('site_content').select('*').eq('key', 'home_hero').single();
+      if (!error && data && data.value) {
+        const val = data.value;
+        const titleEl = document.getElementById('cms_home_title');
+        const subtitleEl = document.getElementById('cms_home_subtitle');
+        const btnEl = document.getElementById('cms_home_btn');
+        const imgEl = document.getElementById('cms_home_image');
+        
+        if (titleEl && val.title) titleEl.innerHTML = val.title;
+        if (subtitleEl && val.subtitle) subtitleEl.textContent = val.subtitle;
+        if (btnEl && val.button_text) {
+          btnEl.childNodes[0].textContent = val.button_text + ' ';
+        }
+        if (imgEl && val.image_url) {
+          imgEl.style.backgroundImage = `url('${val.image_url}')`;
+        }
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', loadCMS);
+  </script>
   <script>
     (async function() {
       await window.loadProductsData();
