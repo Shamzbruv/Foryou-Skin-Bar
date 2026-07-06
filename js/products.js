@@ -112,7 +112,6 @@ window.loadProductsData = async function() {
         return window.productsData;
     } catch (err) {
         console.error("Error fetching products from Supabase:", err);
-        alert("Failed to load products: " + err.message);
         return [];
     }
 };
