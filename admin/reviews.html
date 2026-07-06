@@ -150,7 +150,7 @@
                 return `
                 <tr class="hover:bg-stone-50 transition">
                     <td class="p-4 font-bold text-stone-800">${r.customer_name}</td>
-                    <td class="p-4 text-stone-600">${r.product_id}</td>
+                    <td class="p-4 text-stone-600">${r.product_id ? r.product_id : '<span class="text-amber-800 font-semibold"><i class="fas fa-heart"></i> General Review</span>'}</td>
                     <td class="p-4 text-amber-500">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</td>
                     <td class="p-4 text-stone-600 truncate max-w-xs">${r.review_text}</td>
                     <td class="p-4"><span class="px-2 py-1 text-xs font-semibold rounded-full uppercase ${statusClass}">${statusText}</span></td>

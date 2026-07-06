@@ -299,19 +299,7 @@
       if (title) title.textContent = 'Product Details';
     }
 
-    if (product?.returnPolicyHtml) {
-      const policy = [...container.querySelectorAll('.product-detail-card')].find((card) => /return\s*\/?.*policy|refund/i.test(card.querySelector('h3')?.textContent || ''));
-      if (policy && !policy.dataset.expanded) {
-        policy.dataset.expanded = 'true';
-        const title = policy.querySelector('h3');
-        policy.innerHTML = '';
-        if (title) policy.appendChild(title);
-        const body = document.createElement('div');
-        body.className = 'full-policy-text';
-        body.innerHTML = safeHTML(product.returnPolicyHtml);
-        policy.appendChild(body);
-      }
-    }
+    // The standard global return policy from product.html should remain intact.
 
     mergeLegacyResults();
     syncFavourites();

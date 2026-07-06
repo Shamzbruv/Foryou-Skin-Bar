@@ -3,7 +3,7 @@
     enabled: true,
     name: 'Glow & Go Inner Circle',
     hero: {
-      eyebrow: 'For You Skin Bar Rewards',
+      eyebrow: 'ForYou Skin Bar Rewards',
       title: 'Glow more.\nGet <em>more</em> back.',
       description: 'The Glow & Go Inner Circle is our thank-you for choosing your skin. Earn Glow Credits, unlock special rewards, and rise through every level of your routine.',
       imageUrl: 'assets/products/gift_set.png',

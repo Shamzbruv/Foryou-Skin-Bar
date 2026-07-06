@@ -73,11 +73,12 @@
     </div>
     <div class="hidden md:flex items-center gap-7 text-sm font-medium text-white">
       <a href="index.html" class="hover:text-amber-800 transition">Home</a>
-      <a href="shop.html" class="text-white transition">Shop</a>
+      <a href="shop.html" class="hover:text-amber-800 transition">Shop</a>
       <a href="about.html" class="hover:text-amber-800 transition">About</a>
       <a href="blog.html" class="hover:text-amber-800 transition">Blog</a>
       <a href="ingredients.html" class="hover:text-amber-800 transition">Ingredients</a>
       <a href="quiz.html" class="hover:text-amber-800 transition">Skin Quiz</a>
+      <a href="reviews.html" class="hover:text-amber-800 transition">Reviews</a>
       <a href="loyalty.html" class="hover:text-amber-800 transition">Glow Rewards</a>
       <a href="faq.html" class="hover:text-amber-800 transition">FAQ</a>
       <a href="contact.html" class="hover:text-amber-800 transition">Contact</a>
@@ -129,11 +130,13 @@
     </div>
     <div class="flex flex-col gap-5 text-stone-700 font-medium">
       <a href="index.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-home w-5"></i>Home</a>
-      <a href="shop.html" class="text-lg text-amber-800 transition flex items-center gap-3"><i class="fas fa-bag-shopping w-5"></i>Shop</a>
+      <a href="shop.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-bag-shopping w-5"></i>Shop</a>
       <a href="about.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-heart w-5"></i>About</a>
       <a href="blog.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-newspaper w-5"></i>Blog</a>
       <a href="ingredients.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-leaf w-5"></i>Ingredients</a>
       <a href="quiz.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-magic w-5"></i>Skin Quiz</a>
+      <a href="reviews.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-star w-5"></i>Reviews</a>
+      <a href="loyalty.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-gift w-5"></i>Glow Rewards</a>
       <a href="faq.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-question-circle w-5"></i>FAQ</a>
       <a href="contact.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-envelope w-5"></i>Contact</a>
     </div>
@@ -431,8 +434,25 @@
           </div>` : '';
 
         const customSectionsHtml = (product.infoSections || [])
+          .filter(section => !section.title.toLowerCase().includes('return') && !section.title.toLowerCase().includes('refund'))
           .map(section => detailCard(section.title, section.body, 'fa-layer-group'))
           .join('');
+
+        const standardReturnPolicy = `
+          <b>Return Policy</b><br>
+          Due to the handmade and personal care nature of our skincare products, we do not accept returns or exchanges on opened or used items.<br><br>
+          If your order arrives damaged, defective or incorrect, please contact us within 48hrs of delivery with your order number and photos of the item. We will review the issue and, where appropriate, provide a replacement or refund.<br><br>
+          For hygiene and safety reasons, all sales are final unless the product is damaged, defective, or sent in error. If you have any questions about a product before purchasing, please contact us, we're happy to help.<br><br>
+          <b>Refund Policy</b><br>
+          Customer satisfaction is important to us. Due to the handmade and personal care nature of our products, refunds are only available for items that arrive damaged, defective, or incorrect.<br><br>
+          To request a refund, please contact us within 48hrs of receiving your order and provide your order number along with photos of the issue. Approved refunds will be processed to the original payment method within 5-10 business days.<br><br>
+          We do not offer refunds for:<br>
+          • Opened or used products<br>
+          • Allergic reactions or skin sensitivities<br>
+          • Change of mind after purchase<br>
+          • Incorrect shipping information provided by the customer<br><br>
+          <a href="policies.html" class="text-amber-800 underline font-bold mt-2 inline-block">Read full policy</a>
+        `;
 
         const detailsBlockHtml = [
           htmlCard('Product Description', product.description || product.shortDescription, 'fa-align-left', true),
@@ -440,7 +460,7 @@
           detailCard('Best For', product.bestFor, 'fa-star', 4),
           detailCard('Key Ingredients', product.ingredientsHtml || (product.ingredients || []).join('\n'), 'fa-leaf', 6),
           detailCard('How To Use', product.howToUseHtml || product.howToUse, 'fa-hands-bubbles', 5),
-          htmlCard('Return / Refund Policy', product.returnPolicyHtml, 'fa-rotate-left', true),
+          htmlCard('Return & Refund Policy', standardReturnPolicy, 'fa-rotate-left', true),
           customSectionsHtml
         ].filter(Boolean).join('');
 

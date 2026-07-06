@@ -59,7 +59,7 @@
   width: min(47vw, 45rem);
   background-position: center;
   background-size: cover;
-  opacity: 0.22;
+  opacity: 0.5;
   mix-blend-mode: luminosity;
   mask-image: linear-gradient(90deg, transparent 0%, black 35%, black 100%);
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 35%, black 100%);
@@ -72,7 +72,9 @@
   margin: 0 auto;
 }
 
-.loyalty-hero-inner { max-width: 70rem; }
+.loyalty-hero-inner {
+  max-width: 70rem;
+}
 
 .loyalty-kicker {
   display: inline-flex;
@@ -133,7 +135,9 @@
   transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.loyalty-btn:hover { transform: translateY(-2px); }
+.loyalty-btn:hover {
+  transform: translateY(-2px);
+}
 
 .loyalty-btn-primary {
   background: var(--loyalty-gold);
@@ -141,7 +145,9 @@
   box-shadow: 0 12px 30px rgba(35, 25, 15, 0.3);
 }
 
-.loyalty-btn-primary:hover { background: #b0852f; }
+.loyalty-btn-primary:hover {
+  background: #b0852f;
+}
 
 .loyalty-btn-secondary {
   border: 1px solid rgba(255, 253, 248, 0.34);
@@ -149,7 +155,9 @@
   color: #fffdf8;
 }
 
-.loyalty-btn-secondary:hover { background: rgba(255, 253, 248, 0.14); }
+.loyalty-btn-secondary:hover {
+  background: rgba(255, 253, 248, 0.14);
+}
 
 .loyalty-hero-proof {
   display: flex;
@@ -166,10 +174,17 @@
   font-size: 0.84rem;
 }
 
-.loyalty-hero-proof i { color: #f4d98e; }
+.loyalty-hero-proof i {
+  color: #f4d98e;
+}
 
-.loyalty-section { padding: clamp(4rem, 8vw, 6.5rem) 1.5rem; }
-.loyalty-section-soft { background: linear-gradient(180deg, rgba(221, 229, 215, 0.72), rgba(248, 245, 239, 0.88)); }
+.loyalty-section {
+  padding: clamp(4rem, 8vw, 6.5rem) 1.5rem;
+}
+
+.loyalty-section-soft {
+  background: linear-gradient(180deg, rgba(221, 229, 215, 0.72), rgba(248, 245, 239, 0.88));
+}
 
 .loyalty-section-heading {
   max-width: 42rem;
@@ -238,8 +253,19 @@
   font-size: 3.2rem;
 }
 
-.loyalty-step h3 { margin-top: 2.6rem; color: var(--loyalty-cocoa); font-size: 1.2rem; font-weight: 800; }
-.loyalty-step p { margin-top: 0.55rem; color: #5a4c3a; font-size: 0.94rem; line-height: 1.65; }
+.loyalty-step h3 {
+  margin-top: 2.6rem;
+  color: var(--loyalty-cocoa);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.loyalty-step p {
+  margin-top: 0.55rem;
+  color: #5a4c3a;
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
 
 .loyalty-tier-grid {
   display: grid;
@@ -301,26 +327,98 @@
   font-size: 1.3rem;
 }
 
-.loyalty-tier h3 { margin-top: 2.4rem; color: #fffdf8; font-family: 'Cormorant Garamond', serif; font-size: 2.15rem; line-height: 0.95; }
-.loyalty-tier-threshold { margin-top: 0.7rem; color: rgba(255, 253, 248, 0.82); font-size: 0.8rem; font-weight: 700; font-family: 'Inter', sans-serif; }
-.loyalty-tier-summary { margin-top: 0.85rem; color: rgba(255, 253, 248, 0.9); font-size: 0.9rem; line-height: 1.55; font-family: 'Inter', sans-serif; font-weight: 500; }
+.loyalty-tier h3 {
+  margin-top: 2.4rem;
+  color: #fffdf8;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.15rem;
+  line-height: 0.95;
+}
 
-.loyalty-tier-body { display: grid; gap: 1.35rem; padding: 1.45rem 1.55rem 1.6rem; }
-.loyalty-tier-body h4 { color: var(--loyalty-cocoa); font-size: 0.76rem; font-weight: 850; letter-spacing: 0.095em; text-transform: uppercase; }
-.loyalty-tier-list { display: grid; gap: 0.7rem; margin-top: 0.7rem; }
-.loyalty-tier-list li { position: relative; padding-left: 1.2rem; color: #5a4c3a; font-size: 0.9rem; line-height: 1.55; }
-.loyalty-tier-list li::before { content: '•'; position: absolute; left: 0; color: var(--loyalty-gold); font-size: 1.2rem; line-height: 1; }
+.loyalty-tier-threshold {
+  margin-top: 0.7rem;
+  color: rgba(255, 253, 248, 0.82);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+}
 
-.loyalty-detail-grid { display: grid; gap: 1rem; }
+.loyalty-tier-summary {
+  margin-top: 0.85rem;
+  color: rgba(255, 253, 248, 0.9);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+.loyalty-tier-body {
+  display: grid;
+  gap: 1.35rem;
+  padding: 1.45rem 1.55rem 1.6rem;
+}
+
+.loyalty-tier-body h4 {
+  color: var(--loyalty-cocoa);
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.095em;
+  text-transform: uppercase;
+}
+
+.loyalty-tier-list {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+}
+
+.loyalty-tier-list li {
+  position: relative;
+  padding-left: 1.2rem;
+  color: #5a4c3a;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.loyalty-tier-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--loyalty-cocoa);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.loyalty-detail-grid {
+  display: grid;
+  gap: 1rem;
+}
+
 .loyalty-detail {
   padding: 0.9rem 1rem;
   border: 1px solid rgba(200, 155, 60, 0.24);
   border-radius: 1rem;
   background: rgba(248, 245, 239, 0.76);
 }
-.loyalty-detail strong { display: block; color: var(--loyalty-cocoa); font-size: 0.88rem; }
-.loyalty-detail span { display: block; margin-top: 0.2rem; color: #6b5d50; font-size: 0.82rem; line-height: 1.45; }
-.loyalty-detail-points { color: #a57822 !important; font-weight: 800; }
+
+.loyalty-detail strong {
+  display: block;
+  color: var(--loyalty-cocoa);
+  font-size: 0.88rem;
+}
+
+.loyalty-detail span {
+  display: block;
+  margin-top: 0.2rem;
+  color: #6b5d50;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.loyalty-detail-points {
+  color: #a57822 !important;
+  font-weight: 800;
+}
 
 .loyalty-cta {
   position: relative;
@@ -334,9 +432,27 @@
   color: #fffdf8;
 }
 
-.loyalty-cta h2 { max-width: 43rem; color: #fffdf8; font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 5vw, 4.4rem); line-height: 0.92; letter-spacing: -0.04em; }
-.loyalty-cta p { max-width: 38rem; margin-top: 0.85rem; color: rgba(255, 253, 248, 0.82); line-height: 1.7; font-family: 'Inter', sans-serif; font-weight: 500; }
-.loyalty-cta .loyalty-btn { margin-top: 1.5rem; }
+.loyalty-cta h2 {
+  max-width: 43rem;
+  color: #fffdf8;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+}
+
+.loyalty-cta p {
+  max-width: 38rem;
+  margin-top: 0.85rem;
+  color: rgba(255, 253, 248, 0.82);
+  line-height: 1.7;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+.loyalty-cta .loyalty-btn {
+  margin-top: 1.5rem;
+}
 
 .loyalty-terms {
   max-width: 58rem;
@@ -359,14 +475,40 @@
 }
 
 @media (max-width: 920px) {
+
   .loyalty-steps,
-  .loyalty-tier-grid { grid-template-columns: 1fr; }
-  .loyalty-hero-image { width: 70vw; opacity: 0.14; }
+  .loyalty-tier-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .loyalty-hero-image {
+    width: 70vw;
+    opacity: 0.14;
+  }
 }
 
 @media (max-width: 640px) {
-  .loyalty-hero { padding-inline: 1.25rem; }
-  .loyalty-hero-actions { display: grid; grid-template-columns: 1fr; }
-  .loyalty-btn { width: 100%; }
-  .loyalty-step, .loyalty-tier-top, .loyalty-tier-body { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .loyalty-hero {
+    padding-inline: 1.25rem;
+  }
+
+  .loyalty-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .loyalty-btn {
+    width: 100%;
+  }
+
+  .loyalty-step,
+  .loyalty-tier-top,
+  .loyalty-tier-body {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
 }
+/* Specific Gold Overrides for Headings */
+#loyaltyRoot .loyalty-hero h1, #loyaltyRoot .loyalty-tier h3, #loyaltyRoot .loyalty-cta h2 { color: var(--loyalty-gold) !important; }
+#loyaltyRoot .loyalty-hero h1 em { color: #f4d98e !important; }
+#loyaltyRoot .loyalty-tier:nth-child(2) h3 { color: var(--loyalty-cocoa) !important; }

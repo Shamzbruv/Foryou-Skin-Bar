@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Website Policies | Foryou Skin Bar</title>
+  <meta name="description" content="Policies for For You Skin Bar.">
+  <meta name="robots" content="noindex, follow">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            stone: { 50: '#F8F5EF', 100: '#EBE3D5', 200: '#D1C5B5', 300: '#B8AFA4', 400: '#8A7D6E', 500: '#6B5D50', 600: '#5A4C3A', 700: '#3A2E27', 800: '#3A2E27', 900: '#2C211B' },
+            amber: { 50: '#F8F5EF', 100: '#F3E6C7', 200: '#E1C77D', 300: '#C89B3C', 400: '#C89B3C', 500: '#C89B3C', 600: '#B0852F', 700: '#C89B3C', 800: '#B0852F', 900: '#5A6B53' },
+            sage: { 50: '#DDE5D7', 100: '#C7D2C0', 200: '#AEBDA6', 300: '#93A389', 400: '#7F9077', 500: '#6E7F67', 600: '#5A6B53', 700: '#465640', 800: '#354232', 900: '#253025' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/brand-theme.css">
+  <style>
+    .policy-content h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.25rem;
+      color: #3A2E27;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #EBE3D5;
+    }
+    .policy-content h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #3A2E27;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+    }
+    .policy-content p, .policy-content ul {
+      margin-bottom: 1rem;
+      color: #5A4C3A;
+      line-height: 1.7;
+    }
+    .policy-content ul { list-style-type: disc; padding-left: 1.5rem; }
+    .policy-content li { margin-bottom: 0.5rem; }
+    .policy-nav a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #5A4C3A;
+      border-radius: 0.5rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .policy-nav a:hover {
+      background-color: #F8F5EF;
+      color: #B0852F;
+    }
+    .policy-nav a.active-tab {
+      background-color: #F3E6C7;
+      color: #5A6B53;
+      font-weight: 700;
+    }
+    .policy-tab-content {
+      animation: fadeIn 0.4s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="antialiased policy-page">
+
+  <div class="bg-amber-900/90 text-white text-center py-2.5 text-sm font-medium tracking-wide">
+    🌿 Free Shipping on orders over J$10,000 &nbsp;|&nbsp; ✨ Handcrafted with Love in Jamaica
+  </div>
+
+  <nav class="glass-nav sticky top-0 z-50 px-6 md:px-12 py-4 flex flex-wrap items-center justify-between">
+    <div class="flex items-center gap-2">
+      <a href="index.html"><img src="assets/brand/logo.png" alt="Foryou Skin Bar Logo" class="h-20 md:h-24 w-auto object-contain"></a>
+    </div>
+    <div class="hidden md:flex items-center gap-7 text-sm font-medium text-stone-700">
+      <a href="index.html" class="hover:text-amber-800 transition">Home</a>
+      <a href="shop.html" class="hover:text-amber-800 transition">Shop</a>
+      <a href="about.html" class="hover:text-amber-800 transition">About</a>
+      <a href="blog.html" class="hover:text-amber-800 transition">Blog</a>
+      <a href="ingredients.html" class="hover:text-amber-800 transition">Ingredients</a>
+      <a href="quiz.html" class="hover:text-amber-800 transition">Skin Quiz</a>
+      <a href="reviews.html" class="hover:text-amber-800 transition">Reviews</a>
+      <a href="loyalty.html" class="hover:text-amber-800 transition">Glow Rewards</a>
+      <a href="faq.html" class="hover:text-amber-800 transition">FAQ</a>
+      <a href="contact.html" class="hover:text-amber-800 transition">Contact</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="customer-login.html" class="text-stone-700 hover:text-amber-800 transition" title="My Account">
+        <i class="fas fa-user text-xl"></i>
+      </a>
+      <a href="admin/login.html" class="text-stone-700 hover:text-amber-800 transition" title="Admin Portal">
+        <i class="fas fa-user-shield text-xl"></i>
+      </a>
+      <button id="cartIconBtn" class="relative">
+        <i class="fas fa-bag-shopping text-stone-700 text-xl"></i>
+        <span id="cartCount" class="absolute -top-2 -right-3 bg-amber-700 text-white text-[11px] w-5 h-5 rounded-full flex items-center justify-center" style="display:none;">0</span>
+      </button>
+      <button id="mobileMenuBtn" class="md:hidden text-stone-700 text-2xl"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <main class="py-16 px-6 md:px-12 max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="md:w-1/4 relative">
+      <div class="bg-white rounded-3xl p-6 shadow-sm border border-stone-100 sticky top-32 policy-nav">
+        <h3 class="font-bold text-amber-900 mb-4 text-lg border-b border-stone-100 pb-2">Policies Directory</h3>
+        <nav class="flex flex-col gap-1 text-sm font-medium">
+          <a data-target="return-policy">Return & Refund Policy</a>
+          <a data-target="terms-conditions">Terms & Conditions</a>
+          <a data-target="privacy-policy">Privacy Policy</a>
+          <a data-target="shipping-policy">Shipping Policy</a>
+          <a data-target="product-disclaimer">Product Disclaimer</a>
+          <a data-target="skincare-disclaimer">Skincare Results Disclaimer</a>
+          <a data-target="checkout-consent">Checkout Consent</a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Content Area (Changed from div to article to avoid JS animation hiding it) -->
+    <article class="md:w-3/4 min-h-[500px]">
+      <div class="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-stone-100 policy-content text-stone-800">
+        
+        <h1 class="serif-heading text-5xl text-amber-900 mb-2 border-b border-stone-100 pb-4">Website Policies</h1>
+        
+        <!-- Tab 1: Return & Refund -->
+        <div id="return-policy" class="policy-tab-content hidden">
+          <h2>Return & Refund Policy</h2>
+          <p>Due to the handmade and personal care nature of our skincare products, we do not accept returns or exchanges on opened or used items.</p>
+          <p>If your order arrives damaged, defective or incorrect, please contact us within 48hrs of delivery with your order number and photos of the item. We will review the issue and, where appropriate, provide a replacement or refund.</p>
+          <p>For hygiene and safety reasons, all sales are final unless the product is damaged, defective, or sent in error.</p>
+          
+          <h3 class="mt-8">Comprehensive Refund Policy</h3>
+          <p><em>Last Updated: June 19, 2026</em></p>
+          <p>Welcome to Foryou Skin Bar ("we," "our," "us"). We are a Jamaican sole trader business that manufactures and sells handmade skincare products and related accessories to customers in Jamaica and internationally.</p>
+
+          <h3>1. Products Covered</h3>
+          <p>This policy applies to all products sold by Foryou Skin Bar, including but not limited to:</p>
+          <ul>
+            <li><strong>Skincare Products:</strong> Cold Process Soaps, Facial and Body Serums, Toners, Face and Body Scrubs, Creams, Face Oils, Body Oils, Body Butters, Body Mists</li>
+            <li><strong>Accessories and Tools:</strong> Soap Dishes, Soap Saver Bags, Head Bands, Applicators, Exfoliating Gloves, Other skincare accessories offered for sale</li>
+          </ul>
+
+          <h3>2. Nature of Handmade Products</h3>
+          <p>Our products are handmade in small batches. Variations in color, texture, scent, weight, shape, and appearance may occur and are not considered defects.</p>
+          <p>Product photographs are provided for illustrative purposes only and may differ slightly from the product received.</p>
+
+          <h3>3. No Returns on Opened or Used Skincare Products</h3>
+          <p>For health, hygiene, and safety reasons, we do not accept returns, exchanges, or refunds for opened skincare products, used skincare products, products with broken safety seals, products altered after delivery, or products damaged due to improper storage or misuse.</p>
+
+          <h3>4. Damaged, Defective, or Incorrect Items</h3>
+          <p>If you receive a damaged item, a defective item, or an item different from what you ordered, you must contact us within 48 hours of delivery.</p>
+          <p>Please email us at <a href="mailto:foryouskinbar@gmail.com" class="text-amber-700 underline">foryouskinbar@gmail.com</a> with your order number, description of the issue, and clear photographs showing the product and packaging.</p>
+
+          <h3>5. Allergies and Skin Reactions</h3>
+          <p>Customers are responsible for reviewing all ingredient information before purchasing and using our products.</p>
+          <p>Refunds will not be provided for reactions resulting from allergies, sensitivities, or failure to follow product instructions.</p>
+
+          <h3>6. Returns for Accessories</h3>
+          <p>Unused accessories and tools may be eligible for return if the item is unused, in its original condition, returned in original packaging, and the request is made within 7 days of delivery.</p>
+          <p>For hygiene reasons, used head bands, applicators, exfoliating gloves, or similar personal care accessories are not eligible for return.</p>
+
+          <h3>7. Refund Eligibility</h3>
+          <p>Refunds will not be granted for: Change of mind, personal preference regarding scent or texture, allergic reactions or skin sensitivities, failure to read product descriptions or ingredient lists, delays caused by shipping carriers or customs.</p>
+
+          <h3>8. Order Cancellations</h3>
+          <p>Orders may be cancelled only before production, processing, or shipment has begun. Because many products are handmade to order, cancellation requests received after processing begins may be refused.</p>
+        </div>
+
+        <!-- Tab 2: Terms & Conditions -->
+        <div id="terms-conditions" class="policy-tab-content hidden">
+          <h2>Terms & Conditions</h2>
+          <p><em>Last Updated: June 19, 2026</em></p>
+          <p>Welcome to Foryou Skin Bar ("Company", "we", "our", or "us"). By accessing our website, purchasing our products, or using our services, you agree to be bound by these Terms & Conditions.</p>
+
+          <h3>1. Business Information</h3>
+          <p>Foryou Skin Bar is a sole trader business operating in Jamaica and offering handmade skincare products and related accessories for sale to customers locally and internationally.</p>
+
+          <h3>2. Eligibility</h3>
+          <p>By placing an order, you confirm that: You are at least 18 years old or have the consent of a parent or guardian. The information provided during checkout is accurate and complete. You are legally authorized to use the selected payment method.</p>
+
+          <h3>3. Products</h3>
+          <p>We manufacture and sell handmade skincare products including but not limited to: Cold Process Soaps, Serums, Toners, Scrubs, Creams, Face Oils, Body Oils, Body Butters, Body Mists. We also sell accessories and skincare tools.</p>
+          <p>Because products are handmade, slight variations in color, texture, appearance, scent, and weight may occur.</p>
+
+          <h3>4. Pricing</h3>
+          <p>All prices are displayed in JMD and are subject to change without notice.</p>
+          <p>We reserve the right to correct pricing errors, inaccuracies, or omissions at any time.</p>
+
+          <h3>5. Orders</h3>
+          <p>All orders are subject to acceptance and availability.</p>
+          <p>We reserve the right to: Refuse any order; Limit quantities purchased; Cancel orders suspected of fraud or unauthorized activity.</p>
+          <p>If an order is cancelled after payment has been received, a refund will be issued.</p>
+
+          <h3>6. Payment</h3>
+          <p>Payment must be received in full before an order is processed or shipped. Accepted payment methods will be displayed during checkout.</p>
+
+          <h3>7. Shipping</h3>
+          <p>Shipping and delivery are governed by our Shipping Policy. Delivery estimates are not guarantees and may be affected by courier delays, customs processing, weather conditions, or other circumstances beyond our control.</p>
+
+          <h3>8. Intellectual Property</h3>
+          <p>All website content including: Product names, Product descriptions, Images, Graphics, Logos, Branding, Written content is the property of Foryou Skin Bar and may not be copied, reproduced, distributed, or used without prior written permission.</p>
+
+          <h3>9. Product Use</h3>
+          <p>Customers are responsible for reading ingredients, usage instructions, warnings, and product descriptions before use. Use of our products is at your own risk.</p>
+
+          <h3>10. Limitation of Liability</h3>
+          <p>To the fullest extent permitted by law, Foryou Skin Bar shall not be liable for indirect, incidental, consequential, or special damages arising from the use or inability to use our products or website.</p>
+
+          <h3>11. Contact</h3>
+          <p>
+            <strong>Foryou Skin Bar</strong><br>
+            Email: <a href="mailto:foryouskinbar@gmail.com" class="text-amber-700 underline">foryouskinbar@gmail.com</a><br>
+            Phone/WhatsApp: 8763094374
+          </p>
+        </div>
+
+        <!-- Tab 3: Privacy Policy -->
+        <div id="privacy-policy" class="policy-tab-content hidden">
+          <h2>Privacy Policy</h2>
+          <p><em>Last Updated: June 19, 2026</em></p>
+          <p>Foryou Skin Bar respects your privacy and is committed to protecting your personal information.</p>
+
+          <h3>Information We Collect</h3>
+          <p>We may collect:</p>
+          <ul>
+            <li><strong>Personal Information:</strong> Name, Email address, Phone number, Billing address, Shipping address</li>
+            <li><strong>Order Information:</strong> Products purchased, Order history, Payment details processed through secure third-party providers</li>
+            <li><strong>Technical Information:</strong> IP address, Browser type, Device information, Website usage data</li>
+          </ul>
+
+          <h3>How We Use Your Information</h3>
+          <p>We use information to:</p>
+          <ul>
+            <li>Process and fulfill orders</li>
+            <li>Communicate regarding purchases</li>
+            <li>Provide customer support</li>
+            <li>Improve our website and services</li>
+            <li>Send marketing communications where permitted</li>
+          </ul>
+
+          <h3>Payment Security</h3>
+          <p>Payment information is processed by secure third-party payment providers. Foryou Skin Bar does not store complete credit card information on its servers.</p>
+
+          <h3>Sharing Information</h3>
+          <p>We may share information with: Payment processors, Shipping carriers, Website service providers, Government authorities where legally required.</p>
+          <p>We do not sell personal information to third parties.</p>
+
+          <h3>Data Retention & Rights</h3>
+          <p>We retain personal information only as long as necessary for business, legal, accounting, or tax purposes.</p>
+          <p>Subject to applicable law, you may request access to your information, correction of inaccurate information, or deletion of personal information where legally permitted.</p>
+
+          <h3>Cookies</h3>
+          <p>Our website may use cookies to improve functionality and user experience. Users may disable cookies through their browser settings.</p>
+
+          <h3>Security</h3>
+          <p>We implement reasonable administrative, technical, and physical safeguards to protect personal information. However, no online transmission can be guaranteed completely secure.</p>
+
+          <h3>Contact</h3>
+          <p>For privacy inquiries:<br>
+            <strong>Foryou Skin Bar</strong><br>
+            Email: <a href="mailto:foryouskinbar@gmail.com" class="text-amber-700 underline">foryouskinbar@gmail.com</a>
+          </p>
+        </div>
+
+        <!-- Tab 4: Shipping Policy -->
+        <div id="shipping-policy" class="policy-tab-content hidden">
+          <h2>Shipping Policy</h2>
+          <p><em>Last Updated: June 19, 2026</em></p>
+          
+          <h3>Processing Times</h3>
+          <p>Orders are generally processed within 2–5 business days.</p>
+          <p>During sales periods, holidays, product launches, or high-volume periods, processing times may be extended.</p>
+          <p>Because many of our products are handmade in small batches, additional preparation time may occasionally be required.</p>
+
+          <h3>Domestic Shipping (Jamaica)</h3>
+          <p>Delivery times within Jamaica typically range from 1–5 business days after dispatch depending on the destination and courier service.</p>
+          <p>Delivery estimates are not guaranteed.</p>
+
+          <h3>International Shipping</h3>
+          <p>International delivery times vary by destination, customs processing, and courier service.</p>
+          <p>Estimated delivery times may range from 7–30 business days after dispatch.</p>
+
+          <h3>Customs and Import Charges</h3>
+          <p>International customers are responsible for: Customs duties, Import taxes, Brokerage fees, Other charges imposed by local authorities.</p>
+          <p>Foryou Skin Bar is not responsible for delays caused by customs clearance procedures.</p>
+
+          <h3>Shipping Address Accuracy</h3>
+          <p>Customers are responsible for providing accurate shipping information.</p>
+          <p>Orders returned due to incorrect addresses may require additional shipping fees before reshipment.</p>
+
+          <h3>Tracking Information</h3>
+          <p>Tracking information will be provided where available.</p>
+          <p>Once a package has been handed to the carrier, delivery becomes subject to the carrier's operations and policies.</p>
+
+          <h3>Lost or Delayed Packages</h3>
+          <p>Foryou Skin Bar is not responsible for delays caused by: Weather events, Customs inspections, Carrier disruptions, Strikes, Force majeure events.</p>
+          <p>We will assist customers with carrier investigations where possible.</p>
+
+          <h3>Damaged Shipments</h3>
+          <p>Any shipping damage must be reported within 48 hours of delivery with supporting photographs.</p>
+          <p>Claims submitted after this period may not be accepted.</p>
+
+          <h3>Contact</h3>
+          <p>
+            <strong>Foryou Skin Bar</strong><br>
+            Email: <a href="mailto:foryouskinbar@gmail.com" class="text-amber-700 underline">foryouskinbar@gmail.com</a><br>
+            Phone/WhatsApp: 8763094374
+          </p>
+        </div>
+
+        <!-- Tab 5: Product Disclaimer -->
+        <div id="product-disclaimer" class="policy-tab-content hidden">
+          <h2>Product Disclaimer</h2>
+          <p>Foryou Skin Bar products are handmade cosmetic and personal care products intended for external use only.</p>
+          <p>Our products have not been evaluated by any governmental health authority and are not intended to diagnose, treat, cure, or prevent any disease or medical condition.</p>
+          <p>Individual results may vary. Customers should review ingredient lists carefully and perform a patch test before full use.</p>
+          <p>Discontinue use immediately if irritation occurs and consult a qualified healthcare professional if necessary.</p>
+          <p>Customers with known allergies, sensitive skin, pregnancy-related concerns, or medical conditions should seek professional advice before using any skincare product.</p>
+          <p>By purchasing and using our products, you acknowledge and accept responsibility for determining whether the products are suitable for your individual needs.</p>
+        </div>
+
+        <!-- Tab 6: Skincare Results Disclaimer -->
+        <div id="skincare-disclaimer" class="policy-tab-content hidden">
+          <h2>Skincare Results Disclaimer</h2>
+          <p><em>Last Updated: June 19, 2026</em></p>
+          <p>At Foryou Skin Bar, we strive to create high-quality handmade skincare products using carefully selected ingredients. However, skincare results vary from person to person.</p>
+          <p>By purchasing and using our products, you acknowledge and agree that:</p>
+          <ul>
+            <li>Individual results may vary based on skin type, lifestyle, genetics, allergies, sensitivities, environmental factors, and consistency of use.</li>
+            <li>We do not guarantee specific skincare outcomes or results.</li>
+            <li>Product descriptions, testimonials, reviews, before-and-after photos, social media content, and educational materials are provided for informational purposes only and should not be interpreted as guarantees.</li>
+            <li>Our products are cosmetic products intended to support general skincare and personal care routines.</li>
+            <li>Our products are not intended to diagnose, treat, cure, or prevent any disease or medical condition.</li>
+            <li>Statements regarding ingredients are based on commonly accepted cosmetic and ingredient information and are not medical claims.</li>
+            <li>Customers are responsible for reviewing ingredients before purchase and determining whether products are suitable for their individual needs.</li>
+          </ul>
+          <p>Foryou Skin Bar shall not be liable for dissatisfaction arising from unmet expectations regarding product performance, appearance, scent, texture, or individual skincare results.</p>
+        </div>
+
+        <!-- Tab 7: Checkout Consent Statement -->
+        <div id="checkout-consent" class="policy-tab-content hidden">
+          <h2>Checkout Consent Statement</h2>
+          <p>By placing this order, I confirm that:</p>
+          <ul>
+            <li>I have read and agree to the Terms & Conditions, Privacy Policy, Shipping Policy, Return & Refund Policy, and Product Disclaimer of Foryou Skin Bar.</li>
+            <li>I understand that skincare results vary from person to person and are not guaranteed.</li>
+            <li>I have reviewed product descriptions and ingredient information before purchasing.</li>
+            <li>I understand that Foryou Skin Bar products are cosmetic products and are not intended to diagnose, treat, cure, or prevent any disease or medical condition.</li>
+            <li>I understand that opened or used skincare products cannot be returned for hygiene and safety reasons.</li>
+            <li>I accept responsibility for determining whether products are suitable for my individual skincare needs and sensitivities.</li>
+            <li>I understand that international orders may be subject to customs duties, taxes, and import fees imposed by my country.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Mobile Menu -->
+  <div id="mobileMenu" class="fixed inset-0 bg-stone-900/95 z-50 flex-col items-center justify-center gap-8 hidden text-xl font-serif text-white">
+    <button id="closeMobileMenuBtn" class="absolute top-6 right-6 text-3xl"><i class="fas fa-times"></i></button>
+    <a href="index.html" class="hover:text-amber-500 transition">Home</a>
+    <a href="shop.html" class="hover:text-amber-500 transition">Shop</a>
+    <a href="about.html" class="hover:text-amber-500 transition">About</a>
+    <a href="blog.html" class="hover:text-amber-500 transition">Blog</a>
+    <a href="ingredients.html" class="hover:text-amber-500 transition">Ingredients</a>
+    <a href="quiz.html" class="hover:text-amber-500 transition">Skin Quiz</a>
+    <a href="loyalty.html" class="hover:text-amber-500 transition">Glow Rewards</a>
+    <a href="faq.html" class="hover:text-amber-500 transition">FAQ</a>
+    <a href="contact.html" class="hover:text-amber-500 transition">Contact</a>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div id="cartOverlay" class="fixed inset-0 bg-stone-900/50 z-50 hidden opacity-0 transition-opacity"></div>
+  <div id="cartDrawer" class="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white z-50 shadow-2xl transform translate-x-full transition-transform flex flex-col">
+    <div class="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+      <h2 class="text-xl font-bold font-serif text-stone-800">Your Bag</h2>
+      <button id="closeCartBtn" class="text-stone-500 hover:text-stone-800"><i class="fas fa-times text-xl"></i></button>
+    </div>
+    <div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+    <div class="p-4 border-t border-stone-100 bg-stone-50">
+      <div class="flex justify-between mb-4 text-stone-800">
+        <span class="font-medium">Subtotal</span>
+        <span class="font-bold text-amber-800" id="cartTotal">J$0.00</span>
+      </div>
+      <a href="checkout.html" class="w-full block text-center bg-amber-800 text-white py-3 rounded-full font-medium hover:bg-amber-900 transition">Checkout</a>
+    </div>
+  </div>
+
+  <footer class="bg-stone-900 text-stone-300 px-6 py-12">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div>
+        <img src="assets/brand/logo.png" alt="Foryou Skin Bar Logo" class="h-16 mb-4 filter brightness-0 invert">
+        <p class="text-sm text-stone-400">Handcrafted skincare made in Jamaica, powered by nature to give you the glow you deserve.</p>
+        <div class="flex gap-4 mt-6">
+          <a href="#" class="text-stone-400 hover:text-white transition text-xl"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="text-stone-400 hover:text-white transition text-xl"><i class="fab fa-tiktok"></i></a>
+          <a href="#" class="text-stone-400 hover:text-white transition text-xl"><i class="fab fa-facebook"></i></a>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-serif text-xl font-bold mb-4 text-white">Shop</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="shop.html?filter=Face%20Care" class="hover:text-amber-500 transition">Face Care</a></li>
+          <li><a href="shop.html?filter=Body%20Care" class="hover:text-amber-500 transition">Body Care</a></li>
+          <li><a href="shop.html?filter=Serums%20&%20Oils" class="hover:text-amber-500 transition">Serums & Oils</a></li>
+          <li><a href="shop.html?filter=Scrubs" class="hover:text-amber-500 transition">Scrubs</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="font-serif text-xl font-bold mb-4 text-white">Information</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="about.html" class="hover:text-amber-500 transition">Our Story</a></li>
+          <li><a href="faq.html" class="hover:text-amber-500 transition">FAQ</a></li>
+          <li><a href="contact.html" class="hover:text-amber-500 transition">Contact Us</a></li>
+          <li><a href="policies.html" class="hover:text-amber-500 transition">Policies</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="font-serif text-xl font-bold mb-4 text-white">Stay in the Loop</h3>
+        <p class="text-sm text-stone-400 mb-4">Subscribe for skincare tips, early access to sales, and new product launches.</p>
+        <form class="flex" onsubmit="event.preventDefault(); alert('Subscribed!');">
+          <input type="email" placeholder="Email address" required class="flex-1 px-4 py-2 rounded-l-full bg-stone-800 border border-stone-700 text-white focus:outline-none focus:border-amber-500">
+          <button type="submit" class="bg-amber-800 px-4 py-2 rounded-r-full text-white hover:bg-amber-700 transition">Join</button>
+        </form>
+      </div>
+    </div>
+    <div class="mt-12 pt-8 border-t border-stone-800 text-center text-sm text-stone-500">
+      <p>&copy; 2026 For You Skin Bar. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js?v=2"></script>
+  <script src="js/analytics.js"></script>
+
+  <!-- Tab Logic -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabs = document.querySelectorAll('.policy-nav a[data-target]');
+      const contents = document.querySelectorAll('.policy-tab-content');
+
+      function switchTab(targetId) {
+        // Hide all contents
+        contents.forEach(content => {
+          content.classList.add('hidden');
+        });
+        
+        // Remove active state from all tabs
+        tabs.forEach(tab => {
+          tab.classList.remove('active-tab');
+        });
+
+        // Show target content
+        const targetContent = document.getElementById(targetId);
+        if (targetContent) {
+          targetContent.classList.remove('hidden');
+        }
+
+        // Add active state to target tab
+        const targetTab = Array.from(tabs).find(tab => tab.getAttribute('data-target') === targetId);
+        if (targetTab) {
+          targetTab.classList.add('active-tab');
+        }
+
+        // Scroll to top of content area on mobile so users know it changed
+        if (window.innerWidth < 768) {
+           window.scrollTo({ top: document.querySelector('.policy-content').offsetTop - 100, behavior: 'smooth' });
+        }
+      }
+
+      // Add click events to tabs
+      tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetId = tab.getAttribute('data-target');
+          switchTab(targetId);
+        });
+      });
+
+      // Handle URL hash if someone links directly to a policy
+      const hash = window.location.hash.substring(1);
+      if (hash && document.getElementById(hash)) {
+        switchTab(hash);
+      } else if (tabs.length > 0) {
+        // Initialize first tab by default
+        switchTab(tabs[0].getAttribute('data-target'));
+      }
+    });
+  </script>
+</body>
+</html>
