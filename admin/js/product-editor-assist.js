@@ -29,19 +29,19 @@
     const policy = field('returnPolicy');
 
     const benefitsLabel = labelFor(benefits);
-    if (benefitsLabel) benefitsLabel.textContent = 'Results';
+    if (benefitsLabel && benefitsLabel.textContent !== 'Results') benefitsLabel.textContent = 'Results';
     addHelpText(benefits, 'This appears near the top of the product page under “Results”. Add the clear outcomes here. Do not create a separate custom section named “Results”.', 'results-field-help');
 
     const ingredientsLabel = labelFor(ingredients);
-    if (ingredientsLabel) ingredientsLabel.textContent = 'Key Ingredients';
+    if (ingredientsLabel && ingredientsLabel.textContent !== 'Key Ingredients') ingredientsLabel.textContent = 'Key Ingredients';
     addHelpText(ingredients, 'This appears in the Key Ingredients section on the customer product page.', 'ingredients-field-help');
 
     const directionsLabel = labelFor(directions);
-    if (directionsLabel) directionsLabel.textContent = 'How To Use';
+    if (directionsLabel && directionsLabel.textContent !== 'How To Use') directionsLabel.textContent = 'How To Use';
     addHelpText(directions, 'This appears in the How To Use section on the customer product page.', 'howto-field-help');
 
     const policyLabel = labelFor(policy);
-    if (policyLabel) policyLabel.textContent = 'Return / Refund Policy';
+    if (policyLabel && policyLabel.textContent !== 'Return / Refund Policy') policyLabel.textContent = 'Return / Refund Policy';
     addHelpText(policy, 'This appears as the full Return / Refund Policy on the customer product page.', 'policy-field-help');
 
     const contentHeading = [...document.querySelectorAll('h3')].find((heading) => heading.textContent.includes('Product Page Content Blocks'));
