@@ -54,6 +54,13 @@ const navigationScript = `
       .toLowerCase();
   }
 
+  function rawHref(link) {
+    return String(link && link.getAttribute('href') || '')
+      .replace(/^\//, '')
+      .split('?')[0]
+      .toLowerCase();
+  }
+
   function isLoyaltyLink(link) {
     var href = normalHref(link);
     return href === 'loyalty.html' || href === 'loyalty';
@@ -173,11 +180,64 @@ const navigationScript = `
     }
   }
 
+  function addFooterCancelOrderLink() {
+    var footer = document.querySelector('footer');
+    if (!footer) return;
+    if (!Array.from(footer.querySelectorAll('a')).some(function (link) {
+      var href = rawHref(link);
+      return href === 'policies.html' || href === 'policies';
+    })) {
+      var policyAnchor = Array.from(footer.querySelectorAll('a')).find(function (link) { return normalHref(link) === 'shipping-returns.html'; })
+        || Array.from(footer.querySelectorAll('a')).find(function (link) { return rawHref(link) === 'policies.html#privacy-policy'; })
+        || Array.from(footer.querySelectorAll('a')).find(function (link) { return normalHref(link) === 'contact.html'; });
+      if (policyAnchor) {
+        var policyItem = document.createElement('li');
+        policyItem.innerHTML = '<a href="policies.html" class="hover:text-white transition">Policies</a>';
+        var policyListItem = policyAnchor.closest('li');
+        if (policyListItem) policyListItem.insertAdjacentElement('beforebegin', policyItem);
+        else policyAnchor.insertAdjacentElement('beforebegin', policyItem);
+      }
+    }
+
+    if (Array.from(footer.querySelectorAll('a')).some(function (link) {
+      var href = normalHref(link);
+      return href === 'cancel-order.html' || href === 'cancel-order';
+    })) return;
+
+    var contact = Array.from(footer.querySelectorAll('a')).find(function (link) { return normalHref(link) === 'contact.html'; })
+      || Array.from(footer.querySelectorAll('a')).find(function (link) { return normalHref(link) === 'terms.html'; });
+    if (!contact) {
+      var fallbackLinks = footer.querySelector('[data-footer-compliance-links]');
+      if (!fallbackLinks) {
+        fallbackLinks = document.createElement('div');
+        fallbackLinks.setAttribute('data-footer-compliance-links', 'true');
+        fallbackLinks.className = 'flex flex-wrap gap-4 justify-center mb-4 text-xs';
+        fallbackLinks.innerHTML = [
+          '<a href="policies.html" class="hover:text-white transition">Policies</a>',
+          '<a href="shipping-returns.html" class="hover:text-white transition">Shipping & Returns</a>',
+          '<a href="cancel-order.html" class="hover:text-white transition">Cancel Order</a>',
+          '<a href="policies.html#privacy-policy" class="hover:text-white transition">Privacy</a>',
+          '<a href="policies.html#terms-conditions" class="hover:text-white transition">Terms</a>',
+          '<a href="contact.html" class="hover:text-white transition">Contact</a>'
+        ].join('');
+        footer.insertBefore(fallbackLinks, footer.firstChild);
+      }
+      return;
+    }
+
+    var item = document.createElement('li');
+    item.innerHTML = '<a href="cancel-order.html" class="hover:text-white transition">Cancel Order</a>';
+    var listItem = contact.closest('li');
+    if (listItem) listItem.insertAdjacentElement('beforebegin', item);
+    else contact.insertAdjacentElement('beforebegin', item);
+  }
+
   function ensureNavigation() {
     desktopNavContainers().forEach(function (container) { ensureGlowLink(container, false); });
     mobileNavContainers().forEach(function (container) { ensureGlowLink(container, true); });
     addFooterLoyaltyLink();
     addAccountEntry();
+    addFooterCancelOrderLink();
   }
 
   function start() {

@@ -240,9 +240,19 @@
 
           <h3 class="font-bold text-xl mb-6">Payment Method</h3>
           <div class="space-y-3 mb-8">
-            <label class="flex items-center gap-3 p-4 border border-stone-200 rounded-xl cursor-pointer hover:border-amber-800 transition">
-              <input type="radio" name="paymentMethod" value="WiPay" class="accent-amber-800 w-4 h-4" required checked>
-              <span class="font-medium">WiPay (Credit/Debit Card)</span>
+            <label class="flex items-center gap-3 p-4 border-2 border-amber-800 bg-amber-50 rounded-xl cursor-pointer">
+              <input type="radio" name="paymentMethod" value="Fygaro" class="accent-amber-800 w-4 h-4" required checked>
+              <div class="flex-1">
+                <div class="font-medium text-stone-800 flex items-center gap-2">
+                  <i class="fas fa-credit-card text-amber-800"></i>
+                  Pay by Card (Visa / Mastercard)
+                </div>
+                <div class="text-xs text-stone-500 mt-0.5 flex items-center gap-1">
+                  <i class="fas fa-lock text-green-600"></i>
+                  Secure checkout powered by Fygaro — PCI-DSS certified
+                </div>
+              </div>
+              <img src="https://static-app.fygaro.com/static/img/377af22b0b2e301356f1.png" alt="Fygaro" class="h-6 w-auto opacity-70" onerror="this.style.display='none'">
             </label>
           </div>
 
@@ -252,7 +262,7 @@
           </div>
 
           <button type="submit" class="w-full bg-amber-800 text-white py-4 rounded-xl font-bold text-lg hover:bg-amber-900 transition flex items-center justify-center gap-2">
-            Submit Order
+            <i class="fas fa-lock"></i> Continue to Payment
           </button>
           
           <!-- Messages -->
@@ -388,9 +398,9 @@
           <button type="submit" class="bg-amber-700 hover:bg-amber-800 px-4 rounded-r-lg text-white transition">→</button>
         </form>
         <div class="flex gap-3 mt-4 text-xs text-stone-500">
-          <a href="privacy.html" class="hover:text-white transition">Privacy</a>
+          <a href="policies.html#privacy-policy" class="hover:text-white transition">Privacy</a>
           <span>·</span>
-          <a href="terms.html" class="hover:text-white transition">Terms</a>
+          <a href="policies.html#terms-conditions" class="hover:text-white transition">Terms</a>
         </div>
       </div>
     </div>

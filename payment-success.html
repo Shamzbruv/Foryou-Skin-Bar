@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Payment Confirmed | Foryou Skin Bar</title>
+  <meta name="description" content="Your payment has been confirmed. Thank you for shopping with For You Skin Bar.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            stone: { 50:'#F8F5EF',100:'#EBE3D5',200:'#D1C5B5',300:'#B8AFA4',400:'#8A7D6E',500:'#6B5D50',600:'#5A4C3A',700:'#3A2E27',800:'#3A2E27',900:'#2C211B' },
+            amber: { 50:'#F8F5EF',100:'#F3E6C7',200:'#E1C77D',300:'#C89B3C',400:'#C89B3C',500:'#C89B3C',600:'#B0852F',700:'#C89B3C',800:'#B0852F',900:'#5A6B53' },
+            sage:  { 50:'#DDE5D7',100:'#C7D2C0',200:'#AEBDA6',300:'#93A389',400:'#7F9077',500:'#6E7F67',600:'#5A6B53',700:'#465640',800:'#354232',900:'#253025' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/brand-theme.css">
+
+  <style>
+    @keyframes checkmark-draw {
+      from { stroke-dashoffset: 100; }
+      to   { stroke-dashoffset: 0; }
+    }
+    @keyframes circle-scale {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .success-circle { animation: circle-scale 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .checkmark-path { stroke-dasharray: 100; animation: checkmark-draw 0.6s 0.4s ease forwards; stroke-dashoffset: 100; }
+    .fade-up { animation: fade-up 0.5s ease forwards; opacity: 0; }
+    .fade-up-1 { animation-delay: 0.5s; }
+    .fade-up-2 { animation-delay: 0.7s; }
+    .fade-up-3 { animation-delay: 0.9s; }
+    .fade-up-4 { animation-delay: 1.1s; }
+
+    .order-item-row { border-bottom: 1px solid #EBE3D5; padding: 12px 0; }
+    .order-item-row:last-child { border-bottom: none; }
+  </style>
+</head>
+<body class="antialiased bg-[#6E7F67] text-white min-h-screen">
+
+  <!-- Announcement Bar -->
+  <div class="bg-amber-900/90 text-white text-center py-2.5 text-sm font-medium tracking-wide">
+    🌿 Free Shipping on orders over J$10,000 &nbsp;|&nbsp; ✨ Handcrafted with Love in Jamaica
+  </div>
+
+  <!-- Nav -->
+  <nav class="glass-nav sticky top-0 z-50 px-6 md:px-12 py-4 flex items-center justify-between">
+    <a href="index.html"><img src="assets/brand/logo.png" alt="Foryou Skin Bar Logo" class="h-20 md:h-24 w-auto object-contain"></a>
+    <a href="shop.html" class="text-sm font-medium text-white hover:text-amber-200 transition flex items-center gap-2">
+      <i class="fas fa-bag-shopping"></i> Continue Shopping
+    </a>
+  </nav>
+
+  <main class="py-16 px-6 max-w-2xl mx-auto">
+
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-20">
+      <div class="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-6"></div>
+      <p class="text-white/80 text-lg">Confirming your payment…</p>
+    </div>
+
+    <!-- Confirmed State -->
+    <div id="confirmedState" class="hidden">
+      <!-- Success Animation -->
+      <div class="text-center mb-10">
+        <div class="success-circle inline-flex w-24 h-24 rounded-full bg-green-400/20 border-4 border-green-400 items-center justify-center mb-6">
+          <svg class="w-12 h-12" viewBox="0 0 52 52" fill="none">
+            <polyline class="checkmark-path" points="14,27 22,35 38,19" stroke="#4ade80" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="serif-heading text-4xl md:text-5xl fade-up fade-up-1 text-white">Payment Confirmed!</h1>
+        <p class="text-white/70 mt-3 text-lg fade-up fade-up-2">Your order is now being prepared 🌿</p>
+      </div>
+
+      <!-- Order Card -->
+      <div class="fade-up fade-up-3 bg-white rounded-3xl shadow-xl p-8 text-stone-800 mb-6">
+
+        <div class="flex items-center justify-between mb-6 pb-5 border-b border-stone-100">
+          <div>
+            <p class="text-xs text-stone-400 uppercase tracking-widest font-medium mb-1">Order Number</p>
+            <p class="text-2xl font-bold text-stone-800" id="confirmedOrderNumber">—</p>
+          </div>
+          <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
+            <i class="fas fa-circle-check"></i> Paid
+          </span>
+        </div>
+
+        <!-- Items -->
+        <div id="confirmedItems" class="mb-6">
+          <!-- Injected by JS -->
+        </div>
+
+        <!-- Totals -->
+        <div class="bg-stone-50 rounded-2xl p-5 space-y-2 text-sm mb-6">
+          <div class="flex justify-between text-stone-600">
+            <span>Subtotal</span>
+            <span id="confirmedSubtotal">—</span>
+          </div>
+          <div class="flex justify-between text-stone-600" id="confirmedShippingRow">
+            <span>Shipping</span>
+            <span id="confirmedShipping">—</span>
+          </div>
+          <div class="flex justify-between text-stone-600" id="confirmedDiscountRow" style="display:none">
+            <span>Discount</span>
+            <span id="confirmedDiscount" class="text-green-600">—</span>
+          </div>
+          <div class="flex justify-between font-bold text-base pt-2 border-t border-stone-200 text-stone-800">
+            <span>Total Paid</span>
+            <span id="confirmedTotal">—</span>
+          </div>
+        </div>
+
+        <!-- Delivery -->
+        <div class="text-sm text-stone-600 mb-6 p-4 border border-stone-100 rounded-xl">
+          <p class="font-semibold text-stone-800 mb-2"><i class="fas fa-truck mr-2 text-amber-700"></i>Delivery Details</p>
+          <p id="confirmedDelivery">—</p>
+          <p id="confirmedAddress" class="mt-1 text-stone-400">—</p>
+        </div>
+
+        <!-- What's next -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-stone-700">
+          <p class="font-semibold text-amber-900 mb-1">What happens next?</p>
+          <ul class="space-y-1 text-stone-600">
+            <li>✉️ &nbsp;A payment confirmation email is being sent to your inbox</li>
+            <li>📦 &nbsp;We are preparing your order now</li>
+            <li>🚚 &nbsp;You will receive a shipping notification when your order is dispatched</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- CTA Buttons -->
+      <div class="fade-up fade-up-4 flex flex-col sm:flex-row gap-3">
+        <a id="whatsappBtn" href="#" target="_blank"
+           class="flex-1 flex items-center justify-center gap-2 bg-[#25D366] text-white py-4 rounded-2xl font-bold hover:bg-[#128C7E] transition text-sm">
+          <i class="fab fa-whatsapp text-lg"></i> Message us on WhatsApp
+        </a>
+        <a href="shop.html"
+           class="flex-1 flex items-center justify-center gap-2 bg-white text-stone-800 py-4 rounded-2xl font-bold hover:bg-stone-50 transition text-sm border border-stone-200">
+          <i class="fas fa-bag-shopping"></i> Continue Shopping
+        </a>
+      </div>
+    </div>
+
+    <!-- Pending State (webhook hasn't fired yet) -->
+    <div id="pendingState" class="hidden">
+      <div class="bg-white rounded-3xl p-8 text-stone-800 text-center">
+        <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-5">
+          <i class="fas fa-clock text-amber-800 text-2xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold mb-3">Payment Processing…</h1>
+        <p class="text-stone-500 mb-2">Your payment is being confirmed by Fygaro.</p>
+        <p class="text-stone-400 text-sm mb-6">This usually takes a few seconds. You will receive a confirmation email shortly.</p>
+        <p class="text-stone-700 text-sm font-medium mb-6">Order Reference: <strong id="pendingOrderRef">—</strong></p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a id="whatsappPendingBtn" href="#" target="_blank"
+             class="flex items-center justify-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-full font-bold hover:bg-[#128C7E] transition text-sm">
+            <i class="fab fa-whatsapp"></i> Confirm via WhatsApp
+          </a>
+          <a href="shop.html" class="flex items-center justify-center gap-2 text-stone-600 px-6 py-3 rounded-full border border-stone-200 font-medium text-sm hover:bg-stone-50 transition">
+            Continue Shopping
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error / Not Found State -->
+    <div id="errorState" class="hidden">
+      <div class="bg-white rounded-3xl p-8 text-stone-800 text-center">
+        <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-5">
+          <i class="fas fa-exclamation-circle text-red-500 text-2xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold mb-3">Something went wrong</h1>
+        <p class="text-stone-500 mb-6">We couldn't confirm your order. If you completed payment, please contact us — we will sort it out right away.</p>
+        <a href="https://wa.me/18763094374" target="_blank"
+           class="inline-flex items-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-full font-bold hover:bg-[#128C7E] transition text-sm">
+          <i class="fab fa-whatsapp"></i> Contact us on WhatsApp
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="bg-stone-900 text-stone-300 px-6 py-8 mt-10 text-center text-xs">
+    <p>© 2026 For You Skin Bar. Handmade in Jamaica 🇯🇲</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-public-client.js?v=5"></script>
+  <script>
+    const WHATSAPP_NUMBER = '18763094374';
+
+    function formatJmd(amount) {
+      return 'J$' + Number(amount || 0).toLocaleString();
+    }
+
+    function escapeHtml(value = '') {
+      return String(value).replace(/[&<>'"]/g, (character) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+      }[character]));
+    }
+
+    function show(id) {
+      ['loadingState', 'confirmedState', 'pendingState', 'errorState'].forEach(s => {
+        document.getElementById(s).classList.toggle('hidden', s !== id);
+      });
+    }
+
+    function renderConfirmed(order, items) {
+      show('confirmedState');
+      localStorage.removeItem('foryou_cart');
+      sessionStorage.removeItem('foryou_pending_payment');
+
+      document.getElementById('confirmedOrderNumber').textContent = order.order_number;
+
+      // Items
+      const itemsEl = document.getElementById('confirmedItems');
+      if (items && items.length > 0) {
+        itemsEl.innerHTML = items.map(item => `
+          <div class="order-item-row flex justify-between items-start text-sm">
+            <div>
+              <p class="font-semibold text-stone-800">${escapeHtml(item.product_name)}</p>
+              <p class="text-stone-400 text-xs">Qty: ${escapeHtml(item.quantity)}</p>
+            </div>
+            <p class="font-medium text-stone-700">${formatJmd(item.line_total_jmd)}</p>
+          </div>
+        `).join('');
+      } else {
+        itemsEl.innerHTML = '<p class="text-stone-400 text-sm">Order items will appear in your confirmation email.</p>';
+      }
+
+      // Totals
+      document.getElementById('confirmedSubtotal').textContent = formatJmd(order.subtotal_jmd);
+      document.getElementById('confirmedShipping').textContent = order.shipping_total_jmd > 0
+        ? formatJmd(order.shipping_total_jmd) : 'Free';
+      document.getElementById('confirmedTotal').textContent = formatJmd(order.grand_total_jmd);
+
+      if (order.discount_total_jmd > 0) {
+        document.getElementById('confirmedDiscountRow').style.display = 'flex';
+        document.getElementById('confirmedDiscount').textContent = `-${formatJmd(order.discount_total_jmd)}`;
+      }
+
+      // Delivery
+      const methodLabels = {
+        Zipmail: 'Zipmail (Post to Post)',
+        Knutsford: 'Knutsford Express',
+        Bearer: 'Bearer Delivery',
+        Pickup: 'Local Pickup',
+        Overseas: 'Overseas Delivery',
+      };
+      document.getElementById('confirmedDelivery').textContent =
+        methodLabels[order.delivery_service] || order.delivery_service || 'Delivery';
+      document.getElementById('confirmedAddress').textContent = order.shipping_address || '';
+
+      // WhatsApp button
+      const waMsg = `Hello For You Skin Bar! My payment for order ${order.order_number} has been confirmed. Please let me know when it will be dispatched. Thank you!`;
+      document.getElementById('whatsappBtn').href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMsg)}`;
+    }
+
+    function renderPending(ref) {
+      show('pendingState');
+      document.getElementById('pendingOrderRef').textContent = ref || 'Unknown';
+      const waMsg = `Hello For You Skin Bar! I just completed payment for my order (ref: ${ref}). Please confirm receipt. Thank you!`;
+      document.getElementById('whatsappPendingBtn').href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMsg)}`;
+    }
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref') || params.get('customReference') || params.get('custom_reference');
+      const token = params.get('token') || '';
+
+      if (!ref) {
+        show('errorState');
+        return;
+      }
+
+      // Poll up to 5 times (10 seconds total) waiting for webhook to update payment_status
+      let attempts = 0;
+      const maxAttempts = 5;
+
+      async function checkOrder() {
+        attempts++;
+        try {
+          const response = await fetch(`/api/orders/payment-status?ref=${encodeURIComponent(ref)}&token=${encodeURIComponent(token)}`);
+          const payload = await response.json().catch(() => ({}));
+
+          if (!response.ok || !payload.order) {
+            if (attempts < maxAttempts) {
+              setTimeout(checkOrder, 2000);
+              return;
+            }
+            show('errorState');
+            return;
+          }
+
+          const order = payload.order;
+
+          if (order.payment_status === 'paid') {
+            renderConfirmed(order, payload.items || []);
+          } else {
+            // Payment not yet confirmed by webhook
+            if (attempts < maxAttempts) {
+              setTimeout(checkOrder, 2000);
+            } else {
+              renderPending(ref);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          if (attempts < maxAttempts) {
+            setTimeout(checkOrder, 2000);
+          } else {
+            show('errorState');
+          }
+        }
+      }
+
+      await checkOrder();
+    }
+
+    // Wait for supabase client to be ready
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.supabase) {
+        init();
+      } else {
+        // Slight delay for supabase-public-client.js to initialise
+        setTimeout(init, 300);
+      }
+    });
+  </script>
+</body>
+</html>

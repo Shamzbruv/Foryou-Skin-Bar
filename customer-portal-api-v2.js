@@ -2,11 +2,13 @@
 const expressModulePath = require.resolve('express');
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
+const WebSocket = require('ws');
 
 const nativeExpress = express;
 const db = createClient(
   process.env.SUPABASE_URL || 'https://xftnfbeembjrhezvzquu.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  { realtime: { transport: WebSocket } }
 );
 
 const DEFAULT_POLICY = {
@@ -128,6 +130,25 @@ function labelFor(order) {
   return 'Order received';
 }
 
+function policyUpdatesFrom(value) {
+  let source = value;
+  if (typeof source === 'string') {
+    try { source = JSON.parse(source); } catch (_) { source = []; }
+  }
+  const updates = Array.isArray(source) ? source : (Array.isArray(source?.items) ? source.items : []);
+  return updates
+    .filter((update) => update && update.id && update.title)
+    .slice(0, 20)
+    .map((update) => ({
+      id: String(update.id),
+      title: String(update.title || 'Policy updated'),
+      message: String(update.message || 'A store policy has been updated.'),
+      href: String(update.href || `/policies.html#${update.policyId || ''}`),
+      policyId: String(update.policyId || ''),
+      updatedAt: String(update.updatedAt || '')
+    }));
+}
+
 async function authenticatedUser(req) {
   const header = String(req.headers.authorization || '');
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
@@ -180,7 +201,7 @@ async function dashboardFor(user) {
     items = data || [];
   }
 
-  const { data: settingsRows, error: settingsError } = await db.from('store_settings').select('key, value').in('key', ['loyalty_program', 'loyalty_point_policy']);
+  const { data: settingsRows, error: settingsError } = await db.from('store_settings').select('key, value').in('key', ['loyalty_program', 'loyalty_point_policy', 'policy_updates']);
   if (settingsError) throw settingsError;
   const settings = (settingsRows || []).reduce((all, row) => ({ ...all, [row.key]: row.value }), {});
   const policy = policyFrom(settings.loyalty_point_policy);
@@ -248,19 +269,18 @@ async function dashboardFor(user) {
       calculationNote: `Credits are calculated from eligible paid orders at ${policy.pointsPerJmd} ${loyalty.creditLabel} per J$1 spent, with your active tier multiplier applied.`,
       rewardsContactUrl: String(programme.hero.primaryHref || 'https://wa.me/18763094374')
     },
+    notifications: policyUpdatesFrom(settings.policy_updates),
     orders: responseOrders
   };
 }
 
 function register(app) {
-  app.use(nativeExpress.json());
-
   app.get('/api/customer-portal', async (req, res) => {
     try { return res.status(200).json(await dashboardFor(await authenticatedUser(req))); }
     catch (error) { return res.status(error.status || 500).json({ error: error.message || 'Unable to load your account.' }); }
   });
 
-  app.patch('/api/customer-portal/profile', async (req, res) => {
+  app.patch('/api/customer-portal/profile', nativeExpress.json(), async (req, res) => {
     try {
       const user = await authenticatedUser(req);
       const fullName = String(req.body?.fullName || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Foryou Customer').trim().slice(0, 120);

@@ -21,17 +21,32 @@ function ensureAdminNavigation() {
 
     const links = Array.from(document.querySelectorAll('a'));
     const existingLoyalty = links.some(link => link.getAttribute('href') === '/admin/loyalty.html');
-    if (existingLoyalty) return;
+    const existingPolicies = links.some(link => link.getAttribute('href') === '/admin/policies.html');
 
-    const anchor = links.find(link => link.getAttribute('href') === '/admin/recommendation-rules.html')
+    const loyaltyAnchor = links.find(link => link.getAttribute('href') === '/admin/recommendation-rules.html')
         || links.find(link => link.getAttribute('href') === '/admin/discounts.html');
-    if (!anchor || !anchor.parentElement) return;
+    if (!existingLoyalty && loyaltyAnchor && loyaltyAnchor.parentElement) {
+        const loyaltyLink = document.createElement('a');
+        loyaltyLink.href = '/admin/loyalty.html';
+        loyaltyLink.className = 'block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition';
+        loyaltyLink.textContent = 'Loyalty Program';
+        loyaltyAnchor.insertAdjacentElement('afterend', loyaltyLink);
+    }
 
-    const loyaltyLink = document.createElement('a');
-    loyaltyLink.href = '/admin/loyalty.html';
-    loyaltyLink.className = 'block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition';
-    loyaltyLink.textContent = 'Loyalty Program';
-    anchor.insertAdjacentElement('afterend', loyaltyLink);
+    if (!existingPolicies && !window.location.pathname.endsWith('/admin/policies.html')) {
+        const policyAnchor = links.find(link => link.getAttribute('href') === '/admin/content.html')
+            || links.find(link => link.getAttribute('href') === '/admin/settings.html');
+        if (!policyAnchor || !policyAnchor.parentElement) return;
+        const policiesLink = document.createElement('a');
+        policiesLink.href = '/admin/policies.html';
+        policiesLink.className = 'block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition';
+        policiesLink.textContent = 'Policies';
+        if (policyAnchor.getAttribute('href') === '/admin/settings.html') {
+            policyAnchor.insertAdjacentElement('beforebegin', policiesLink);
+        } else {
+            policyAnchor.insertAdjacentElement('afterend', policiesLink);
+        }
+    }
 }
 
 if (document.readyState === 'loading') {

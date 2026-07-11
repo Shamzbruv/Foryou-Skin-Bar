@@ -6,6 +6,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const FREE_SHIPPING_THRESHOLD = 10000;
   const WHATSAPP_NUMBER = '18763094374';
 
+  // ── Handle return states from Fygaro ──
+  const urlParams = new URLSearchParams(window.location.search);
+  const returnStatus = urlParams.get('status');
+  const returnRef    = urlParams.get('ref');
+
+  if (returnStatus === 'cancelled') {
+    let pendingPayment = null;
+    try { pendingPayment = JSON.parse(sessionStorage.getItem('foryou_pending_payment') || 'null'); } catch (_) {}
+    let resumePaymentUrl = '';
+    try {
+      const candidate = new URL(pendingPayment?.fygaroUrl || '', window.location.href);
+      if (candidate.protocol === 'https:' || candidate.origin === window.location.origin) resumePaymentUrl = candidate.href;
+    } catch (_) {}
+    // Customer cancelled payment on Fygaro — show a friendly message
+    const cancelBanner = document.createElement('div');
+    cancelBanner.id = 'cancelledBanner';
+    cancelBanner.className = 'fixed top-0 left-0 right-0 z-[200] bg-amber-800 text-white text-center py-3 px-4 text-sm font-medium';
+    cancelBanner.innerHTML = `
+      <i class="fas fa-info-circle mr-2"></i>
+      Your payment was not completed. Your cart is still here if you would like to try again.
+      ${resumePaymentUrl ? `<a href="${resumePaymentUrl}" class="ml-4 underline font-bold opacity-90 hover:opacity-100">Resume payment</a>` : ''}
+      <button onclick="this.parentElement.remove()" class="ml-4 underline opacity-80 hover:opacity-100">Dismiss</button>
+    `;
+    document.body.prepend(cancelBanner);
+    // Clean the URL
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
   const orderItemsContainer = document.getElementById('orderItems');
   const subtotalEl = document.getElementById('checkoutSubtotal');
   const shippingEl = document.getElementById('checkoutShipping');
@@ -344,9 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const response = await fetch('/api/create-order', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
@@ -358,30 +384,63 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await response.json();
         const orderNumber = result.order_number || result.orderNumber || 'PENDING';
 
-        // Show success UI
-        form.reset();
-        successOrderNumber.innerText = orderNumber;
-        
-        let message = `Hello For You Skin Bar, I just placed an order on the website.\n\n`;
-        message += `*Order Number:* ${orderNumber}\n`;
-        message += `*Name:* ${data.fullName}\n`;
-        
-        const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-        whatsappFollowupBtn.href = url;
-        
-        successMessage.classList.remove('hidden');
-        submitBtn.classList.add('hidden');
+        if (result.fygaro_url) {
+          // ── Fygaro redirect flow ──
+          sessionStorage.setItem('foryou_pending_payment', JSON.stringify({ orderNumber, fygaroUrl: result.fygaro_url }));
+          submitBtn.innerHTML = '<i class="fas fa-lock mr-2"></i> Redirecting to secure payment...';
 
-        // Clear cart ONLY after success
-        localStorage.removeItem(STORAGE_KEY);
-        cart = [];
-        if (window.cartManager) window.cartManager.clearCart();
+          // Show a friendly redirect UI
+          const redirectState = document.createElement('div');
+          redirectState.className = 'mt-6 p-6 bg-amber-50 border border-amber-200 rounded-xl text-center text-stone-800';
+          redirectState.innerHTML = `
+            <div class="flex flex-col items-center gap-4">
+              <div class="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center">
+                <i class="fas fa-lock text-amber-800 text-xl"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-lg mb-1">Order Confirmed — Proceed to Payment</h4>
+                <p class="text-stone-600 text-sm mb-1">Your order <strong>${orderNumber}</strong> has been saved.</p>
+                <p class="text-stone-500 text-xs">You are being redirected to our secure payment page…</p>
+              </div>
+              <div class="flex gap-2 items-center text-amber-800 text-xs">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Redirecting to Fygaro secure checkout…</span>
+              </div>
+            </div>
+          `;
+          form.appendChild(redirectState);
+          submitBtn.classList.add('hidden');
+
+          // Redirect after a brief moment so the user sees the state
+          setTimeout(() => {
+            window.location.href = result.fygaro_url;
+          }, 1800);
+
+        } else {
+          // ── Fallback: Fygaro not yet configured ──
+          // Show legacy success + WhatsApp message
+          localStorage.removeItem(STORAGE_KEY);
+          cart = [];
+          if (window.cartManager) window.cartManager.clearCart();
+          form.reset();
+          successOrderNumber.innerText = orderNumber;
+
+          let message = `Hello For You Skin Bar, I just placed an order on the website.\n\n`;
+          message += `*Order Number:* ${orderNumber}\n`;
+          message += `*Name:* ${data.fullName}\n`;
+          message += `\nPayment will be arranged separately.`;
+
+          const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+          whatsappFollowupBtn.href = url;
+
+          successMessage.classList.remove('hidden');
+          submitBtn.classList.add('hidden');
+        }
         
       } catch (err) {
         console.error(err);
         errorMessage.innerText = 'Something went wrong while submitting your order. Please try again or contact us on WhatsApp. (' + err.message + ')';
         errorMessage.classList.remove('hidden');
-      } finally {
         submitBtn.innerHTML = originalBtnText;
         submitBtn.disabled = false;
       }

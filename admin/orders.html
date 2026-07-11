@@ -55,7 +55,7 @@
     </style>
 </head>
 <body class="bg-stone-50 font-sans">
-    <div class="flex h-screen overflow-hidden"><div class="w-64 bg-stone-900 text-white py-5 flex flex-col shrink-0 h-screen sticky top-0">
+    <div class="flex h-screen overflow-hidden"><div class="w-64 bg-stone-900 text-white py-5 flex flex-col shrink-0 h-screen sticky top-0 overflow-y-auto overflow-x-hidden">
         <h2 class="px-5 text-2xl font-serif mb-8 text-amber-200">Foryou Admin</h2>
         <a href="/admin/index.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Dashboard</a>
         <a href="/admin/orders.html" class="block bg-stone-800 text-white border-l-4 border-amber-800 px-4 py-3">Orders</a>
@@ -64,9 +64,11 @@
         <a href="/admin/customers.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Customers</a>
         <a href="/admin/discounts.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Discounts</a>
         <a href="/admin/loyalty.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Loyalty Program</a>
+        <a href="/admin/recommendation-rules.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Quiz Rules</a>
+        <a href="/admin/reviews.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Reviews</a>
         <a href="/admin/blog.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Blog & Content</a>
         <a href="/admin/content.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Site Content (CMS)</a>
-        <a href="/admin/reviews.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Reviews</a>
+        <a href="/admin/policies.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Policies</a>
         <a href="/admin/settings.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Settings</a>
         <div class="mt-auto border-t border-stone-800 pt-3">
             <a href="#" id="logoutBtn" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Logout</a>
@@ -115,6 +117,9 @@
         import { supabase, checkAuth, formatCurrency } from '/admin/js/supabase-client.js';
         
         let currentOrders = [];
+        const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({
+            '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
+        }[char]));
 
         window.openOrderModal = async function(orderId) {
             const order = currentOrders.find(o => o.id === orderId);
@@ -139,8 +144,8 @@
             const itemsHtml = items.map(item => `
                 <div class="flex justify-between py-2 border-b border-gray-100 text-sm">
                     <div>
-                        <p class="font-semibold text-stone-800">${item.product_name}</p>
-                        <p class="text-stone-500">Qty: ${item.quantity}</p>
+                        <p class="font-semibold text-stone-800">${escapeHtml(item.product_name)}</p>
+                        <p class="text-stone-500">Qty: ${escapeHtml(item.quantity)}</p>
                     </div>
                     <p class="font-medium">${formatCurrency(item.line_total_jmd)}</p>
                 </div>
@@ -149,23 +154,30 @@
             content.innerHTML = `
                 <div>
                     <h3 class="font-bold text-stone-800 mb-3 border-b pb-2">Customer Details</h3>
-                    <p class="text-sm mb-1"><strong>Name:</strong> ${order.customers?.full_name}</p>
-                    <p class="text-sm mb-1"><strong>Email:</strong> ${order.customers?.email}</p>
-                    <p class="text-sm mb-1"><strong>Phone:</strong> ${order.customers?.phone}</p>
-                    
+                    <p class="text-sm mb-1"><strong>Name:</strong> ${escapeHtml(order.customers?.full_name || 'N/A')}</p>
+                    <p class="text-sm mb-1"><strong>Email:</strong> ${escapeHtml(order.customers?.email || 'N/A')}</p>
+                    <p class="text-sm mb-1"><strong>Phone:</strong> ${escapeHtml(order.customers?.phone || 'N/A')}</p>
+
                     <h3 class="font-bold text-stone-800 mb-3 mt-6 border-b pb-2">Delivery Details</h3>
-                    <p class="text-sm mb-1"><strong>Method:</strong> <span class="capitalize">${order.delivery_method}</span></p>
-                    <p class="text-sm mb-1"><strong>Address:</strong> ${order.shipping_address || 'N/A'}</p>
-                    <p class="text-sm mb-1"><strong>Parish:</strong> ${order.parish || 'N/A'}</p>
-                    <p class="text-sm mb-1"><strong>Notes:</strong> ${order.customer_notes || 'None'}</p>
+                    <p class="text-sm mb-1"><strong>Method:</strong> <span class="capitalize">${escapeHtml(order.delivery_method || 'N/A')}</span></p>
+                    <p class="text-sm mb-1"><strong>Address:</strong> ${escapeHtml(order.shipping_address || 'N/A')}</p>
+                    <p class="text-sm mb-1"><strong>Parish:</strong> ${escapeHtml(order.parish || 'N/A')}</p>
+                    <p class="text-sm mb-1"><strong>Notes:</strong> ${escapeHtml(order.customer_notes || 'None')}</p>
+
+                    ${order.admin_notes ? `
+                    <h3 class="font-bold text-red-800 mb-3 mt-6 border-b pb-2">Admin / Cancellation Notes</h3>
+                    <p class="text-sm text-red-900 bg-red-50 p-3 rounded-lg border border-red-100 whitespace-pre-wrap">${escapeHtml(order.admin_notes)}</p>
+                    ` : ''}
 
                     <h3 class="font-bold text-stone-800 mb-3 mt-6 border-b pb-2">Update Status</h3>
                     <div class="flex flex-col gap-3">
                         <div>
                             <label class="block text-xs font-bold text-stone-500 mb-1">Payment Status</label>
                             <select id="paymentStatusSelect" class="w-full border border-gray-300 rounded p-2 text-sm" onchange="window.updateOrderStatus('${order.id}', 'payment_status', this.value)">
-                                <option value="pending" ${order.payment_status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="unpaid" ${order.payment_status === 'unpaid' ? 'selected' : ''}>Unpaid</option>
+                                <option value="awaiting_confirmation" ${order.payment_status === 'awaiting_confirmation' ? 'selected' : ''}>Awaiting Confirmation</option>
                                 <option value="paid" ${order.payment_status === 'paid' ? 'selected' : ''}>Paid</option>
+                                <option value="partially_paid" ${order.payment_status === 'partially_paid' ? 'selected' : ''}>Partially Paid</option>
                                 <option value="refunded" ${order.payment_status === 'refunded' ? 'selected' : ''}>Refunded</option>
                             </select>
                         </div>
@@ -213,10 +225,11 @@
         }
 
         function getStatusBadgeClass(status) {
-            if (['paid', 'delivered', 'shipped'].includes(status)) return 'bg-green-100 text-green-800';
+            if (['paid', 'delivered', 'shipped', 'completed'].includes(status)) return 'bg-green-100 text-green-800';
             if (['cancelled', 'refunded'].includes(status)) return 'bg-red-100 text-red-800';
             if (['processing'].includes(status)) return 'bg-blue-100 text-blue-800';
-            return 'bg-yellow-100 text-yellow-800';
+            if (['unpaid', 'awaiting_confirmation', 'partially_paid'].includes(status)) return 'bg-amber-100 text-amber-800';
+            return 'bg-gray-100 text-gray-600';
         }
 
         async function loadOrders() {
@@ -246,12 +259,12 @@
             
             tbody.innerHTML = orders.map(o => `
                 <tr class="hover:bg-stone-50 font-sans">
-                    <td class="p-4 font-bold text-stone-800">${o.order_number}</td>
+                    <td class="p-4 font-bold text-stone-800">${escapeHtml(o.order_number)}</td>
                     <td class="p-4 text-sm text-stone-500">${new Date(o.created_at).toLocaleDateString()}</td>
-                    <td class="p-4 text-sm">${o.customers?.full_name || 'Unknown'}</td>
+                    <td class="p-4 text-sm">${escapeHtml(o.customers?.full_name || 'Unknown')}</td>
                     <td class="p-4 text-sm font-medium">${formatCurrency(o.grand_total_jmd)}</td>
-                    <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(o.payment_status)} capitalize">${o.payment_status}</span></td>
-                    <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(o.status)} capitalize">${o.status}</span></td>
+                    <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(o.payment_status)} capitalize">${escapeHtml(o.payment_status)}</span></td>
+                    <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(o.status)} capitalize">${escapeHtml(o.status)}</span></td>
                     <td class="p-4">
                         <button class="bg-blue-50 text-amber-800 hover:bg-blue-100 px-3 py-1.5 rounded text-sm font-medium transition" onclick="window.openOrderModal('${o.id}')">View / Edit</button>
                     </td>

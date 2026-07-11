@@ -46,6 +46,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://foryouskinbar.com/policies.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://foryouskinbar.com/cancel-order.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://foryouskinbar.com/product.html?id=1</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

@@ -84,7 +84,14 @@
       }
 
       const addButton = [...card.querySelectorAll('button')].find((button) => /add/i.test(button.textContent || '') || button.hasAttribute('data-add-to-cart'));
-      if (addButton?.parentElement) addButton.parentElement.classList.add('product-card-actions');
+      if (addButton?.parentElement) {
+        const parent = addButton.parentElement;
+        if (parent.querySelector('h3') || parent.querySelector('a[href*="product.html"]') || parent.querySelector('[id^="price-"]')) {
+          addButton.classList.add('product-card-actions');
+        } else {
+          parent.classList.add('product-card-actions');
+        }
+      }
     });
     syncFavourites();
   }

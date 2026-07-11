@@ -4,12 +4,19 @@
   let session = null;
   let portalData = null;
 
-  const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&', '<': '<', '>': '>', "'": '&#39;', '"': '"' }[character]));
+  const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[character]));
   const formatCurrency = (value) => new Intl.NumberFormat('en-JM', { style: 'currency', currency: 'JMD', maximumFractionDigits: 0 }).format(Number(value || 0));
   const formatNumber = (value) => new Intl.NumberFormat('en-JM').format(Number(value || 0));
   const formatDate = (value) => {
     const date = new Date(value);
     return Number.isNaN(date.valueOf()) ? '—' : date.toLocaleDateString('en-JM', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+  const safeHref = (value = 'policies.html') => {
+    const href = String(value || 'policies.html').trim();
+    if (/^(https?:)?\/\//i.test(href) || href.toLowerCase().startsWith('javascript:')) return 'policies.html';
+    return href || 'policies.html';
   };
 
   function showLoading() {
@@ -64,6 +71,8 @@
       </div>`;
     }
 
+    const isEligibleForCancellation = !['shipped', 'delivered', 'cancelled', 'refunded'].includes(String(order.status || '').toLowerCase());
+
     return `<article class="account-card order-card">
       <div class="order-card-top">
         <div><h3>${escapeHtml(order.orderNumber)}</h3><p class="order-card-meta">Placed ${formatDate(order.createdAt)}${order.deliveryService ? ` · ${escapeHtml(order.deliveryService)}` : ''}</p></div>
@@ -71,7 +80,16 @@
       </div>
       <div class="order-card-items">${orderItemsMarkup(order.items)}</div>
       <div class="order-card-bottom">
-        <div><strong class="order-total">Order total: ${formatCurrency(order.grandTotalJmd)}</strong>${order.deliveryAddress ? `<span class="block mt-1 text-xs text-stone-500">${escapeHtml(order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery')} · ${escapeHtml(order.deliveryAddress)}</span>` : ''}</div>
+        <div>
+          <strong class="order-total">Order total: ${formatCurrency(order.grandTotalJmd)}</strong>
+          ${order.deliveryAddress ? `<span class="block mt-1 text-xs text-stone-500">${escapeHtml(order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery')} · ${escapeHtml(order.deliveryAddress)}</span>` : ''}
+          ${isEligibleForCancellation ? `
+            <div style="margin-top: 12px;">
+              <button class="cancel-order-portal-btn text-red-600 hover:text-red-800 font-semibold text-xs flex items-center gap-1.5 transition" data-order-number="${escapeHtml(order.orderNumber)}" type="button">
+                <i class="fas fa-ban"></i> Request Cancellation
+              </button>
+            </div>` : ''}
+        </div>
         ${Number(order.pointsEarned || 0) > 0 ? `<span class="order-credit"><i class="fas fa-sparkles mr-1"></i>+${formatNumber(order.pointsEarned)} ${escapeHtml(portalData.loyalty.creditLabel)}</span>` : '<span class="order-credit text-stone-500">Credits apply after payment is confirmed</span>'}
       </div>
     </article>`;
@@ -96,6 +114,58 @@
     }).join('');
   }
 
+  function notificationStorageKey() {
+    return `foryou_policy_notifications_read:${portalData?.profile?.email || 'guest'}`;
+  }
+
+  function dismissedNotificationIds() {
+    try {
+      const ids = JSON.parse(localStorage.getItem(notificationStorageKey()) || '[]');
+      return new Set(Array.isArray(ids) ? ids.map(String) : []);
+    } catch (_) {
+      return new Set();
+    }
+  }
+
+  function saveDismissedNotification(id) {
+    const ids = dismissedNotificationIds();
+    ids.add(String(id));
+    localStorage.setItem(notificationStorageKey(), JSON.stringify([...ids].slice(-100)));
+  }
+
+  function visibleNotifications(notifications) {
+    const dismissed = dismissedNotificationIds();
+    return (Array.isArray(notifications) ? notifications : [])
+      .filter((notification) => notification?.id && !dismissed.has(String(notification.id)))
+      .slice(0, 5);
+  }
+
+  function notificationPanel(notifications) {
+    if (!notifications.length) return '';
+    return `<section class="account-card account-section" data-policy-notifications style="margin-bottom: 24px; border-left: 4px solid #C89B3C;">
+      <div class="account-section-head">
+        <div><p class="account-eyebrow">Policy updates</p><h2>Updates from Foryou Skin Bar</h2></div>
+        <a href="policies.html" class="account-link">View all policies <i class="fas fa-arrow-right ml-1"></i></a>
+      </div>
+      <div style="display: grid; gap: 12px;">
+        ${notifications.map((notification) => `
+          <article data-policy-notification="${escapeHtml(notification.id)}" style="background:#F8F5EF; border:1px solid #EBE3D5; border-radius:14px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+              <div>
+                <h3 style="font-size:1rem; margin-bottom:4px; color:#3A2E27;">${escapeHtml(notification.title)}</h3>
+                <p style="font-size:.875rem; color:#5A4C3A; line-height:1.55;">${escapeHtml(notification.message)}</p>
+                ${notification.updatedAt ? `<p style="font-size:.75rem; color:#8A7D6E; margin-top:6px;">Updated ${formatDate(notification.updatedAt)}</p>` : ''}
+              </div>
+              <button type="button" data-dismiss-policy-notification="${escapeHtml(notification.id)}" aria-label="Dismiss notification" style="color:#8A7D6E; padding:4px;">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <a href="${escapeHtml(safeHref(notification.href))}" class="reward-request" style="margin-top:10px;">Review policy <i class="fas fa-arrow-right ml-1"></i></a>
+          </article>`).join('')}
+      </div>
+    </section>`;
+  }
+
   function renderPortal(data) {
     if (!root) return;
     portalData = data;
@@ -110,6 +180,7 @@
       : 100;
     const firstName = String(profile.fullName || '').trim().split(/\s+/)[0] || 'Glow friend';
     const recentOrders = orders.slice(0, 3);
+    const policyNotifications = visibleNotifications(data.notifications || []);
 
     root.innerHTML = `
       <main class="account-shell">
@@ -118,6 +189,8 @@
             <div><span class="account-eyebrow">My Foryou Skin Bar</span><h1>Hi, ${escapeHtml(firstName)}.</h1><p>Everything from your skincare journey, in one calm little space.</p></div>
             <div class="account-hero-actions"><a href="shop.html" class="account-outline"><i class="fas fa-bag-shopping"></i>Continue shopping</a><button id="accountSignOutBtn" class="account-outline" type="button"><i class="fas fa-right-from-bracket"></i>Sign out</button></div>
           </section>
+
+          ${notificationPanel(policyNotifications)}
 
           <div class="account-tabs" role="tablist">
             <button class="account-tab active" data-account-tab="overview" type="button">Overview</button>
@@ -295,6 +368,49 @@
       } finally {
         setButtonBusy(button, false);
       }
+    });
+
+    document.querySelectorAll('.cancel-order-portal-btn').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const orderNumber = button.dataset.orderNumber;
+        const email = portalData?.profile?.email;
+        if (!email) return alert('Unable to determine account email.');
+
+        const reason = prompt(`Are you sure you want to cancel order ${orderNumber}? If so, please enter a reason (optional):`);
+        if (reason === null) return; // cancelled the prompt
+
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing…';
+
+        try {
+          const response = await fetch('/api/orders/cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderNumber, email, reason })
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || 'Failed to cancel order.');
+
+          alert(`Your cancellation request for order ${orderNumber} has been received.`);
+          loadPortal();
+        } catch (error) {
+          alert(error.message);
+          button.disabled = false;
+          button.innerHTML = '<i class="fas fa-ban mr-1"></i>Request Cancellation';
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-dismiss-policy-notification]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = button.dataset.dismissPolicyNotification;
+        if (!id) return;
+        saveDismissedNotification(id);
+        const item = Array.from(document.querySelectorAll('[data-policy-notification]')).find((node) => node.dataset.policyNotification === id);
+        item?.remove();
+        const panel = document.querySelector('[data-policy-notifications]');
+        if (panel && !panel.querySelector('[data-policy-notification]')) panel.remove();
+      });
     });
   }
 
