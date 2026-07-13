@@ -59,7 +59,7 @@ const adminSidebarNormalizer = `
   function sidebarCandidate(element) {
     if (!element || !element.querySelector) return false;
     var title = element.querySelector('h2');
-    return title && /Foryou Admin/i.test(title.textContent || '') && element.querySelector('a[href="/admin/index.html"]');
+    return title && title.parentElement === element && /Foryou Admin/i.test(title.textContent || '') && element.querySelector('a[href="/admin/index.html"]');
   }
 
   function findSidebar() {
