@@ -1574,7 +1574,7 @@ body.welcome-screen-active {
 }
 
 .bliss-hero-bg {
-  background: linear-gradient(90deg, rgba(251, 246, 237, 0.98) 0%, rgba(251, 246, 237, 0.96) 45%, rgba(251, 246, 237, 0.22) 68%, rgba(251, 246, 237, 0) 100%);
+  background: linear-gradient(90deg, rgba(251, 246, 237, 0.98) 0%, rgba(251, 246, 237, 0.96) 47%, rgba(251, 246, 237, 0) 47.1%);
 }
 
 .bliss-hero-shell {
@@ -1620,7 +1620,9 @@ body.welcome-screen-active {
 }
 
 .bliss-hero-visual::before {
-  background: linear-gradient(90deg, rgba(251, 246, 237, 0.78), rgba(251, 246, 237, 0.12) 38%, rgba(251, 246, 237, 0) 100%);
+  display: none;
+  content: none;
+  background: none;
 }
 
 .bliss-hero-visual::after,

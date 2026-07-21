@@ -591,7 +591,7 @@ footer .text-amber-700 {
 }
 
 .bliss-hero-bg {
-  background: linear-gradient(90deg, rgba(251, 246, 237, 0.98) 0%, rgba(251, 246, 237, 0.96) 45%, rgba(251, 246, 237, 0.22) 68%, rgba(251, 246, 237, 0) 100%) !important;
+  background: linear-gradient(90deg, rgba(251, 246, 237, 0.98) 0%, rgba(251, 246, 237, 0.96) 47%, rgba(251, 246, 237, 0) 47.1%) !important;
 }
 
 .bliss-hero-shell {
@@ -642,7 +642,9 @@ footer .text-amber-700 {
 }
 
 .bliss-hero-visual::before {
-  background: linear-gradient(90deg, rgba(251, 246, 237, 0.78), rgba(251, 246, 237, 0.12) 38%, rgba(251, 246, 237, 0) 100%) !important;
+  display: none !important;
+  content: none !important;
+  background: none !important;
 }
 
 .bliss-hero-visual::after,
