@@ -647,6 +647,29 @@ footer .text-amber-700 {
   background: none !important;
 }
 
+@media (min-width: 1101px) {
+  .bliss-image-card {
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.22) 4%,
+      rgba(0, 0, 0, 0.72) 11%,
+      #000 19%
+    ) !important;
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.22) 4%,
+      rgba(0, 0, 0, 0.72) 11%,
+      #000 19%
+    ) !important;
+    -webkit-mask-repeat: no-repeat !important;
+    mask-repeat: no-repeat !important;
+    -webkit-mask-size: 100% 100% !important;
+    mask-size: 100% 100% !important;
+  }
+}
+
 .bliss-hero-visual::after,
 .bliss-orb,
 .bliss-feature-strip {
