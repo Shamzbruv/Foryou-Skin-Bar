@@ -1430,7 +1430,7 @@ body.welcome-screen-active {
 .home-social-proof {
   background:
     linear-gradient(90deg, rgba(248, 245, 239, 0.96), rgba(248, 245, 239, 0.82)),
-    url("../assets/brand/welcome-lifestyle-branded-bg.jpg?v=no-logo-1") right center / cover no-repeat;
+    url("../assets/brand/welcome-lifestyle-branded-bg.jpg?v=regenerated-1") right center / cover no-repeat;
 }
 
 .home-customer-img {
@@ -1613,7 +1613,7 @@ body.welcome-screen-active {
 }
 
 .bliss-image-card {
-  background-image: url("../assets/brand/welcome-lifestyle-branded-bg.jpg?v=no-logo-1");
+  background-image: url("../assets/brand/welcome-lifestyle-branded-bg.jpg?v=regenerated-1");
   background-position: 62% center;
   filter: none;
   transform: none;
