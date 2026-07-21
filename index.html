@@ -14,6 +14,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
   <link rel="preload" as="image" href="assets/brand/welcome-founder-bg.jpg">
+  <link rel="preload" as="image" href="assets/brand/logo-welcome-black.png">
   <script>
     (function () {
       var storageKey = 'foryou_welcome_last_seen';
@@ -40,11 +41,27 @@
     })();
   </script>
   <style id="welcome-prepaint-guard">
+    html.welcome-screen-pending,
+    html.welcome-screen-pending body {
+      min-height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #fbf7ef;
+    }
+
     html.welcome-screen-pending body > :not(#welcomeScreen) {
       visibility: hidden;
     }
 
     html.welcome-screen-pending #welcomeScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      background:
+        linear-gradient(90deg, rgba(251, 247, 239, 0.98) 0%, rgba(251, 247, 239, 0.9) 36%, rgba(251, 247, 239, 0.12) 61%, rgba(251, 247, 239, 0) 100%),
+        url("assets/brand/welcome-founder-bg.jpg") right center / cover no-repeat;
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
@@ -117,6 +134,8 @@
   }
   </script>
   <link rel="stylesheet" href="css/brand-theme.css?v=hero-edge-fade-1">
+  <link id="clientReviewStyles" rel="stylesheet" href="css/client-review.css?v=15">
+  <link rel="stylesheet" href="css/editorial-refresh.css?v=1">
   <style id="homepage-trust-overrides">
     .home-concern-grid {
       display: grid !important;
@@ -396,15 +415,16 @@
     </section>
 
     <!-- Customer Validation -->
-    <section class="home-story-section home-social-proof px-6 md:px-16 py-20">
+    <section id="customerStories" class="home-story-section home-social-proof px-6 md:px-16 py-20">
       <div class="max-w-7xl mx-auto grid lg:grid-cols-[0.8fr_1.2fr] gap-10 items-center">
         <div>
           <p class="home-kicker">Real customers, real routines</p>
           <h2 class="serif-heading text-4xl md:text-5xl leading-tight mb-5">People are already choosing Foryou Skin Bar for their glow.</h2>
           <p class="text-stone-600 max-w-xl mb-7">From first cleanse to daily glow, customers choose handmade routines for acne, dark spots, body care, and confident skin.</p>
-          <div class="grid grid-cols-2 gap-3 max-w-xl">
-            <img src="assets/brand/about-us.png" class="home-customer-img" alt="Customer applying face serum">
-            <img src="assets/brand/about-hero.png" class="home-customer-img" alt="Customers smiling with skincare products">
+          <div class="home-melanin-gallery">
+            <img src="assets/brand/about-us.png" class="home-customer-img home-melanin-gallery__feature" alt="Dark-skinned customer applying face serum">
+            <img src="assets/brand/about-hero.png" class="home-customer-img" alt="Women smiling together with their skincare products">
+            <img src="assets/home-concerns/not-sure-yet.jpg" class="home-customer-img" alt="Dark-skinned woman sharing a skincare routine with friends">
           </div>
         </div>
         <div>

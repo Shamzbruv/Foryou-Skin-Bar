@@ -54,10 +54,7 @@
   screen.setAttribute('aria-hidden', 'false');
   document.body.classList.add('welcome-screen-active');
 
-  requestAnimationFrame(() => {
-    screen.classList.add('is-visible');
-    root.classList.remove('welcome-screen-pending');
-  });
+  screen.classList.add('is-visible');
 
   const autoCloseTimer = window.setTimeout(closeWelcome, VISIBLE_MS);
   document.getElementById('welcomeSkipBtn')?.addEventListener('click', () => {

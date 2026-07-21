@@ -424,20 +424,16 @@ button.bg-amber-700:hover {
   border: 1px solid rgba(200, 155, 60, 0.32) !important;
 }
 
-/* Quiz page: keep the nature background on both /quiz and /quiz.html. */
+/* Quiz page: use a calm paper canvas and reserve nature imagery for the header. */
 body.quiz-page,
 body:has(#quizContainer) {
-  background:
-    linear-gradient(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.15)),
-    url('../assets/brand/quiz_bg_nature.png') center / cover no-repeat fixed !important;
+  background: #f8f5ef !important;
 }
 .quiz-main,
 main:has(#quizContainer),
 body.quiz-page main.min-h-screen {
   min-height: calc(100vh - 7rem);
-  background:
-    linear-gradient(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.15)),
-    url('../assets/brand/quiz_bg_nature.png') center / cover no-repeat fixed !important;
+  background: #f8f5ef !important;
   box-shadow: none !important;
   border: 0 !important;
 }

@@ -398,9 +398,7 @@ main > section.home-shop-cta h2.serif-heading,
 
 /* Quiz gets a purposeful visual frame and consistently gold next action. */
 body.quiz-page {
-  background:
-    linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.15)),
-    url('../assets/brand/quiz_bg_nature.png') center / cover no-repeat fixed !important;
+  background: #f8f5ef !important;
 }
 body.quiz-page main,
 body.quiz-page main.min-h-screen {
