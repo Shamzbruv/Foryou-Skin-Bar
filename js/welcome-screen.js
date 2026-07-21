@@ -1,4 +1,5 @@
 (function () {
+  const root = document.documentElement;
   const screen = document.getElementById('welcomeScreen');
   if (!screen) return;
 
@@ -13,31 +14,49 @@
   }
 
   function shouldShow() {
-    const lastSeen = Number(localStorage.getItem(STORAGE_KEY) || 0);
-    const stale = !lastSeen || Date.now() - lastSeen > SHOW_AGAIN_AFTER_MS;
-    return navigationType() === 'reload' || stale;
+    if (typeof window.__foryouWelcomeShouldShow === 'boolean') {
+      return window.__foryouWelcomeShouldShow;
+    }
+
+    try {
+      const lastSeen = Number(localStorage.getItem(STORAGE_KEY) || 0);
+      const stale = !lastSeen || Date.now() - lastSeen > SHOW_AGAIN_AFTER_MS;
+      return navigationType() === 'reload' || stale;
+    } catch (error) {
+      return true;
+    }
   }
 
   function closeWelcome() {
     screen.classList.add('is-leaving');
     document.body.classList.remove('welcome-screen-active');
+    root.classList.remove('welcome-screen-pending');
     window.setTimeout(() => {
       screen.classList.remove('is-visible', 'is-leaving');
       screen.hidden = true;
+      screen.setAttribute('aria-hidden', 'true');
+      root.classList.add('welcome-screen-skip');
     }, FADE_MS);
   }
 
   if (!shouldShow()) {
+    root.classList.remove('welcome-screen-pending');
+    root.classList.add('welcome-screen-skip');
     screen.remove();
     return;
   }
 
-  localStorage.setItem(STORAGE_KEY, String(Date.now()));
+  try {
+    localStorage.setItem(STORAGE_KEY, String(Date.now()));
+  } catch (error) {}
+
   screen.hidden = false;
+  screen.setAttribute('aria-hidden', 'false');
   document.body.classList.add('welcome-screen-active');
 
   requestAnimationFrame(() => {
     screen.classList.add('is-visible');
+    root.classList.remove('welcome-screen-pending');
   });
 
   const autoCloseTimer = window.setTimeout(closeWelcome, VISIBLE_MS);

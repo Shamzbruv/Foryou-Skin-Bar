@@ -514,8 +514,8 @@ body.animations-ready .reveal-panel.revealed {
   padding: clamp(1rem, 3vw, 2rem);
   color: #171312;
   background:
-    linear-gradient(90deg, rgba(251, 247, 239, 0.98) 0%, rgba(251, 247, 239, 0.92) 38%, rgba(251, 247, 239, 0.42) 66%, rgba(251, 247, 239, 0.18) 100%),
-    url("../assets/brand/welcome-lifestyle-bg.png") right center / cover no-repeat;
+    linear-gradient(90deg, rgba(251, 247, 239, 0.98) 0%, rgba(251, 247, 239, 0.9) 36%, rgba(251, 247, 239, 0.12) 61%, rgba(251, 247, 239, 0) 100%),
+    url("../assets/brand/welcome-founder-bg.jpg") right center / cover no-repeat;
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
@@ -527,6 +527,20 @@ body.animations-ready .reveal-panel.revealed {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+}
+
+html.welcome-screen-pending body {
+  overflow: hidden;
+}
+
+html.welcome-screen-pending .welcome-screen {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+html.welcome-screen-skip .welcome-screen {
+  display: none;
 }
 
 .welcome-screen.is-leaving {
@@ -667,6 +681,10 @@ body.welcome-screen-active {
   font-size: clamp(1.25rem, 2.6vw, 2rem);
 }
 
+.welcome-mobile-break {
+  display: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .welcome-screen.is-visible .welcome-screen__copy {
     animation: welcomeCopyIn 900ms ease both;
@@ -691,6 +709,9 @@ body.welcome-screen-active {
   .welcome-screen {
     justify-content: center;
     padding: 1rem;
+    background:
+      linear-gradient(180deg, rgba(251, 247, 239, 0.9) 0%, rgba(251, 247, 239, 0.6) 52%, rgba(251, 247, 239, 0.28) 100%),
+      url("../assets/brand/welcome-founder-bg.jpg") 69% center / cover no-repeat;
     overflow: hidden;
   }
 
@@ -747,11 +768,12 @@ body.welcome-screen-active {
 
   .welcome-screen__eyebrow,
   .welcome-screen__subhead {
-    letter-spacing: 0.12em;
+    letter-spacing: 0.08em;
   }
 
   .welcome-screen__subhead {
-    max-width: min(330px, 86vw);
+    max-width: min(310px, 82vw);
+    font-size: 0.78rem;
   }
 
   .welcome-screen__proof {
@@ -780,10 +802,16 @@ body.welcome-screen-active {
 
   .welcome-screen__tagline {
     min-height: 64px;
-    font-size: 1.02rem;
+    font-size: 0.9rem;
+    line-height: 1.2;
     justify-content: center;
     text-align: center;
     padding-inline: 1rem;
+    white-space: normal;
+  }
+
+  .welcome-mobile-break {
+    display: block;
   }
 
 }
@@ -1402,7 +1430,7 @@ body.welcome-screen-active {
 .home-social-proof {
   background:
     linear-gradient(90deg, rgba(248, 245, 239, 0.96), rgba(248, 245, 239, 0.82)),
-    url("../assets/brand/welcome-lifestyle-bg.png") right center / cover no-repeat;
+    url("../assets/brand/welcome-lifestyle-branded-bg.jpg") right center / cover no-repeat;
 }
 
 .home-customer-img {
@@ -1585,7 +1613,7 @@ body.welcome-screen-active {
 }
 
 .bliss-image-card {
-  background-image: url("../assets/brand/welcome-lifestyle-bg.png");
+  background-image: url("../assets/brand/welcome-lifestyle-branded-bg.jpg");
   background-position: 62% center;
   filter: none;
   transform: none;

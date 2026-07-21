@@ -13,9 +13,46 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+  <link rel="preload" as="image" href="assets/brand/welcome-founder-bg.jpg">
+  <script>
+    (function () {
+      var storageKey = 'foryou_welcome_last_seen';
+      var showAgainAfterMs = 6 * 60 * 60 * 1000;
+
+      function navigationType() {
+        var entries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+        if (entries && entries[0] && entries[0].type) return entries[0].type;
+        return performance.navigation && performance.navigation.type === 1 ? 'reload' : 'navigate';
+      }
+
+      function shouldShowWelcome() {
+        try {
+          var lastSeen = Number(localStorage.getItem(storageKey) || 0);
+          var stale = !lastSeen || Date.now() - lastSeen > showAgainAfterMs;
+          return navigationType() === 'reload' || stale;
+        } catch (error) {
+          return true;
+        }
+      }
+
+      window.__foryouWelcomeShouldShow = shouldShowWelcome();
+      document.documentElement.classList.add(window.__foryouWelcomeShouldShow ? 'welcome-screen-pending' : 'welcome-screen-skip');
+    })();
+  </script>
+  <style id="welcome-prepaint-guard">
+    html.welcome-screen-pending body > :not(#welcomeScreen) {
+      visibility: hidden;
+    }
+
+    html.welcome-screen-pending #welcomeScreen {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+  </style>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="css/styles.css?v=homepage-trust-5">
+  <link rel="stylesheet" href="css/styles.css?v=welcome-screen-4">
   <script src="https://cdn.tailwindcss.com?plugins=typography"></script>  <script>
     tailwind.config = {
       theme: {
@@ -79,7 +116,7 @@
     }
   }
   </script>
-  <link rel="stylesheet" href="css/brand-theme.css?v=gold-process-1">
+  <link rel="stylesheet" href="css/brand-theme.css?v=hero-branded-1">
   <style id="homepage-trust-overrides">
     .home-concern-grid {
       display: grid !important;
@@ -150,7 +187,7 @@
 </head>
 <body class="antialiased">
 
-  <div id="welcomeScreen" class="welcome-screen" aria-label="Welcome to Foryou Skin Bar" hidden>
+  <div id="welcomeScreen" class="welcome-screen" aria-label="Welcome to Foryou Skin Bar" aria-hidden="true">
     <div class="welcome-screen__panel">
       <div class="welcome-screen__copy">
         <div class="welcome-screen__brandmark" aria-label="Foryou Skin Bar">
@@ -159,7 +196,7 @@
         <p class="welcome-screen__eyebrow">Welcome to</p>
         <h1>Foryou<br>Skin Bar</h1>
         <div class="welcome-screen__rule" aria-hidden="true"><span></span><i class="fas fa-leaf"></i><span></span></div>
-        <p class="welcome-screen__subhead">Handcrafted skin and body care made just for you.</p>
+        <p class="welcome-screen__subhead">Handcrafted skin and body care<br class="welcome-mobile-break"> made just for you.</p>
 
         <div class="welcome-screen__proof" aria-label="Brand promises">
           <div><i class="fas fa-leaf"></i><span>Natural<br>Ingredients</span></div>
@@ -171,8 +208,9 @@
 
       <div class="welcome-screen__lifestyle" aria-hidden="true"></div>
     </div>
-    <div class="welcome-screen__tagline">Pure Ingredients. Thoughtfully Made. Beautifully You.</div>
+    <div class="welcome-screen__tagline">Pure Ingredients. Thoughtfully Made.<br class="welcome-mobile-break"> Beautifully You.</div>
   </div>
+  <script src="js/welcome-screen.js?v=2"></script>
 
   <!-- Announcement bar -->
   <div class="announcement-bar bg-amber-900/90 text-white text-center py-2.5 text-sm font-medium tracking-wide">
@@ -561,7 +599,6 @@
   <script src="js/blog.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=homepage-trust-3"></script>
-  <script src="js/welcome-screen.js?v=1"></script>
   
   <script type="module">
     const supabase = window.supabase;
