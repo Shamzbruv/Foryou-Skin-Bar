@@ -62,7 +62,8 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="css/brand-theme.css?v=2">
+  <link rel="stylesheet" href="css/brand-theme.css?v=gold-headers-1">
+  <link rel="stylesheet" href="css/quiz-layout.css?v=4">
 </head>
 <body class="antialiased quiz-page">
 
@@ -220,12 +221,12 @@
           <h2 class="text-2xl font-bold text-stone-800 mb-6 text-center">Face care, body care, or both?</h2>
           <div class="space-y-3">
             <label class="quiz-option">
-              <input type="radio" name="focus" value="Mostly face care">
-              <div class="flex items-center gap-3"><span class="text-2xl">💆‍♀️</span> <span>Mostly face care</span></div>
+              <input type="radio" name="focus" value="Face care">
+              <div class="flex items-center gap-3"><span class="text-2xl">💆‍♀️</span> <span>Face care</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="focus" value="Mostly body care">
-              <div class="flex items-center gap-3"><span class="text-2xl">🛁</span> <span>Mostly body care</span></div>
+              <input type="radio" name="focus" value="Body care">
+              <div class="flex items-center gap-3"><span class="text-2xl">🛁</span> <span>Body care</span></div>
             </label>
             <label class="quiz-option">
               <input type="radio" name="focus" value="Both face and body">
@@ -255,34 +256,35 @@
 
         <!-- Step 6 -->
         <div class="quiz-step hidden" data-step="6">
-          <h2 class="text-2xl font-bold text-stone-800 mb-6 text-center">What type of product are you looking for most?</h2>
+          <h2 class="text-2xl font-bold text-stone-800 mb-2 text-center">What product types are you looking for?</h2>
+          <p class="text-center text-sm text-stone-500 mb-6">Choose one or more.</p>
           <div class="space-y-3">
             <label class="quiz-option">
-              <input type="radio" name="productPreference" value="Soap / cleanser">
+              <input type="checkbox" name="productPreference" value="Soap / cleanser">
               <div class="flex items-center gap-3"><span>Soap / cleanser</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="productPreference" value="Serum / treatment">
+              <input type="checkbox" name="productPreference" value="Serum / treatment">
               <div class="flex items-center gap-3"><span>Serum / treatment</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="productPreference" value="Toner / mist">
+              <input type="checkbox" name="productPreference" value="Toner / mist">
               <div class="flex items-center gap-3"><span>Toner / mist</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="productPreference" value="Cream / moisturizer">
+              <input type="checkbox" name="productPreference" value="Cream / moisturizer">
               <div class="flex items-center gap-3"><span>Cream / moisturizer</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="productPreference" value="Scrub / exfoliation">
+              <input type="checkbox" name="productPreference" value="Scrub / exfoliation">
               <div class="flex items-center gap-3"><span>Scrub / exfoliation</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="productPreference" value="Body butter / body oil">
+              <input type="checkbox" name="productPreference" value="Body butter / body oil">
               <div class="flex items-center gap-3"><span>Body butter / body oil</span></div>
             </label>
             <label class="quiz-option">
-              <input type="radio" name="productPreference" value="No preference">
+              <input type="checkbox" name="productPreference" value="No preference" data-exclusive="true">
               <div class="flex items-center gap-3"><span>No preference</span></div>
             </label>
           </div>
@@ -297,10 +299,10 @@
     </div>
 
     <!-- Quiz Results (Hidden initially) -->
-    <div id="quizResults" class="max-w-4xl mx-auto hidden animate-fade-in">
+    <div id="quizResults" class="max-w-4xl mx-auto hidden animate-fade-in text-stone-900">
       <div class="text-center mb-10">
-        <h1 class="serif-heading text-4xl md:text-5xl font-bold mb-4">Your Personalized Glow Routine</h1>
-        <p id="resultSummary" class="text-lg text-stone-600 max-w-2xl mx-auto"></p>
+        <h1 class="serif-heading text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow">Your Personalized Glow Routine</h1>
+        <p id="resultSummary" class="text-lg text-white max-w-2xl mx-auto drop-shadow"></p>
       </div>
 
       <div id="routineGrid" class="space-y-6 mb-10">
@@ -419,10 +421,9 @@
   <script src="js/analytics.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-public-client.js?v=5"></script>
-  <script src="js/products.js?v=6"></script>
-  <script src="js/recommendation-engine.js"></script>
+  <script src="js/products.js?v=7"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=2"></script>
-  <script src="js/quiz.js?v=2"></script>
+  <script src="js/quiz.js?v=3"></script>
 </body>
 </html>

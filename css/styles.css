@@ -501,6 +501,318 @@ body.animations-ready .reveal-panel.revealed {
 }
 
 /* ================================
+   Foryou Skin Bar - Welcome Screen
+================================ */
+
+.welcome-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(1rem, 3vw, 2rem);
+  color: #171312;
+  background:
+    linear-gradient(90deg, rgba(251, 247, 239, 0.98) 0%, rgba(251, 247, 239, 0.92) 38%, rgba(251, 247, 239, 0.42) 66%, rgba(251, 247, 239, 0.18) 100%),
+    url("../assets/brand/welcome-lifestyle-bg.png") right center / cover no-repeat;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 700ms ease, visibility 700ms ease;
+}
+
+.welcome-screen.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.welcome-screen.is-leaving {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.welcome-screen-active {
+  overflow: hidden;
+}
+
+.welcome-screen__panel {
+  width: min(100%, 1120px);
+  min-height: min(62vh, 570px);
+  margin: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(300px, 0.98fr);
+  align-items: center;
+  gap: clamp(1.25rem, 4vw, 3.2rem);
+  position: relative;
+  padding-bottom: 86px;
+}
+
+.welcome-screen__copy {
+  text-align: center;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.welcome-screen__brandmark {
+  width: min(430px, 82vw);
+  margin: 0 auto clamp(1.35rem, 3vw, 2.2rem);
+  display: block;
+}
+
+.welcome-screen__brandmark img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.welcome-screen__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1rem, 2vw, 1.55rem);
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.welcome-screen h1 {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(3rem, 6.1vw, 5.1rem);
+  font-weight: 500;
+  line-height: 0.92;
+  text-transform: uppercase;
+  color: #171312;
+}
+
+.welcome-screen__rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  margin: clamp(1.1rem, 2.4vw, 1.8rem) auto;
+  color: #b08a55;
+}
+
+.welcome-screen__rule span {
+  width: min(150px, 28vw);
+  height: 1px;
+  background: #b08a55;
+}
+
+.welcome-screen__subhead {
+  max-width: 760px;
+  margin: 0 auto clamp(1.2rem, 3vw, 1.85rem);
+  font-size: clamp(0.95rem, 1.5vw, 1.18rem);
+  line-height: 1.45;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.welcome-screen__proof {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.welcome-screen__proof div {
+  min-height: 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.5rem 1rem;
+  border-right: 1px solid rgba(176, 138, 85, 0.35);
+  color: #2c211b;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.welcome-screen__proof div:last-child {
+  border-right: 0;
+}
+
+.welcome-screen__proof i {
+  color: #3f5137;
+  font-size: 1.55rem;
+}
+
+.welcome-screen__lifestyle {
+  min-height: 450px;
+  position: relative;
+}
+
+
+.welcome-screen__tagline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(1.5rem, 6vw, 5rem);
+  background: #111111;
+  color: #b08a55;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1.25rem, 2.6vw, 2rem);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .welcome-screen.is-visible .welcome-screen__copy {
+    animation: welcomeCopyIn 900ms ease both;
+  }
+
+  .welcome-screen.is-visible .welcome-screen__lifestyle {
+    animation: welcomeStillLifeIn 1000ms ease both;
+  }
+}
+
+@keyframes welcomeCopyIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes welcomeStillLifeIn {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 900px) {
+  .welcome-screen {
+    justify-content: center;
+    padding: 1rem;
+    overflow: hidden;
+  }
+
+  .welcome-screen__panel {
+    width: min(100%, 560px);
+    min-height: auto;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    padding-bottom: 76px;
+  }
+
+  .welcome-screen__copy {
+    padding: 3rem 0.5rem 0;
+  }
+
+  .welcome-screen__lifestyle {
+    min-height: 245px;
+    width: min(100%, 410px);
+    margin: -0.25rem auto 0;
+  }
+
+  .welcome-screen__proof {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 500px;
+  }
+
+  .welcome-screen__proof div {
+    min-height: 64px;
+    font-size: 0.62rem;
+    padding: 0.35rem;
+  }
+
+  .welcome-screen__proof i {
+    font-size: 1.25rem;
+  }
+
+}
+
+@media (max-width: 560px) {
+  .welcome-screen {
+    padding: 0.65rem;
+  }
+
+  .welcome-screen__brandmark {
+    width: min(260px, 72vw);
+    max-width: calc(100vw - 4rem);
+    margin-bottom: 0.9rem;
+  }
+
+  .welcome-screen h1 {
+    font-size: clamp(2.45rem, 11vw, 3.15rem);
+    line-height: 0.94;
+  }
+
+  .welcome-screen__eyebrow,
+  .welcome-screen__subhead {
+    letter-spacing: 0.12em;
+  }
+
+  .welcome-screen__subhead {
+    max-width: min(330px, 86vw);
+  }
+
+  .welcome-screen__proof {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(330px, 86vw);
+  }
+
+  .welcome-screen__proof div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .welcome-screen__proof div:nth-child(1),
+  .welcome-screen__proof div:nth-child(2) {
+    border-bottom: 1px solid rgba(176, 138, 85, 0.35);
+  }
+
+  .welcome-screen__proof div {
+    min-height: 58px;
+    font-size: 0.54rem;
+    padding-inline: 0.25rem;
+  }
+
+  .welcome-screen__lifestyle {
+    min-height: 205px;
+  }
+
+  .welcome-screen__tagline {
+    min-height: 64px;
+    font-size: 1.02rem;
+    justify-content: center;
+    text-align: center;
+    padding-inline: 1rem;
+  }
+
+}
+
+@media (max-width: 390px), (max-height: 760px) {
+  .welcome-screen h1 {
+    font-size: clamp(2.15rem, 10vw, 2.8rem);
+  }
+
+  .welcome-screen__brandmark {
+    width: min(230px, 68vw);
+    margin-bottom: 0.7rem;
+  }
+
+  .welcome-screen__rule {
+    margin-block: 0.85rem;
+  }
+
+  .welcome-screen__subhead {
+    margin-bottom: 0.9rem;
+    font-size: 0.82rem;
+  }
+
+  .welcome-screen__lifestyle {
+    min-height: 170px;
+  }
+}
+
+/* ================================
    ForYou Skin Bar - Bliss Hero
 ================================ */
 
@@ -933,5 +1245,605 @@ body.animations-ready .reveal-panel.revealed {
     width: 46px;
     height: 46px;
     font-size: 1.05rem;
+  }
+}
+
+/* Homepage trust-building story */
+.home-proof-strip {
+  background: #354232;
+  color: #fffdf8;
+}
+
+.home-stat-card {
+  min-height: 126px;
+  padding: 22px 20px;
+  border: 1px solid rgba(255, 253, 248, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.08);
+}
+
+.home-stat-card strong {
+  display: block;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 0.92;
+  font-weight: 600;
+  color: #f8f5ef;
+}
+
+.home-stat-card span {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: #e8dfcf;
+}
+
+.home-story-section {
+  position: relative;
+}
+
+.home-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.home-section-heading p,
+.home-kicker {
+  color: #5a6b53;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.home-section-heading h2 {
+  max-width: 730px;
+  font-size: clamp(2.5rem, 5vw, 4.6rem);
+  line-height: 0.98;
+}
+
+.home-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #7b5f23;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.home-text-link:hover {
+  color: #354232;
+}
+
+.home-concern-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-concern-card {
+  position: relative;
+  min-height: 430px;
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  overflow: hidden;
+  border-radius: 8px;
+  color: #fffdf8;
+  background: #354232;
+  box-shadow: 0 18px 38px rgba(58, 46, 39, 0.12);
+}
+
+.home-concern-card:nth-child(1),
+.home-concern-card:nth-child(2) {
+  grid-column: span 3;
+}
+
+.home-concern-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.55s ease;
+}
+
+.home-concern-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(37, 48, 37, 0.05), rgba(37, 48, 37, 0.76));
+}
+
+.home-concern-card span,
+.home-concern-card small {
+  position: relative;
+  z-index: 1;
+  margin-inline: 22px;
+}
+
+.home-concern-card span {
+  display: block;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.85rem, 3vw, 2.7rem);
+  line-height: 1;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.home-concern-card small {
+  display: block;
+  max-width: 330px;
+  margin-bottom: 22px;
+  color: #f4ecdf;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.home-concern-card:hover img {
+  transform: scale(1.05);
+}
+
+.home-concern-card--quiz::after {
+  background: linear-gradient(180deg, rgba(176, 133, 47, 0.1), rgba(58, 46, 39, 0.82));
+}
+
+.home-social-proof {
+  background:
+    linear-gradient(90deg, rgba(248, 245, 239, 0.96), rgba(248, 245, 239, 0.82)),
+    url("../assets/brand/welcome-lifestyle-bg.png") right center / cover no-repeat;
+}
+
+.home-customer-img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 18px 34px rgba(58, 46, 39, 0.12);
+}
+
+.home-ingredient-card {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  min-height: 150px;
+  overflow: hidden;
+  border: 1px solid rgba(58, 46, 39, 0.09);
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #3a2e27;
+  box-shadow: 0 10px 28px rgba(58, 46, 39, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.home-ingredient-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(58, 46, 39, 0.1);
+}
+
+.home-ingredient-card img {
+  width: 132px;
+  height: 100%;
+  min-height: 150px;
+  object-fit: cover;
+}
+
+.home-ingredient-card div {
+  padding: 20px;
+}
+
+.home-ingredient-card h3 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.home-ingredient-card p {
+  color: #6b5d50;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.home-shop-cta {
+  background:
+    linear-gradient(135deg, rgba(53, 66, 50, 0.98), rgba(90, 107, 83, 0.94)),
+    url("../assets/brand/about-hero.png") center / cover no-repeat;
+}
+
+.home-shop-cta .home-kicker {
+  color: #f3e6c7;
+}
+
+.home-cta-btn {
+  min-height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 28px;
+  border: 1px solid rgba(255, 253, 248, 0.75);
+  border-radius: 999px;
+  color: #fffdf8;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  transition: transform 0.24s ease, background-color 0.24s ease;
+}
+
+.home-cta-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 253, 248, 0.12);
+}
+
+.home-cta-btn--light {
+  background: #fffdf8;
+  color: #354232;
+}
+
+.home-cta-btn--light:hover {
+  background: #f3e6c7;
+}
+
+@media (max-width: 1024px) {
+  .home-concern-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-concern-card,
+  .home-concern-card:nth-child(1),
+  .home-concern-card:nth-child(2) {
+    grid-column: span 1;
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 700px) {
+  .home-section-heading {
+    display: block;
+  }
+
+  .home-section-heading h2 {
+    margin: 8px 0 18px;
+  }
+
+  .home-concern-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-concern-card,
+  .home-concern-card:nth-child(1),
+  .home-concern-card:nth-child(2) {
+    min-height: 330px;
+  }
+
+  .home-ingredient-card {
+    grid-template-columns: 112px 1fr;
+  }
+
+  .home-ingredient-card img {
+    width: 112px;
+  }
+}
+
+/* Homepage clean visual pass */
+.bliss-hero {
+  min-height: 640px;
+  background: linear-gradient(90deg, #fbf6ed 0%, #fbf6ed 47%, #efe2cd 100%);
+}
+
+.bliss-hero::before {
+  opacity: 0.18;
+}
+
+.bliss-hero-bg {
+  background: linear-gradient(90deg, rgba(251, 246, 237, 0.98) 0%, rgba(251, 246, 237, 0.96) 45%, rgba(251, 246, 237, 0.22) 68%, rgba(251, 246, 237, 0) 100%);
+}
+
+.bliss-hero-shell {
+  width: 48vw;
+  min-height: 640px;
+  padding: 64px 24px 80px;
+}
+
+.bliss-hero-copy {
+  max-width: 620px;
+  transform: none;
+}
+
+.bliss-eyebrow {
+  color: #354232;
+}
+
+.bliss-hero-copy h1 {
+  font-size: clamp(3.7rem, 6.2vw, 6.45rem);
+  line-height: 0.94;
+  letter-spacing: -0.025em;
+  margin: 24px 0 24px;
+}
+
+.bliss-hero-copy p {
+  max-width: 560px;
+  color: #2c211b;
+  font-size: clamp(1rem, 1.1vw, 1.14rem);
+  line-height: 1.72;
+}
+
+.bliss-hero-visual {
+  width: 52vw;
+  clip-path: none;
+  border-left: none;
+}
+
+.bliss-image-card {
+  background-image: url("../assets/brand/welcome-lifestyle-bg.png");
+  background-position: 62% center;
+  filter: none;
+  transform: none;
+}
+
+.bliss-hero-visual::before {
+  background: linear-gradient(90deg, rgba(251, 246, 237, 0.78), rgba(251, 246, 237, 0.12) 38%, rgba(251, 246, 237, 0) 100%);
+}
+
+.bliss-hero-visual::after,
+.bliss-orb,
+.bliss-feature-strip {
+  display: none;
+}
+
+.bliss-mini-proof {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 620px;
+  gap: 12px;
+}
+
+.bliss-mini-proof div {
+  padding: 14px 16px;
+  background: transparent;
+  border-left: 1px solid rgba(53, 66, 50, 0.26);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.home-proof-strip {
+  background: #f8f5ef;
+  padding-top: 30px;
+  padding-bottom: 50px;
+}
+
+.home-proof-strip > .max-w-7xl {
+  padding: 18px;
+  border: 1px solid rgba(58, 46, 39, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.88);
+  box-shadow: 0 18px 42px rgba(58, 46, 39, 0.07);
+}
+
+.home-stat-card {
+  min-height: 118px;
+  padding: 18px 14px;
+  border: 0;
+  border-right: 1px solid rgba(58, 46, 39, 0.09);
+  border-radius: 0;
+  background: transparent;
+  text-align: center;
+}
+
+.home-stat-card:last-child {
+  border-right: 0;
+}
+
+.home-stat-card i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(53, 66, 50, 0.2);
+  border-radius: 999px;
+  color: #354232;
+  font-size: 0.95rem;
+}
+
+.home-stat-card strong {
+  font-family: "Inter", sans-serif;
+  font-size: clamp(1.45rem, 2.5vw, 2.15rem);
+  line-height: 1;
+  color: #171312;
+}
+
+.home-stat-card span {
+  margin-top: 8px;
+  color: #5a4c3a;
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.home-story-section {
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+
+.home-section-heading {
+  align-items: flex-start;
+  margin-bottom: 26px;
+}
+
+.home-section-heading h2 {
+  font-size: clamp(2.25rem, 4vw, 3.8rem);
+  line-height: 1.02;
+}
+
+.home-concern-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.home-concern-card,
+.home-concern-card:nth-child(1),
+.home-concern-card:nth-child(2) {
+  grid-column: auto;
+  min-height: 0;
+  display: block;
+  overflow: hidden;
+  border: 1px solid rgba(58, 46, 39, 0.08);
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #2c211b;
+  box-shadow: 0 12px 28px rgba(58, 46, 39, 0.06);
+}
+
+.home-concern-card::after {
+  display: none;
+}
+
+.home-concern-card img {
+  position: static;
+  width: 100%;
+  height: 218px;
+  object-fit: cover;
+  transform: none;
+}
+
+.home-concern-card span,
+.home-concern-card small {
+  margin-inline: 0;
+}
+
+.home-concern-card span {
+  padding: 18px 20px 0;
+  color: #253025;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+}
+
+.home-concern-card small {
+  padding: 7px 20px 20px;
+  margin-bottom: 0;
+  max-width: none;
+  color: #5a4c3a;
+  font-size: 0.92rem;
+}
+
+.home-concern-card:hover img {
+  transform: none;
+}
+
+.home-social-proof {
+  background: #efe8da;
+}
+
+.home-customer-img {
+  aspect-ratio: 5 / 4;
+  max-height: 245px;
+  object-position: center;
+}
+
+.home-ingredient-card {
+  min-height: 132px;
+}
+
+.home-ingredient-card img {
+  min-height: 132px;
+}
+
+.home-shop-cta {
+  padding-top: 58px;
+  padding-bottom: 58px;
+}
+
+@media (max-width: 1100px) {
+  .bliss-hero {
+    min-height: 0;
+  }
+
+  .bliss-hero-shell {
+    width: 100%;
+    min-height: auto;
+    padding: 48px 24px 26px;
+  }
+
+  .bliss-hero-copy {
+    max-width: 780px;
+  }
+
+  .bliss-hero-visual {
+    position: relative;
+    width: calc(100% - 48px);
+    min-height: 420px;
+    margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-concern-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-stat-card:nth-child(2) {
+    border-right: 0;
+  }
+
+  .home-stat-card:nth-child(1),
+  .home-stat-card:nth-child(2) {
+    border-bottom: 1px solid rgba(58, 46, 39, 0.09);
+  }
+}
+
+@media (max-width: 700px) {
+  .bliss-hero-shell {
+    padding: 38px 18px 22px;
+  }
+
+  .bliss-hero-copy h1 {
+    font-size: clamp(3rem, 14vw, 4.4rem);
+  }
+
+  .bliss-mini-proof {
+    grid-template-columns: 1fr;
+    margin-top: 28px;
+  }
+
+  .bliss-hero-visual {
+    width: calc(100% - 28px);
+    min-height: 340px;
+  }
+
+  .home-proof-strip > .max-w-7xl {
+    padding: 10px;
+  }
+
+  .home-stat-card {
+    min-height: 108px;
+  }
+
+  .home-concern-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-concern-card img {
+    height: 210px;
+  }
+
+  .home-story-section {
+    padding-top: 58px;
+    padding-bottom: 58px;
+  }
+
+  .home-customer-img {
+    max-height: none;
   }
 }

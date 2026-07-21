@@ -57,7 +57,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
-  <link rel="stylesheet" href="css/brand-theme.css">
+  <link rel="stylesheet" href="css/brand-theme.css?v=gold-headers-1">
 </head>
 <body class="antialiased bg-[#F8F5EF] text-stone-800">
 
@@ -215,7 +215,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-public-client.js?v=5"></script>
   <script src="js/analytics.js"></script>
-  <script src="js/products.js?v=6"></script>
+  <script src="js/products.js?v=7"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=2"></script>
   <script>
@@ -258,6 +258,33 @@
           });
         });
         return holder.innerHTML;
+      }
+
+      function plainTextToHTML(value = '') {
+        const text = String(value || '').replace(/\r\n?/g, '\n').trim();
+        if (!text) return '';
+
+        return text.split(/\n{2,}/)
+          .map(block => block.trim())
+          .filter(Boolean)
+          .map(block => {
+            const lines = block.split('\n').map(line => line.trim()).filter(Boolean);
+            const isList = lines.length > 1 && lines.every(line => /^([-*•]|\d+[.)])\s+/.test(line));
+
+            if (isList) {
+              return `<ul>${lines.map(line => `<li>${escapeHTML(line.replace(/^([-*•]|\d+[.)])\s+/, ''))}</li>`).join('')}</ul>`;
+            }
+
+            return `<p>${lines.map(line => escapeHTML(line)).join('<br>')}</p>`;
+          })
+          .join('');
+      }
+
+      function richTextHTML(value = '') {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        if (/<[a-z][\s\S]*>/i.test(raw)) return safeHTML(raw);
+        return plainTextToHTML(raw);
       }
 
       function scanItems(value = '', maxItems = 4) {
@@ -311,7 +338,7 @@
         if (!stripToText(body)) return '';
         return `<div class="product-detail-card p-6 ${span ? 'lg:col-span-2' : ''}">
           <h3 class="text-amber-800 font-bold mb-3 flex items-center gap-2 text-lg"><i class="fas ${icon}"></i>${escapeHTML(title)}</h3>
-          <div class="product-rich-text text-sm leading-relaxed">${safeHTML(body)}</div>
+          <div class="product-rich-text text-sm leading-relaxed">${richTextHTML(body)}</div>
         </div>`;
       }
 
@@ -466,6 +493,30 @@
           customSectionsHtml
         ].filter(Boolean).join('');
 
+        const attributeList = [
+          { key: 'is_sulphate_free', icon: 'fa-droplet-slash', label: 'Sulphate Free' },
+          { key: 'is_paraben_free', icon: 'fa-ban', label: 'Paraben Free' },
+          { key: 'is_mineral_oil_free', icon: 'fa-vial', label: 'Mineral Oil Free' },
+          { key: 'is_cruelty_free', icon: 'fa-paw', label: 'Cruelty Free' },
+          { key: 'is_handmade_in_jamaica', icon: 'fa-hand-sparkles', label: 'Handmade in Jamaica' }
+        ].filter(attr => product[attr.key]).map(attr => `<li class="flex items-center gap-2 font-medium text-stone-700"><i class="fas ${attr.icon} text-amber-700 w-5"></i> ${attr.label}</li>`).join('');
+
+        const attributesHtml = attributeList ? `
+            <div class="mt-7 pt-6 border-t border-amber-100">
+              <ul class="grid grid-cols-2 gap-4 text-sm">
+                ${attributeList}
+              </ul>
+            </div>` : '';
+
+        const globalDisclaimerHtml = product.has_results_disclaimer ? `
+            <div class="lg:col-span-2 mt-4 p-6 bg-stone-50 rounded-2xl border border-stone-200" data-nosnippet>
+              <h4 class="font-bold text-stone-800 mb-2 flex items-center gap-2 text-lg"><i class="fas fa-clock text-amber-800"></i> Expected Results</h4>
+              <p class="text-sm text-stone-600 leading-relaxed">
+                Healthy looking skin develops through consistent daily care. With regular use as directed, many customers began noticing results within the first few weeks. Continued use for 6 - 8 weeks helps improve the appearance of skin and a more even-looking complexion. Individual results may vary depending on skin type, skincare routine and consistency of use.
+              </p>
+            </div>
+        ` : '';
+
         document.getElementById('productDetails').innerHTML = `
           <div class="flex flex-col">
             <div class="relative">
@@ -506,14 +557,7 @@
               ${product.routineStep ? `<div class="bg-amber-50 rounded-2xl p-3"><strong>Routine Step:</strong><br><span class="capitalize">${escapeHTML(product.routineStep)}</span></div>` : ''}
             </div>
 
-            <div class="mt-7 pt-6 border-t border-amber-100">
-              <ul class="grid grid-cols-2 gap-4 text-sm">
-                <li class="flex items-center gap-2"><i class="fas fa-truck text-amber-700 w-5"></i> Ships in 1-3 days</li>
-                <li class="flex items-center gap-2"><i class="fas fa-leaf text-amber-700 w-5"></i> Handcrafted</li>
-                <li class="flex items-center gap-2"><i class="fas fa-shield-alt text-amber-700 w-5"></i> Natural & Cruelty-Free</li>
-                <li class="flex items-center gap-2"><i class="fas fa-heart text-amber-700 w-5"></i> Made with Love</li>
-              </ul>
-            </div>
+            ${attributesHtml}
           </div>
 
           <div class="md:col-span-2 mt-4">
@@ -522,6 +566,7 @@
             </div>
             <div class="grid lg:grid-cols-2 gap-5">
               ${detailsBlockHtml || htmlCard('Product Description', product.description || product.shortDescription, 'fa-align-left', true)}
+              ${globalDisclaimerHtml}
             </div>
           </div>
           

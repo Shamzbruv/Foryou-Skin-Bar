@@ -16,11 +16,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const goalMap = {
     'fade dark spots': 'dark-spots',
+    'fade dark spots and hyperpigmentation': 'dark-spots',
     'reduce acne and breakouts': 'acne',
     'brighten dull skin': 'glow',
     'smooth rough texture': 'texture',
     'moisturize dry skin': 'dryness',
+    'deeply moisturize dry skin': 'dryness',
     'build a simple daily routine': 'glow'
+  };
+
+  const preferenceStepMap = {
+    'soap cleanser': ['cleanse'],
+    'serum treatment': ['treat'],
+    'toner mist': ['tone'],
+    'cream moisturizer': ['moisturize'],
+    'scrub exfoliation': ['exfoliate'],
+    'body butter body oil': ['moisturize', 'body-care']
+  };
+
+  const stepAliases = {
+    clean: 'cleanse',
+    cleanser: 'cleanse',
+    cleansing: 'cleanse',
+    wash: 'cleanse',
+    soap: 'cleanse',
+    toner: 'tone',
+    toning: 'tone',
+    mist: 'tone',
+    treatment: 'treat',
+    serum: 'treat',
+    active: 'treat',
+    actives: 'treat',
+    moisturise: 'moisturize',
+    moisturiser: 'moisturize',
+    moisturizer: 'moisturize',
+    cream: 'moisturize',
+    butter: 'moisturize',
+    hydrate: 'moisturize',
+    hydrating: 'moisturize',
+    scrub: 'exfoliate',
+    exfoliant: 'exfoliate',
+    exfoliation: 'exfoliate',
+    exfoliating: 'exfoliate',
+    body: 'body-care',
+    bodycare: 'body-care',
+    spf: 'protect',
+    sunscreen: 'protect'
+  };
+
+  const routinePlans = {
+    simple: ['cleanse', 'tone', 'treat'],
+    balanced: ['cleanse', 'tone', 'treat', 'moisturize'],
+    full: ['cleanse', 'exfoliate', 'tone', 'treat', 'moisturize']
+  };
+
+  const stepLabels = {
+    cleanse: ['Cleanse', 'Start with the admin-approved cleansing product for your answers.'],
+    tone: ['Tone', 'Refresh and prep the skin with the selected toner or mist.'],
+    treat: ['Treat', 'Target your main concern with the selected treatment.'],
+    exfoliate: ['Exfoliate', 'Use the selected exfoliating step as directed.'],
+    moisturize: ['Moisturize', 'Seal in hydration with the selected moisture step.'],
+    protect: ['Protect', 'Finish with the selected protective step.'],
+    'body-care': ['Body Care', 'Support your body-care goal with the selected product.']
   };
 
   const escapeHTML = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({
@@ -28,9 +85,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }[character]));
   const normalize = (value) => String(value || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, ' ').trim();
   const toArray = (value) => Array.isArray(value) ? value : [];
+  const canonicalStep = (value) => {
+    const normalized = normalize(value);
+    const compact = normalized.replace(/\s+/g, '');
+    return stepAliases[normalized] || stepAliases[compact] || normalized;
+  };
+  const parseSteps = (value) => toArray(value).length
+    ? value.map(canonicalStep).filter(Boolean)
+    : String(value || '').split(/[,\|/]/).map(canonicalStep).filter(Boolean);
 
   function currentStepElement() {
     return steps.find((step) => Number(step.dataset.step) === currentStep) || null;
+  }
+
+  function checkedInputs(step = currentStepElement()) {
+    return Array.from(step?.querySelectorAll('input:checked') || []);
+  }
+
+  function saveStepAnswers(step = currentStepElement()) {
+    if (!step) return;
+    const names = [...new Set(Array.from(step.querySelectorAll('input[name]')).map(input => input.name))];
+    names.forEach((name) => {
+      const selected = Array.from(step.querySelectorAll(`input[name="${name}"]:checked`)).map(input => input.value);
+      answers[name] = selected.length > 1 ? selected : selected[0];
+    });
   }
 
   function showStepNotice(message) {
@@ -44,22 +122,39 @@ document.addEventListener('DOMContentLoaded', () => {
     step.appendChild(notice);
   }
 
-  function saveAnswer(input) {
-    if (input?.name) answers[input.name] = input.value;
-  }
-
   function selectOption(option) {
     const step = option.closest('.quiz-step');
-    const input = option.querySelector('input[type="radio"]');
+    const input = option.querySelector('input');
     if (!step || !input || Number(step.dataset.step) !== currentStep) return;
 
-    step.querySelectorAll(`input[name="${input.name}"]`).forEach((radio) => {
-      radio.checked = false;
-      radio.closest('.quiz-option')?.classList.remove('selected');
-    });
-    input.checked = true;
-    option.classList.add('selected');
-    saveAnswer(input);
+    if (input.type === 'radio') {
+      step.querySelectorAll(`input[name="${input.name}"]`).forEach((radio) => {
+        radio.checked = false;
+        radio.closest('.quiz-option')?.classList.remove('selected');
+      });
+      input.checked = true;
+      option.classList.add('selected');
+    } else if (input.type === 'checkbox') {
+      const exclusive = input.dataset.exclusive === 'true';
+      if (exclusive) {
+        step.querySelectorAll(`input[name="${input.name}"]`).forEach((checkbox) => {
+          checkbox.checked = false;
+          checkbox.closest('.quiz-option')?.classList.remove('selected');
+        });
+        input.checked = true;
+        option.classList.add('selected');
+      } else {
+        const noPreference = step.querySelector(`input[name="${input.name}"][data-exclusive="true"]`);
+        if (noPreference) {
+          noPreference.checked = false;
+          noPreference.closest('.quiz-option')?.classList.remove('selected');
+        }
+        input.checked = !input.checked;
+        option.classList.toggle('selected', input.checked);
+      }
+    }
+
+    saveStepAnswers(step);
     document.getElementById('quizNotice')?.remove();
   }
 
@@ -73,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
       step.classList.toggle('hidden', !active);
       if (active) {
         step.querySelectorAll('.quiz-option').forEach((option) => {
-          const input = option.querySelector('input[type="radio"]');
+          const input = option.querySelector('input');
           option.classList.toggle('selected', Boolean(input?.checked));
         });
       }
@@ -85,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (nextBtn) {
-      nextBtn.textContent = currentStep === totalSteps ? 'See Results ✨' : 'Next →';
+      nextBtn.textContent = currentStep === totalSteps ? 'See Results' : 'Next';
       nextBtn.classList.remove('bg-stone-200', 'text-stone-700', 'hover:bg-stone-300');
       nextBtn.classList.add('bg-amber-800', 'text-white', 'hover:bg-amber-900');
     }
@@ -96,6 +191,245 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('quizNotice')?.remove();
     updateUI();
     quizContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function concernForGoal(goal) {
+    const normalized = normalize(goal);
+    return goalMap[normalized] || 'glow';
+  }
+
+  function focusArea() {
+    const focus = normalize(answers.focus);
+    if (focus === 'face care' || focus === 'mostly face care') return 'face';
+    if (focus === 'body care' || focus === 'mostly body care') return 'body';
+    return 'both';
+  }
+
+  function routinePlanKey() {
+    const pref = normalize(answers.routinePreference);
+    if (pref.includes('quick') || pref.includes('simple')) return 'simple';
+    if (pref.includes('full')) return 'full';
+    return 'balanced';
+  }
+
+  function selectedPreferenceSteps() {
+    const preferences = toArray(answers.productPreference).length ? answers.productPreference : [answers.productPreference];
+    const steps = [];
+    preferences.forEach((preference) => {
+      if (normalize(preference) === 'no preference') return;
+      (preferenceStepMap[normalize(preference)] || []).forEach((step) => {
+        if (!steps.includes(step)) steps.push(step);
+      });
+    });
+    return steps;
+  }
+
+  function desiredSteps() {
+    return routinePlans[routinePlanKey()] || routinePlans.balanced;
+  }
+
+  function isAvailable(product) {
+    if (product.allowBackorder || product.trackInventory === false) return true;
+    if (product.stockQuantity === null || product.stockQuantity === undefined || product.stockQuantity === '') return true;
+    return Number(product.stockQuantity) > 0;
+  }
+
+  function productArea(product) {
+    const area = normalize(product.productUse);
+    if (['face', 'body', 'both'].includes(area)) return area;
+    return 'both';
+  }
+
+  function productSteps(product) {
+    return parseSteps(product.routineSteps?.length ? product.routineSteps : product.routineStep);
+  }
+
+  function hasAdminQuizProfile(product) {
+    if (Object.prototype.hasOwnProperty.call(product, 'hasRecommendationProfile') && !product.hasRecommendationProfile) return false;
+    return productSteps(product).length > 0
+      && ['face', 'body', 'both'].includes(productArea(product));
+  }
+
+  function canUseForArea(product, area) {
+    const productUse = productArea(product);
+    return area === 'both' || productUse === 'both' || productUse === area;
+  }
+
+  function scoreForStep(product, step, context) {
+    if (!product?.id || product.status !== 'active' || !isAvailable(product) || !hasAdminQuizProfile(product)) return -10000;
+    if (!productSteps(product).includes(step)) return -10000;
+    if (!canUseForArea(product, context.area)) return -10000;
+
+    const concerns = toArray(product.skinConcern).map(normalize);
+    const skinTypes = toArray(product.skinType).map(normalize);
+    const avoidFor = toArray(product.avoidFor).map(normalize);
+    const targetType = normalize(context.skinType);
+    let score = 50;
+
+    if (concerns.includes(context.concern)) score += 45;
+    else if (context.concern === 'glow' && concerns.length === 0) score += 8;
+    else if (concerns.length > 0) score -= 18;
+
+    if (targetType && targetType !== 'not sure') {
+      if (avoidFor.includes(targetType)) return -10000;
+      if (skinTypes.includes(targetType)) score += 24;
+      else if (skinTypes.length === 0) score += 8;
+      else score -= 12;
+    }
+
+    const sensitivity = normalize(context.sensitivity);
+    if (sensitivity.includes('very sensitive') && !product.isSensitiveFriendly) score -= 30;
+    if (sensitivity.includes('sensitive') && product.isSensitiveFriendly) score += 14;
+
+    if (productArea(product) === context.area) score += 12;
+    if (toArray(context.preferredSteps).includes(step)) score += 18;
+    return score;
+  }
+
+  function chooseProduct(products, step, used, context) {
+    const ranked = products
+      .filter(product => !used.has(String(product.id)))
+      .map(product => ({ product, score: scoreForStep(product, step, context) }))
+      .filter(result => result.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    const selected = ranked[0] || null;
+    if (selected) used.add(String(selected.product.id));
+    return selected;
+  }
+
+  function buildRoutine(products) {
+    const context = {
+      area: focusArea(),
+      concern: concernForGoal(answers.goal),
+      skinType: answers.type,
+      sensitivity: answers.sensitivity,
+      preferredSteps: selectedPreferenceSteps()
+    };
+    const used = new Set();
+    const routine = [];
+
+    desiredSteps().forEach((step) => {
+      const result = chooseProduct(products, step, used, context);
+      if (!result) return;
+      const [title, description] = stepLabels[step] || ['Recommendation', 'Selected from the admin quiz settings.'];
+      routine.push({
+        step,
+        label: `${routine.length + 1}. ${title}`,
+        description,
+        result
+      });
+    });
+
+    return { routine, context };
+  }
+
+  async function getProductsSafely() {
+    try {
+      if (window.loadProductsData) await window.loadProductsData();
+      return Array.isArray(window.productsData) ? window.productsData : [];
+    } catch (error) {
+      console.error('Skin quiz product loading error:', error);
+      return [];
+    }
+  }
+
+  function plainText(value = '') {
+    const holder = document.createElement('div');
+    holder.innerHTML = String(value);
+    return (holder.textContent || holder.innerText || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function explainChoice(product, step, context) {
+    const parts = [];
+    const concernLabel = context.concern.replace(/-/g, ' ');
+    if (toArray(product.skinConcern).map(normalize).includes(context.concern)) parts.push(`supports ${concernLabel}`);
+    if (normalize(context.skinType) !== 'not sure' && toArray(product.skinType).map(normalize).includes(normalize(context.skinType))) parts.push(`fits ${String(context.skinType).toLowerCase()} skin`);
+    if (normalize(context.sensitivity).includes('sensitive') && product.isSensitiveFriendly) parts.push('marked sensitive-friendly');
+    parts.push(`approved by admin for ${stepLabels[step]?.[0].toLowerCase() || step}`);
+    return parts.join(', ') + '.';
+  }
+
+  function renderNoResults() {
+    const grid = document.getElementById('routineGrid');
+    if (!grid) return;
+    grid.innerHTML = `
+      <div class="bg-white rounded-3xl p-8 shadow-sm border border-amber-50 text-center text-stone-800">
+        <h3 class="font-bold text-2xl mb-3">No exact routine match is configured yet.</h3>
+        <p class="text-stone-600 mb-6">The quiz now only uses the admin recommendation settings. Add routine steps, skin concerns, skin types, and product-use areas to the products you want the quiz to recommend.</p>
+        <a href="shop.html" class="inline-block bg-amber-800 text-white px-6 py-3 rounded-full font-bold hover:bg-amber-900 transition">Shop Products</a>
+      </div>`;
+    const total = document.getElementById('routineTotal');
+    if (total) total.textContent = 'Total Routine Value: J$0';
+  }
+
+  function renderRoutine(routine, context) {
+    const grid = document.getElementById('routineGrid');
+    if (!grid) return;
+    let totalValue = 0;
+
+    grid.innerHTML = routine.map((item) => {
+      const product = item.result.product;
+      totalValue += Number(product.price || 0);
+      return `
+        <article class="bg-white rounded-3xl p-6 shadow-sm border border-amber-50 flex flex-col md:flex-row gap-6 items-center text-stone-800">
+          <div class="w-full md:w-1/3 shrink-0 text-center">
+            <h4 class="font-bold text-amber-800 mb-1">${escapeHTML(item.label)}</h4>
+            <p class="text-xs text-stone-600 mb-4">${escapeHTML(item.description)}</p>
+            <img src="${escapeHTML(product.image)}" class="w-full h-40 object-cover rounded-2xl" alt="${escapeHTML(product.name)}">
+          </div>
+          <div class="w-full md:w-2/3">
+            <h3 class="font-bold text-xl mb-2 text-stone-900">${escapeHTML(product.name)}</h3>
+            <p class="text-amber-800 font-bold mb-3">J$${Number(product.price || 0).toLocaleString()}</p>
+            <p class="text-stone-700 text-sm mb-4">${escapeHTML(plainText(product.shortDescription || product.description || 'Recommended based on your quiz answers.'))}</p>
+            <div class="bg-amber-50 rounded-xl p-4 text-stone-800">
+              <p class="text-sm font-bold mb-1">Why we chose this for you:</p>
+              <p class="text-sm">${escapeHTML(explainChoice(product, item.step, context))}</p>
+            </div>
+          </div>
+        </article>`;
+    }).join('');
+
+    const total = document.getElementById('routineTotal');
+    if (total) total.textContent = `Total Routine Value: J$${totalValue.toLocaleString()}`;
+  }
+
+  async function generateResults() {
+    steps.forEach(saveStepAnswers);
+    quizContainer.classList.add('hidden');
+    quizResults.classList.remove('hidden');
+    quizResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (window.trackEvent) window.trackEvent('quiz_complete', answers);
+
+    const grid = document.getElementById('routineGrid');
+    if (grid) {
+      grid.innerHTML = `
+        <div class="bg-white rounded-3xl p-8 shadow-sm border border-amber-50 text-center text-stone-800">
+          <i class="fas fa-spinner fa-spin text-amber-800 text-2xl mb-3"></i>
+          <p class="font-semibold">Building your results...</p>
+        </div>`;
+    }
+
+    const products = await getProductsSafely();
+    const summary = document.getElementById('resultSummary');
+    if (!products.length) {
+      if (summary) summary.textContent = 'We could not load the product catalogue right now. Please refresh or visit the shop.';
+      recommendedRoutine = [];
+      renderNoResults();
+      return;
+    }
+
+    const { routine, context } = buildRoutine(products);
+    recommendedRoutine = routine;
+    if (summary) {
+      const plan = desiredSteps();
+      const planLabel = routinePlanKey();
+      const stepNames = plan.map(step => stepLabels[step]?.[0] || step).join(', ');
+      summary.innerHTML = `Based on your answers, your ${escapeHTML(planLabel)} routine can recommend up to <strong>${plan.length}</strong> product${plan.length === 1 ? '' : 's'}: ${escapeHTML(stepNames)}. Products are selected only from the admin recommendation settings.`;
+    }
+
+    if (!routine.length) renderNoResults();
+    else renderRoutine(routine, context);
   }
 
   steps.forEach((step) => {
@@ -119,277 +453,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   nextBtn?.addEventListener('click', async () => {
-    const selected = currentStepElement()?.querySelector('input[type="radio"]:checked');
-    if (!selected) {
+    const selected = checkedInputs();
+    if (!selected.length) {
       showStepNotice('Please select an option to continue.');
       return;
     }
-    saveAnswer(selected);
+    saveStepAnswers();
     if (currentStep < totalSteps) {
       moveToStep(currentStep + 1);
       return;
     }
     await generateResults();
   });
-
-  function concernForGoal(goal) {
-    const normalized = normalize(goal);
-    return goalMap[normalized] || (normalized.includes('acne') ? 'acne' : 'glow');
-  }
-
-  function productText(product) {
-    return normalize([
-      product.name,
-      product.category,
-      product.description,
-      product.shortDescription,
-      product.bestFor,
-      product.bestForHtml,
-      product.resultsHtml,
-      product.ingredientsHtml,
-      product.routineStep
-    ].join(' '));
-  }
-
-  function isAccessory(product) {
-    return /soap saver|mesh bag|soap dish|facial sponge|exfoliation glove|spa headband|bamboo dish|skincare tool|accessory/.test(productText(product));
-  }
-
-  function productArea(product) {
-    const declared = normalize(product.productUse);
-    if (declared === 'face' || declared === 'body') return declared;
-    const text = productText(product);
-    if (/body butter|body oil|body mist|body scrub|coffee rush|island vybz|vanilla bae|bold touch|in your dreams/.test(text)) return 'body';
-    if (/serum|toner|vanishing cream|face cream|blemish|acne|hyperpigmentation|niacinamide|salicylic/.test(text)) return 'face';
-    return 'both';
-  }
-
-  function isAvailable(product) {
-    if (product.allowBackorder || product.trackInventory === false) return true;
-    if (product.stockQuantity === null || product.stockQuantity === undefined || product.stockQuantity === '') return true;
-    return Number(product.stockQuantity) > 0;
-  }
-
-  function stepMatches(product, desiredStep, expression) {
-    const current = normalize(product.routineStep);
-    return current === desiredStep || expression.test(productText(product));
-  }
-
-  function scoreProduct(product, targetConcern, targetType, focus, preference) {
-    if (!product?.id || product.status !== 'active' || !isAvailable(product) || isAccessory(product)) return -10000;
-
-    const concerns = toArray(product.skinConcern).map(normalize);
-    const skinTypes = toArray(product.skinType).map(normalize);
-    const avoidFor = toArray(product.avoidFor).map(normalize);
-    const area = productArea(product);
-    const text = productText(product);
-    let score = 0;
-
-    if (focus === 'Mostly face care' && area === 'body') return -10000;
-    if (focus === 'Mostly body care' && area === 'face') return -10000;
-
-    if (concerns.includes(targetConcern)) score += 70;
-    else if (targetConcern === 'glow' && (concerns.includes('dark spots') || concerns.includes('dryness'))) score += 24;
-    else score -= 16;
-
-    if (focus === 'Mostly face care' && area === 'face') score += 32;
-    if (focus === 'Mostly body care' && area === 'body') score += 32;
-
-    if (targetType && targetType !== 'not sure') {
-      if (skinTypes.includes(targetType)) score += 22;
-      else if (skinTypes.length === 0) score += 5;
-      else score -= 8;
-      if (avoidFor.includes(targetType)) return -10000;
-    }
-
-    const sensitivity = normalize(answers.sensitivity);
-    if (sensitivity.includes('very sensitive')) score += product.isSensitiveFriendly ? 15 : -10;
-    if (sensitivity.includes('somewhat sensitive') && product.isSensitiveFriendly) score += 8;
-
-    const preferenceMap = {
-      'soap cleanser': 'cleanse',
-      'serum treatment': 'treat',
-      'toner mist': 'tone',
-      'cream moisturizer': 'moisturize',
-      'scrub exfoliation': 'exfoliate',
-      'body butter body oil': 'moisturize'
-    };
-    const preferredStep = preferenceMap[normalize(preference)];
-    if (preferredStep && normalize(product.routineStep) === preferredStep) score += 12;
-
-    if (targetConcern === 'acne' && /salicylic|niacinamide|neem|turmeric|blemish|acne/.test(text)) score += 12;
-    if (targetConcern === 'dark-spots' && /kojic|vitamin c|niacinamide|dark spot|hyperpigmentation/.test(text)) score += 12;
-    if (targetConcern === 'dryness' && /moistur|hydrating|butter|oil|cream/.test(text)) score += 12;
-
-    return score;
-  }
-
-  function rankProducts(products) {
-    const targetConcern = concernForGoal(answers.goal);
-    const targetType = normalize(answers.type);
-    const focus = answers.focus || 'Both face and body';
-    const preference = answers.productPreference || 'No preference';
-
-    return products
-      .map((product) => ({
-        product,
-        score: scoreProduct(product, targetConcern, targetType, focus, preference)
-      }))
-      .filter((result) => result.score > 0)
-      .sort((a, b) => b.score - a.score);
-  }
-
-  function chooseProduct(ranked, used, desiredStep, matcher, area) {
-    const candidate = ranked.find(({ product }) => {
-      if (!product || used.has(String(product.id))) return false;
-      if (area && productArea(product) !== area && productArea(product) !== 'both') return false;
-      return stepMatches(product, desiredStep, matcher);
-    });
-    if (!candidate) return null;
-    used.add(String(candidate.product.id));
-    return candidate;
-  }
-
-  function chooseBestSameArea(ranked, used, area) {
-    const candidate = ranked.find(({ product }) => {
-      if (!product || used.has(String(product.id))) return false;
-      return !area || productArea(product) === area || productArea(product) === 'both';
-    });
-    if (!candidate) return null;
-    used.add(String(candidate.product.id));
-    return candidate;
-  }
-
-  function buildRoutine(products) {
-    const ranked = rankProducts(products);
-    const focus = answers.focus || 'Both face and body';
-    const compact = normalize(answers.routinePreference).includes('quick');
-    const used = new Set();
-    const routine = [];
-
-    const add = (label, description, result) => {
-      if (result?.product) routine.push({ label, description, result });
-    };
-
-    const buildFace = () => {
-      const cleanse = chooseProduct(ranked, used, 'cleanse', /soap|cleanser|cleanse|wash/, 'face');
-      const treat = chooseProduct(ranked, used, 'treat', /serum|elixir|blemish|treat|toner|vanishing cream/, 'face');
-      const moisturize = chooseProduct(ranked, used, 'moisturize', /cream|moistur|hydrating|lotion/, 'face');
-      add('Step 1: Cleanse', 'Start with a face cleanser selected for your skin goal.', cleanse);
-      add('Step 2: Treat', 'Target your main skin concern with a focused treatment.', treat);
-      if (!compact || routine.length < 2) add('Step 3: Moisturize', 'Finish with face-friendly moisture and support.', moisturize);
-      if (!routine.length) add('Recommendation', 'Best available match for your answers.', chooseBestSameArea(ranked, used, 'face'));
-    };
-
-    const buildBody = () => {
-      const exfoliate = chooseProduct(ranked, used, 'exfoliate', /scrub|exfoliat|polish/, 'body');
-      const moisturize = chooseProduct(ranked, used, 'moisturize', /body butter|body oil|body cream|moistur/, 'body');
-      add('Body Step 1: Polish', 'Smooth and refresh body skin with a suitable exfoliant.', exfoliate);
-      add('Body Step 2: Nourish', 'Seal in moisture with body-focused hydration.', moisturize);
-      if (!routine.length) add('Recommendation', 'Best available match for your answers.', chooseBestSameArea(ranked, used, 'body'));
-    };
-
-    if (focus === 'Mostly face care') buildFace();
-    else if (focus === 'Mostly body care') buildBody();
-    else {
-      buildFace();
-      buildBody();
-    }
-
-    if (!routine.length) {
-      const fallback = chooseBestSameArea(ranked, used, focus === 'Mostly face care' ? 'face' : focus === 'Mostly body care' ? 'body' : null);
-      add('Recommendation', 'Best available match for your answers.', fallback);
-    }
-
-    return { routine, targetConcern: concernForGoal(answers.goal), targetType: answers.type || 'your' };
-  }
-
-  async function getProductsSafely() {
-    try {
-      if (window.loadProductsData) await window.loadProductsData();
-      return Array.isArray(window.productsData) ? window.productsData : [];
-    } catch (error) {
-      console.error('Skin quiz product loading error:', error);
-      return [];
-    }
-  }
-
-  function renderNoResults() {
-    const grid = document.getElementById('routineGrid');
-    if (!grid) return;
-    grid.innerHTML = `
-      <div class="bg-white rounded-3xl p-8 shadow-sm border border-amber-50 text-center text-stone-800">
-        <h3 class="font-bold text-2xl mb-3">We could not find an in-stock routine for those exact answers.</h3>
-        <p class="text-stone-600 mb-6">Please try another preference or browse the full collection. We do not add unrelated products to complete a routine.</p>
-        <a href="shop.html" class="inline-block bg-amber-800 text-white px-6 py-3 rounded-full font-bold hover:bg-amber-900 transition">Shop Products</a>
-      </div>`;
-    const total = document.getElementById('routineTotal');
-    if (total) total.textContent = 'Total Routine Value: J$0';
-  }
-
-  function plainText(value = '') {
-    const holder = document.createElement('div');
-    holder.innerHTML = String(value);
-    return (holder.textContent || holder.innerText || '').replace(/\s+/g, ' ').trim();
-  }
-
-  function renderRoutine(routine, targetConcern, targetType) {
-    const grid = document.getElementById('routineGrid');
-    if (!grid) return;
-    let totalValue = 0;
-
-    grid.innerHTML = routine.map((item) => {
-      const product = item.result.product;
-      totalValue += Number(product.price || 0);
-      const explanation = `Matched to your ${targetConcern.replace(/-/g, ' ')} goal${targetType && normalize(targetType) !== 'not sure' ? ` and ${String(targetType).toLowerCase()} skin profile` : ''}.`;
-      return `
-        <article class="bg-white rounded-3xl p-6 shadow-sm border border-amber-50 flex flex-col md:flex-row gap-6 items-center text-stone-800">
-          <div class="w-full md:w-1/3 shrink-0 text-center">
-            <h4 class="font-bold text-amber-800 mb-1">${escapeHTML(item.label)}</h4>
-            <p class="text-xs text-stone-500 mb-4">${escapeHTML(item.description)}</p>
-            <img src="${escapeHTML(product.image)}" class="w-full h-40 object-cover rounded-2xl" alt="${escapeHTML(product.name)}">
-          </div>
-          <div class="w-full md:w-2/3">
-            <h3 class="font-bold text-xl mb-2">${escapeHTML(product.name)}</h3>
-            <p class="text-amber-800 font-bold mb-3">J$${Number(product.price || 0).toLocaleString()}</p>
-            <p class="text-stone-600 text-sm mb-4">${escapeHTML(plainText(product.shortDescription || product.description || 'Recommended based on your quiz answers.'))}</p>
-            <div class="bg-amber-50 rounded-xl p-4">
-              <p class="text-sm font-bold mb-1">Why we chose this for you:</p>
-              <p class="text-sm text-stone-700">${escapeHTML(explanation)}</p>
-            </div>
-          </div>
-        </article>`;
-    }).join('');
-
-    const total = document.getElementById('routineTotal');
-    if (total) total.textContent = `Total Routine Value: J$${totalValue.toLocaleString()}`;
-  }
-
-  async function generateResults() {
-    document.querySelectorAll('.quiz-step input[type="radio"]:checked').forEach(saveAnswer);
-    quizContainer.classList.add('hidden');
-    quizResults.classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (window.trackEvent) window.trackEvent('quiz_complete', answers);
-
-    const products = await getProductsSafely();
-    if (!products.length) {
-      document.getElementById('resultSummary').textContent = 'We could not load the product catalogue right now. Please refresh or visit the shop.';
-      recommendedRoutine = [];
-      renderNoResults();
-      return;
-    }
-
-    const { routine, targetConcern, targetType } = buildRoutine(products);
-    recommendedRoutine = routine;
-    const summary = document.getElementById('resultSummary');
-    if (summary) {
-      summary.innerHTML = `Based on your answers, we selected only <strong>in-stock</strong> products that suit your <strong>${escapeHTML(String(answers.focus || 'skincare').toLowerCase())}</strong> routine and support <strong>${escapeHTML(String(answers.goal || 'your skin goal').toLowerCase())}</strong>.`;
-    }
-
-    if (!routine.length) renderNoResults();
-    else renderRoutine(routine, targetConcern, targetType);
-  }
 
   const addAllBtn = document.getElementById('addAllBtn');
   if (addAllBtn) {

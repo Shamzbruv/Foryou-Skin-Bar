@@ -4,7 +4,7 @@
       const stylesheet = document.createElement('link');
       stylesheet.id = 'clientReviewStyles';
       stylesheet.rel = 'stylesheet';
-      stylesheet.href = 'css/client-review.css?v=9';
+      stylesheet.href = 'css/client-review.css?v=14';
       document.head.appendChild(stylesheet);
     }
 
@@ -165,23 +165,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Newsletter Form ──
   const newsletterForm = document.getElementById('newsletterForm');
   if (newsletterForm) {
-    newsletterForm.addEventListener('submit', (e) => {
+    newsletterForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = newsletterForm.querySelector('input[type="email"]').value;
+      const input = newsletterForm.querySelector('input[type="email"]');
+      const email = input.value.trim().toLowerCase();
       if (email) {
         // Track the event
         if (window.trackEvent) window.trackEvent('newsletter_signup', { email });
 
-        // Open WhatsApp with subscription message
-        const message = `Hi For You Skin Bar! I'd like to join the Glow Letters newsletter. My email is: ${email}`;
-        window.open(`https://wa.me/18763094374?text=${encodeURIComponent(message)}`, '_blank');
+        if (window.supabase) {
+          const { error } = await window.supabase
+            .from('newsletter_subscribers')
+            .insert({ email, source: 'footer', is_active: true });
+          if (error && error.code !== '23505') {
+            console.warn('Newsletter signup could not be saved:', error.message);
+          }
+        }
 
         // Show success feedback
         const btn = newsletterForm.querySelector('button');
         const originalText = btn.innerHTML;
         btn.innerHTML = '✓';
         btn.classList.add('bg-green-600');
-        newsletterForm.querySelector('input').value = '';
+        input.value = '';
         setTimeout(() => {
           btn.innerHTML = originalText;
           btn.classList.remove('bg-green-600');

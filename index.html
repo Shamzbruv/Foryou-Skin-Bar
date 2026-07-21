@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=homepage-trust-5">
   <script src="https://cdn.tailwindcss.com?plugins=typography"></script>  <script>
     tailwind.config = {
       theme: {
@@ -79,12 +79,103 @@
     }
   }
   </script>
-  <link rel="stylesheet" href="css/brand-theme.css">
+  <link rel="stylesheet" href="css/brand-theme.css?v=gold-process-1">
+  <style id="homepage-trust-overrides">
+    .home-concern-grid {
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 18px !important;
+    }
+    .home-concern-card,
+    .home-concern-card:nth-child(1),
+    .home-concern-card:nth-child(2) {
+      display: grid !important;
+      grid-template-rows: 220px auto !important;
+      grid-column: auto !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      border-radius: 8px !important;
+      background: #fffdf8 !important;
+      color: #2c211b !important;
+    }
+    .home-concern-card::after { display: none !important; }
+    .home-concern-card img {
+      position: static !important;
+      width: 100% !important;
+      max-width: none !important;
+      height: 220px !important;
+      min-height: 220px !important;
+      margin: 0 !important;
+      object-fit: cover !important;
+      border-radius: 0 !important;
+      transform: none !important;
+    }
+    .home-concern-card span,
+    .home-concern-card small {
+      position: static !important;
+      margin-inline: 0 !important;
+      color: inherit !important;
+    }
+    .home-concern-card span {
+      display: block !important;
+      padding: 18px 20px 0 !important;
+      color: #354232 !important;
+      font-family: "Cormorant Garamond", serif !important;
+      font-size: clamp(1.5rem, 2.2vw, 2rem) !important;
+      line-height: 1.05 !important;
+    }
+    .home-concern-card small {
+      display: block !important;
+      padding: 8px 20px 22px !important;
+      max-width: none !important;
+      color: #5a4c3a !important;
+      font-size: 0.92rem !important;
+      line-height: 1.45 !important;
+    }
+    @media (max-width: 900px) {
+      .home-concern-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    }
+    @media (max-width: 700px) {
+      .home-concern-grid { grid-template-columns: 1fr !important; }
+      .home-concern-card,
+      .home-concern-card:nth-child(1),
+      .home-concern-card:nth-child(2) { grid-template-rows: 210px auto !important; }
+      .home-concern-card img {
+        height: 210px !important;
+        min-height: 210px !important;
+      }
+    }
+  </style>
 </head>
 <body class="antialiased">
 
+  <div id="welcomeScreen" class="welcome-screen" aria-label="Welcome to Foryou Skin Bar" hidden>
+    <div class="welcome-screen__panel">
+      <div class="welcome-screen__copy">
+        <div class="welcome-screen__brandmark" aria-label="Foryou Skin Bar">
+          <img src="assets/brand/logo-welcome-black.png" alt="Foryou Skin Bar">
+        </div>
+        <p class="welcome-screen__eyebrow">Welcome to</p>
+        <h1>Foryou<br>Skin Bar</h1>
+        <div class="welcome-screen__rule" aria-hidden="true"><span></span><i class="fas fa-leaf"></i><span></span></div>
+        <p class="welcome-screen__subhead">Handcrafted skin and body care made just for you.</p>
+
+        <div class="welcome-screen__proof" aria-label="Brand promises">
+          <div><i class="fas fa-leaf"></i><span>Natural<br>Ingredients</span></div>
+          <div><i class="far fa-heart"></i><span>Handcrafted<br>With Care</span></div>
+          <div><i class="fas fa-droplet"></i><span>Nourishing<br>& Effective</span></div>
+          <div><i class="fas fa-seedling"></i><span>Made For<br>Sensitive Skin</span></div>
+        </div>
+      </div>
+
+      <div class="welcome-screen__lifestyle" aria-hidden="true"></div>
+    </div>
+    <div class="welcome-screen__tagline">Pure Ingredients. Thoughtfully Made. Beautifully You.</div>
+  </div>
+
   <!-- Announcement bar -->
-  <div class="bg-amber-900/90 text-white text-center py-2.5 text-sm font-medium tracking-wide">
+  <div class="announcement-bar bg-amber-900/90 text-white text-center py-2.5 text-sm font-medium tracking-wide">
     🌿 Free Shipping on orders over J$10,000 &nbsp;|&nbsp; ✨ Handcrafted with Love in Jamaica
   </div>
 
@@ -130,23 +221,22 @@
         <div class="bliss-hero-copy">
           <span class="bliss-eyebrow">
             <i class="fas fa-leaf"></i>
-            Plant-powered. Results-driven.
+            Welcome to Foryou Skin Bar
           </span>
 
-          <h1 id="cms_home_title">
-            Skincare made<br>
-            for <em>your</em> glow.
+          <h1>
+            Healthy Skin.<br>
+            Real <em>Confidence.</em>
           </h1>
 
-          <p id="cms_home_subtitle">
-            Handmade in Jamaica with powerful natural ingredients that help target
-            acne, hyperpigmentation, dark spots, uneven tone, and reveal healthy,
-            radiant skin.
+          <p>
+            Natural, handcrafted skincare for real women. Clean, nutrient-rich
+            products made for acne, dark spots, body care, and everyday glow.
           </p>
 
           <div class="bliss-hero-actions">
-            <a href="shop.html" id="cms_home_btn" class="bliss-btn bliss-btn-primary">
-              Shop Now
+            <a href="#best-sellers" class="bliss-btn bliss-btn-primary">
+              Shop Best Sellers
               <i class="fas fa-arrow-right"></i>
             </a>
 
@@ -157,12 +247,16 @@
 
           <div class="bliss-mini-proof">
             <div>
-              <strong>Jamaican Made</strong>
-              <span>Handcrafted with care</span>
+              <strong>Handmade in Jamaica</strong>
+              <span>Small-batch care</span>
             </div>
             <div>
-              <strong>Melanin-Rich Skin</strong>
-              <span>Glow-focused formulas</span>
+              <strong>Natural & Effective</strong>
+              <span>Plant-powered formulas</span>
+            </div>
+            <div>
+              <strong>Loved by Customers</strong>
+              <span>Trusted glow routines</span>
             </div>
           </div>
         </div>
@@ -171,7 +265,7 @@
 
       <!-- Right Image Area (Absolute Bleed) -->
       <div class="bliss-hero-visual" aria-label="ForYou Skin Bar skincare products">
-        <div id="cms_home_image" class="bliss-image-card"></div>
+        <div class="bliss-image-card"></div>
         <div class="bliss-orb bliss-orb-one"></div>
         <div class="bliss-orb bliss-orb-two"></div>
       </div>
@@ -212,42 +306,142 @@
       </div>
     </section>
 
-    <!-- Shop by Skin Concern -->
-    <section class="py-20 px-6 md:px-16 max-w-7xl mx-auto">
-      <h2 class="serif-heading text-4xl text-center mb-6">Find what you're looking for</h2>
-      <p class="text-center text-stone-500 max-w-2xl mx-auto mb-10">Find products targeted to your specific skin goals. Every product is formulated with natural ingredients for melanin-rich skin.</p>
-      <div class="home-concern-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <a href="shop.html?concern=dark-spots" class="bg-white rounded-3xl p-6 shadow-md hover:shadow-xl transition glow-border border border-amber-100 block text-stone-800 text-center">
-          <img src="assets/products/natural-handmade-acne-and-brightening-cream-for-spots-and-uneven-skin-tone.png" class="w-20 h-20 object-cover rounded-full mx-auto mb-4 border-2 border-amber-100" alt="Dark Spots">
-          <h3 class="font-bold text-xl">Dark Spots & Hyperpigmentation</h3><p class="text-stone-500 text-sm mt-1">For acne marks, sun spots, uneven tone.</p><span class="mt-4 text-amber-800 font-medium text-sm inline-block">Shop Concern →</span></a>
-        
-        <a href="shop.html?concern=acne" class="bg-white rounded-3xl p-6 shadow-md hover:shadow-xl transition glow-border border border-amber-100 block text-stone-800 text-center">
-          <img src="assets/products/handcrafted-natural-soap-bar-for-acne-and-brightening.png" class="w-20 h-20 object-cover rounded-full mx-auto mb-4 border-2 border-amber-100" alt="Acne">
-          <h3 class="font-bold text-xl">Acne & Breakouts</h3><p class="text-stone-500 text-sm mt-1">Blemishes, clogged pores, oiliness.</p><span class="mt-4 text-amber-800 font-medium text-sm inline-block">Shop Concern →</span></a>
-        
-        <a href="shop.html?concern=glow" class="bg-white rounded-3xl p-6 shadow-md hover:shadow-xl transition glow-border border border-amber-100 block text-stone-800 text-center">
-          <img src="assets/products/niaskin-boost-elixir-handmade-serum-with-niacinamide.png" class="w-20 h-20 object-cover rounded-full mx-auto mb-4 border-2 border-amber-100" alt="Glow">
-          <h3 class="font-bold text-xl">Glow & Brightening</h3><p class="text-stone-500 text-sm mt-1">Dull skin, tired-looking, uneven texture.</p><span class="mt-4 text-amber-800 font-medium text-sm inline-block">Shop Concern →</span></a>
-        
-        <a href="shop.html?concern=body-care" class="bg-white rounded-3xl p-6 shadow-md hover:shadow-xl transition glow-border border border-amber-100 block text-stone-800 text-center">
-          <img src="assets/products/jamaican-handmade-natural-emulsified-body-butter.png" class="w-20 h-20 object-cover rounded-full mx-auto mb-4 border-2 border-amber-100" alt="Body Care">
-          <h3 class="font-bold text-xl">Body Care</h3><p class="text-stone-500 text-sm mt-1">Soft, smooth, hydrated skin from neck to toe.</p><span class="mt-4 text-amber-800 font-medium text-sm inline-block">Shop Concern →</span></a>
-        
-        <a href="shop.html?concern=dryness" class="bg-white rounded-3xl p-6 shadow-md hover:shadow-xl transition glow-border border border-amber-100 block text-stone-800 text-center">
-          <img src="assets/products/body-oil-jamaican-made-natural-botanical-infused.png" class="w-20 h-20 object-cover rounded-full mx-auto mb-4 border-2 border-amber-100" alt="Dryness">
-          <h3 class="font-bold text-xl">Dry & Dehydrated Skin</h3><p class="text-stone-500 text-sm mt-1">Deep moisture, nourishment, and skin repair.</p><span class="mt-4 text-amber-800 font-medium text-sm inline-block">Shop Concern →</span></a>
-        
-        <a href="shop.html?concern=texture" class="bg-white rounded-3xl p-6 shadow-md hover:shadow-xl transition glow-border border border-amber-100 block text-stone-800 text-center">
-          <img src="assets/products/glow-reset-sugar-scrub.png" class="w-20 h-20 object-cover rounded-full mx-auto mb-4 border-2 border-amber-100" alt="Scrubs">
-          <h3 class="font-bold text-xl">Exfoliation & Texture</h3><p class="text-stone-500 text-sm mt-1">Smooth rough patches, renew skin surface.</p><span class="mt-4 text-amber-800 font-medium text-sm inline-block">Shop Concern →</span></a>
+    <!-- Trust and Achievement Statistics -->
+    <section class="home-proof-strip px-6 md:px-16 py-10">
+      <div class="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="home-stat-card"><i class="fas fa-bag-shopping"></i><strong>5,000+</strong><span>Products sold</span></div>
+        <div class="home-stat-card"><i class="fas fa-users"></i><strong>500+</strong><span>Happy customers</span></div>
+        <div class="home-stat-card"><i class="fas fa-star"></i><strong>4.9</strong><span>Average rating</span></div>
+        <div class="home-stat-card"><i class="fas fa-leaf"></i><strong>100%</strong><span>Handcrafted</span></div>
       </div>
-      <div class="home-shop-all"><a href="shop.html">Shop All Products <span aria-hidden="true">→</span></a></div>
+    </section>
+
+    <!-- Shop by Skin Concern -->
+    <section class="home-story-section px-6 md:px-16 py-20 max-w-7xl mx-auto">
+      <div class="home-section-heading">
+        <p>Shop by concern</p>
+        <h2 class="serif-heading">Start with what your skin needs most.</h2>
+        <a href="shop.html" class="home-text-link">Shop all products <span aria-hidden="true">&rarr;</span></a>
+      </div>
+      <div class="home-concern-grid">
+        <a href="shop.html?concern=acne" class="home-concern-card">
+          <img src="assets/home-concerns/acne-breakouts.jpg" alt="Woman with blemish-prone skin checking acne breakouts">
+          <span>Acne & Breakouts</span>
+          <small>Cleanse, balance, and calm blemish-prone skin.</small>
+        </a>
+        <a href="shop.html?concern=dark-spots" class="home-concern-card">
+          <img src="assets/home-concerns/dark-spots.jpg" alt="Woman checking dark spots and hyperpigmentation">
+          <span>Dark Spots</span>
+          <small>Target marks, hyperpigmentation, and uneven tone.</small>
+        </a>
+        <a href="shop.html?concern=dryness" class="home-concern-card">
+          <img src="assets/home-concerns/dry-skin.jpg" alt="Woman applying rich moisturizer for dry skin">
+          <span>Dry Skin</span>
+          <small>Moisture-rich butters, oils, and body care.</small>
+        </a>
+        <a href="shop.html?concern=sensitive-skin" class="home-concern-card">
+          <img src="assets/home-concerns/sensitive-skin.jpg" alt="Woman applying gentle skincare for sensitive skin">
+          <span>Sensitive Skin</span>
+          <small>Gentle routines made with skin comfort in mind.</small>
+        </a>
+        <a href="shop.html?concern=texture" class="home-concern-card">
+          <img src="assets/home-concerns/texture-exfoliation.jpg" alt="Woman using a gentle exfoliating scrub for skin texture">
+          <span>Texture & Exfoliation</span>
+          <small>Smooth rough patches and renew dull skin.</small>
+        </a>
+        <a href="quiz.html" class="home-concern-card home-concern-card--quiz">
+          <img src="assets/home-concerns/not-sure-yet.jpg" alt="Women with different skin needs for the skin quiz">
+          <span>Not Sure Yet?</span>
+          <small>Take the skin quiz and build a guided routine.</small>
+        </a>
+      </div>
+    </section>
+
+    <!-- Customer Validation -->
+    <section class="home-story-section home-social-proof px-6 md:px-16 py-20">
+      <div class="max-w-7xl mx-auto grid lg:grid-cols-[0.8fr_1.2fr] gap-10 items-center">
+        <div>
+          <p class="home-kicker">Real customers, real routines</p>
+          <h2 class="serif-heading text-4xl md:text-5xl leading-tight mb-5">People are already choosing Foryou Skin Bar for their glow.</h2>
+          <p class="text-stone-600 max-w-xl mb-7">From first cleanse to daily glow, customers choose handmade routines for acne, dark spots, body care, and confident skin.</p>
+          <div class="grid grid-cols-2 gap-3 max-w-xl">
+            <img src="assets/brand/about-us.png" class="home-customer-img" alt="Customer applying face serum">
+            <img src="assets/brand/about-hero.png" class="home-customer-img" alt="Customers smiling with skincare products">
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between items-center gap-4 mb-6">
+            <h3 class="font-bold text-xl text-stone-900">Latest Reviews</h3>
+            <a href="reviews.html" class="home-text-link">View all reviews <span aria-hidden="true">&rarr;</span></a>
+          </div>
+          <div class="grid md:grid-cols-3 gap-5" id="homeReviewsList">
+            <div class="text-center py-10 text-stone-500 bg-white border border-stone-100 rounded-lg">
+              <i class="fas fa-spinner fa-spin text-2xl mb-3 text-amber-500"></i><br>
+              Loading reviews...
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Natural Ingredients Section -->
+    <section class="home-story-section px-6 md:px-16 py-20 max-w-7xl mx-auto">
+      <div class="home-section-heading">
+        <p>Meet Our Powerful Ingredients</p>
+        <h2 class="serif-heading">Plant-powered care for real skin goals.</h2>
+        <a href="ingredients.html" class="home-text-link">Explore ingredients <span aria-hidden="true">&rarr;</span></a>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <a href="ingredients.html" class="home-ingredient-card">
+          <img src="assets/ingredients-story/neem.jpg" alt="Fresh neem leaves and botanical oil">
+          <div><h3>Neem</h3><p>Helps fight acne and soothe irritated skin.</p></div>
+        </a>
+        <a href="ingredients.html" class="home-ingredient-card">
+          <img src="assets/ingredients-story/turmeric.jpg" alt="Turmeric roots and turmeric powder">
+          <div><h3>Turmeric</h3><p>Brightening support for dull uneven tone.</p></div>
+        </a>
+        <a href="ingredients.html" class="home-ingredient-card">
+          <img src="assets/ingredients-story/kojic-acid.jpg" alt="Kojic acid powder and clear skincare gel">
+          <div><h3>Kojic Acid</h3><p>Supports the look of clearer, even skin.</p></div>
+        </a>
+        <a href="ingredients.html" class="home-ingredient-card">
+          <img src="assets/ingredients-story/niacinamide.jpg" alt="Niacinamide serum drops in a glass dish">
+          <div><h3>Niacinamide</h3><p>Improves the look of pores and texture.</p></div>
+        </a>
+        <a href="ingredients.html" class="home-ingredient-card">
+          <img src="assets/ingredients-story/vitamin-c.jpg" alt="Fresh orange and vitamin C skincare gel">
+          <div><h3>Vitamin C</h3><p>Boosts radiance and protects against dullness.</p></div>
+        </a>
+        <a href="ingredients.html" class="home-ingredient-card">
+          <img src="assets/ingredients-story/salicylic-acid.jpg" alt="Salicylic acid powder with willow bark and clear gel">
+          <div><h3>Salicylic Acid</h3><p>Supports breakout-prone skin.</p></div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Product Discovery CTA -->
+    <section class="home-shop-cta px-6 md:px-16 py-16">
+      <div class="max-w-7xl mx-auto grid lg:grid-cols-[1fr_0.75fr] gap-10 items-center">
+        <div>
+          <p class="home-kicker">Ready to find your routine?</p>
+          <h2 class="serif-heading text-4xl md:text-5xl text-white leading-tight mb-4" style="color:#f5d77a !important; -webkit-text-fill-color:#f5d77a !important; text-shadow:0 2px 16px rgba(0,0,0,0.38) !important;">Shop by concern, take the quiz, or go straight to the best sellers.</h2>
+          <p class="text-sage-50 max-w-2xl">Choose the quickest path to skincare made for your skin goal.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row lg:flex-col gap-3">
+          <a href="shop.html" class="home-cta-btn home-cta-btn--light">Shop All Products</a>
+          <a href="quiz.html" class="home-cta-btn">Find Products for Your Skin</a>
+          <a href="#best-sellers" class="home-cta-btn">View Best Sellers</a>
+        </div>
+      </div>
     </section>
 
     <!-- Best Sellers -->
-    <section class="px-6 md:px-16 max-w-7xl mx-auto pb-16">
-      <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-        <h2 class="serif-heading text-4xl">Our Best Sellers</h2>
+    <section id="best-sellers" class="px-6 md:px-16 max-w-7xl mx-auto py-20">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <p class="home-kicker">Product purchase</p>
+          <h2 class="serif-heading text-4xl">Best Sellers Customers Come Back For</h2>
+        </div>
         <div class="flex gap-2 flex-wrap" id="filterTabs">
           <button data-filter="all" class="filter-btn active px-4 py-2 rounded-full bg-amber-800 text-white text-sm">All</button>
           <button data-filter="Face Care" class="filter-btn px-4 py-2 rounded-full bg-amber-100 text-amber-900 text-sm">Face Care</button>
@@ -257,85 +451,8 @@
         </div>
       </div>
       <div id="productGrid" class="flex overflow-x-auto gap-7 pb-8 pt-4 hide-scrollbar snap-x snap-mandatory scroll-smooth -mx-6 px-6 md:-mx-16 md:px-16"></div>
-      <div class="text-center mt-10">
-        <a href="shop.html" class="border border-amber-700 bg-white/70 text-amber-900 px-7 py-3 rounded-full font-semibold hover:bg-amber-50 transition inline-block">View All Products →</a>
-      </div>
-    </section>
-
-    <!-- Build Your Glow Ritual & Quiz -->
-    <section class="glow-ritual-section px-6 md:px-16 max-w-7xl mx-auto py-16 bg-amber-50/50 rounded-3xl my-10">
-      <h2 class="serif-heading text-4xl text-center">Build Your Glow Ritual</h2>
-      <p class="text-center text-stone-600 mt-3 max-w-2xl mx-auto mb-10">Not sure where to start? Every great skin transformation starts with a simple routine. Answer 6 quick questions to let your skin choose the routine, or build it yourself below.</p>
-      
-      <div class="text-center mb-16">
-        <a href="quiz.html" class="bg-amber-700 text-white px-8 py-3 rounded-full font-semibold inline-block hover:bg-amber-800 transition shadow-md text-lg">Take the 1-Minute Quiz</a>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-8">
-        <div class="glow-routine-card bg-white p-8 rounded-3xl shadow-sm text-center border border-amber-100 text-stone-800">
-          <img src="assets/products/handcrafted-natural-soap-bar-for-acne-and-brightening.png" class="w-24 h-24 object-cover rounded-full mx-auto mb-4 border-4 border-amber-50" alt="Cleanse">
-          <h3 class="font-bold text-2xl mb-2">Step 1: Cleanse</h3>
-          <p class="text-stone-600 text-sm">Start with a soap bar or cleanser to gently remove impurities and prepare your skin.</p>
-        </div>
-        <div class="glow-routine-card bg-white p-8 rounded-3xl shadow-sm text-center border border-amber-100 text-stone-800">
-          <img src="assets/products/handmade-toner-for-spots.png" class="w-24 h-24 object-cover rounded-full mx-auto mb-4 border-4 border-amber-50" alt="Treat">
-          <h3 class="font-bold text-2xl mb-2">Step 2: Treat</h3>
-          <p class="text-stone-600 text-sm">Apply a toner, serum, or spot treatment to target your specific skin concerns.</p>
-        </div>
-        <div class="glow-routine-card bg-white p-8 rounded-3xl shadow-sm text-center border border-amber-100 text-stone-800">
-          <img src="assets/products/jamaican-handmade-natural-emulsified-body-butter.png" class="w-24 h-24 object-cover rounded-full mx-auto mb-4 border-4 border-amber-50" alt="Glow & Maintain">
-          <h3 class="font-bold text-2xl mb-2">Step 3: Glow & Maintain</h3>
-          <p class="text-stone-600 text-sm">Seal in moisture with a cream, butter, or oil to keep your skin glowing all day.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Removed Glow Lab -->
-
-    <!-- Customer Testimonials -->
-    <section class="py-20 px-6 md:px-16 max-w-7xl mx-auto">
-      <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
-        <h2 class="serif-heading text-4xl text-center md:text-left">What Our Glow Community Says</h2>
-        <a href="reviews.html" class="text-amber-800 font-semibold hover:underline border border-amber-800 px-6 py-2 rounded-full hover:bg-amber-50 transition">View All Reviews</a>
-      </div>
-      <div class="grid md:grid-cols-3 gap-6" id="homeReviewsList">
-        <div class="md:col-span-3 text-center py-10 text-stone-500">
-          <i class="fas fa-spinner fa-spin text-2xl mb-3 text-amber-500"></i><br>
-          Loading reviews...
-        </div>
-      </div>
-    </section>
-
-
-    <!-- Blog Preview -->
-    <section class="glow-journal-section py-20 px-6 md:px-16 max-w-7xl mx-auto">
-      <div class="flex justify-between items-center mb-8">
-        <h2 class="serif-heading text-4xl">From the Glow Journal</h2>
-        <a href="blog.html" class="text-white font-semibold hover:underline hidden md:inline">View All Articles →</a>
-      </div>
-      <div id="blogPreview" class="grid md:grid-cols-3 gap-6"></div>
-      <div class="text-center mt-6 md:hidden">
-        <a href="blog.html" class="text-stone-800 font-semibold hover:underline">View All Articles →</a>
-      </div>
-    </section>
-
-    <!-- Removed FAQ Preview -->
-
-    <!-- Custom Orders -->
-    <section class="py-20 px-6 text-center max-w-5xl mx-auto">
-      <i class="fas fa-gift text-4xl text-amber-800"></i>
-      <h2 class="serif-heading text-3xl mt-3">Custom Skincare Favours for Events</h2>
-      <p class="text-stone-600 mt-3 max-w-2xl mx-auto">Weddings · Corporate Gifts · Bridal Showers · Minimum 30 items, 8 weeks notice, 50% deposit. Request yours.</p>
-      <a href="contact.html#custom-order" class="mt-6 border border-amber-700 bg-white/70 text-amber-900 px-6 py-2 rounded-full hover:bg-amber-50 transition inline-block">Request Custom Order</a>
-    </section>
-
-    <!-- Final CTA -->
-    <section class="journey-cta bg-gradient-to-r from-[#465640] via-[#6E7F67] to-[#5A6B53] text-white py-16 px-6 text-center rounded-3xl mx-6 md:mx-16 mb-10">
-      <h2 class="serif-heading text-4xl md:text-5xl mb-4 text-white font-bold tracking-wide shadow-sm">Ready to Start Your Glow Journey?</h2>
-      <p class="text-amber-100 max-w-lg mx-auto mb-8 font-medium">Handmade in Jamaica with love, care, and powerful natural ingredients. Your skin transformation starts today.</p>
-      <div class="journey-cta-actions flex flex-wrap gap-4 justify-center">
-        <a href="shop.html" class="bg-white text-amber-900 px-8 py-3 rounded-full font-semibold hover:bg-amber-50 transition">Shop All Products</a>
-        <a href="quiz.html" class="border border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white/10 transition">Take the Skin Quiz</a>
+      <div class="text-center mt-8">
+        <a href="shop.html" class="border border-amber-700 bg-white/70 text-amber-900 px-7 py-3 rounded-full font-semibold hover:bg-amber-50 transition inline-block">View All Products &rarr;</a>
       </div>
     </section>
   </main>
@@ -440,10 +557,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-public-client.js?v=5"></script>
   <script src="js/analytics.js"></script>
-  <script src="js/products.js?v=6"></script>
+  <script src="js/products.js?v=7"></script>
   <script src="js/blog.js"></script>
   <script src="js/cart.js"></script>
-  <script src="js/main.js?v=2"></script>
+  <script src="js/main.js?v=homepage-trust-3"></script>
+  <script src="js/welcome-screen.js?v=1"></script>
   
   <script type="module">
     const supabase = window.supabase;
@@ -486,7 +604,7 @@
         const list = document.getElementById('homeReviewsList');
         
         if (error || !data || data.length === 0) {
-          list.innerHTML = '<div class="md:col-span-3 text-center py-10 text-stone-500">No reviews yet. Be the first to share your experience on our <a href="reviews.html" class="text-amber-800 underline">Reviews</a> page!</div>';
+          list.innerHTML = '<div class="col-span-full text-center py-10 text-stone-500">No reviews yet. Be the first to share your experience on our <a href="reviews.html" class="text-amber-800 underline">Reviews</a> page!</div>';
           return;
         }
 

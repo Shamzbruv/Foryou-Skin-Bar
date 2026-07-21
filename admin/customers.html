@@ -84,6 +84,39 @@
             </div>
         </div>
 
+        <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
+                <div>
+                    <h2 class="text-xl font-bold text-stone-800">Newsletter Broadcast</h2>
+                    <p class="text-sm text-stone-500 mt-1">Send a Glow Letters update to every active newsletter subscriber.</p>
+                </div>
+                <div class="text-sm bg-amber-50 text-amber-900 border border-amber-100 rounded-lg px-4 py-2">
+                    <span class="font-bold" id="subscriberCount">0</span> active subscribers
+                </div>
+            </div>
+            <form id="newsletterBroadcastForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-stone-700 mb-1">Subject</label>
+                    <input type="text" id="newsletterSubject" class="w-full px-4 py-3 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-800" placeholder="New skincare tips from Foryou Skin Bar" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-stone-700 mb-1">Message</label>
+                    <textarea id="newsletterMessage" rows="6" class="w-full px-4 py-3 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-800" placeholder="Write the update you want subscribers to receive..." required></textarea>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <button type="submit" id="sendNewsletterBtn" class="inline-flex items-center justify-center gap-2 bg-amber-800 text-white px-5 py-3 rounded-lg font-semibold hover:bg-amber-900 transition">
+                        <i class="fas fa-paper-plane"></i>
+                        Send to Subscribers
+                    </button>
+                    <button type="button" id="copySubscriberEmailsBtn" class="inline-flex items-center justify-center gap-2 border border-stone-300 text-stone-700 px-5 py-3 rounded-lg font-semibold hover:bg-stone-50 transition">
+                        <i class="fas fa-copy"></i>
+                        Copy Email List
+                    </button>
+                    <p id="newsletterStatus" class="text-sm text-stone-500"></p>
+                </div>
+            </form>
+        </div>
+
         <!-- Customers Table -->
         <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
             <table class="w-full text-left border-collapse">
@@ -107,10 +140,13 @@
         import { supabase, checkAuth } from '/admin/js/supabase-client.js';
         
         let allCustomers = [];
+        let allSubscribers = [];
+        let adminSession = null;
 
         async function init() {
-            await checkAuth();
+            adminSession = await checkAuth();
             loadCustomers();
+            loadSubscribers();
         }
         
         async function loadCustomers() {
@@ -124,6 +160,29 @@
             
             allCustomers = data;
             renderCustomers(allCustomers);
+        }
+
+        async function loadSubscribers() {
+            const statusEl = document.getElementById('newsletterStatus');
+            const countEl = document.getElementById('subscriberCount');
+            const { data, error } = await supabase
+                .from('newsletter_subscribers')
+                .select('email, source, is_active, created_at')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                allSubscribers = [];
+                countEl.textContent = '0';
+                statusEl.textContent = `Newsletter subscribers could not be loaded: ${error.message}`;
+                statusEl.className = 'text-sm text-red-600';
+                return;
+            }
+
+            allSubscribers = data || [];
+            countEl.textContent = allSubscribers.length;
+            statusEl.textContent = allSubscribers.length ? 'Ready to send when the message is complete.' : 'No active subscribers yet.';
+            statusEl.className = 'text-sm text-stone-500';
         }
 
         function renderCustomers(customers) {
@@ -156,6 +215,66 @@
                 (c.phone && c.phone.includes(query))
             );
             renderCustomers(filtered);
+        });
+
+        document.getElementById('copySubscriberEmailsBtn').addEventListener('click', async () => {
+            const statusEl = document.getElementById('newsletterStatus');
+            const emails = allSubscribers.map(subscriber => subscriber.email).filter(Boolean).join(', ');
+            if (!emails) {
+                statusEl.textContent = 'There are no active subscriber emails to copy.';
+                statusEl.className = 'text-sm text-amber-700';
+                return;
+            }
+            await navigator.clipboard.writeText(emails);
+            statusEl.textContent = 'Subscriber email list copied.';
+            statusEl.className = 'text-sm text-green-700';
+        });
+
+        document.getElementById('newsletterBroadcastForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusEl = document.getElementById('newsletterStatus');
+            const sendBtn = document.getElementById('sendNewsletterBtn');
+            const subject = document.getElementById('newsletterSubject').value.trim();
+            const message = document.getElementById('newsletterMessage').value.trim();
+
+            if (!allSubscribers.length) {
+                statusEl.textContent = 'There are no active subscribers to send to.';
+                statusEl.className = 'text-sm text-amber-700';
+                return;
+            }
+
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            statusEl.textContent = 'Sending newsletter broadcast...';
+            statusEl.className = 'text-sm text-stone-500';
+
+            try {
+                if (!adminSession?.access_token) {
+                    adminSession = await checkAuth();
+                }
+
+                const response = await fetch('/api/newsletter/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminSession.access_token}`
+                    },
+                    body: JSON.stringify({ subject, message })
+                });
+                const result = await response.json();
+                if (!response.ok && response.status !== 207) {
+                    throw new Error(result.error || 'Newsletter broadcast failed.');
+                }
+
+                statusEl.textContent = `Newsletter sent to ${result.sent || 0} subscriber(s).${result.failed ? ` ${result.failed} failed.` : ''}`;
+                statusEl.className = result.failed ? 'text-sm text-amber-700' : 'text-sm text-green-700';
+            } catch (error) {
+                statusEl.textContent = error.message || 'Newsletter broadcast failed.';
+                statusEl.className = 'text-sm text-red-600';
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send to Subscribers';
+            }
         });
         
         document.getElementById('logoutBtn').addEventListener('click', async (e) => {

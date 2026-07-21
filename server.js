@@ -147,6 +147,37 @@ const supabaseAdmin = createClient(
   { realtime: { transport: WebSocket } }
 );
 
+async function requireAdmin(req) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) {
+    const error = new Error('Admin authentication is required.');
+    error.status = 401;
+    throw error;
+  }
+
+  const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+  if (userError || !userData?.user) {
+    const error = new Error('Invalid admin session.');
+    error.status = 401;
+    throw error;
+  }
+
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .select('role')
+    .eq('id', userData.user.id)
+    .maybeSingle();
+
+  if (profileError || !profile || !['owner', 'admin', 'staff'].includes(profile.role)) {
+    const error = new Error('Admin privileges are required.');
+    error.status = 403;
+    throw error;
+  }
+
+  return userData.user;
+}
+
 // ── API Routes ──
 
 app.post('/api/validate-discount', async (req, res) => {
@@ -207,13 +238,118 @@ app.post('/api/validate-discount', async (req, res) => {
   }
 });
 
+app.post('/api/newsletter/send', async (req, res) => {
+  try {
+    await requireAdmin(req);
+
+    const subject = String(req.body.subject || '').trim();
+    const message = String(req.body.message || '').trim();
+    if (!subject) throw new Error('Subject is required.');
+    if (!message) throw new Error('Message is required.');
+
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    if (!RESEND_API_KEY) {
+      const error = new Error('RESEND_API_KEY is not configured on the server.');
+      error.status = 503;
+      throw error;
+    }
+
+    const FROM_EMAIL = process.env.FROM_EMAIL || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
+    const { data: subscribers, error: subscribersError } = await supabaseAdmin
+      .from('newsletter_subscribers')
+      .select('email')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (subscribersError) throw subscribersError;
+
+    const uniqueEmails = [...new Set((subscribers || [])
+      .map((row) => String(row.email || '').trim().toLowerCase())
+      .filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))];
+
+    if (uniqueEmails.length === 0) {
+      return res.status(200).json({ success: true, sent: 0, failed: 0, message: 'No active subscribers found.' });
+    }
+
+    const htmlMessage = escapeHtml(message)
+      .split(/\n{2,}/)
+      .map((paragraph) => `<p>${paragraph.replace(/\n/g, '<br>')}</p>`)
+      .join('');
+    const html = `
+      ${htmlMessage}
+      <hr>
+      <p style="font-size:12px;color:#666;">You are receiving this email because you subscribed to Glow Letters from For You Skin Bar. To unsubscribe, reply to this email with "unsubscribe".</p>
+    `;
+
+    let sent = 0;
+    const failures = [];
+    for (const email of uniqueEmails) {
+      try {
+        const resendResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: FROM_EMAIL,
+            to: email,
+            subject,
+            html
+          })
+        });
+
+        if (!resendResponse.ok) {
+          const body = await resendResponse.text();
+          failures.push({ email, error: body });
+          await supabaseAdmin.from('email_logs').insert({
+            recipient: email,
+            email_type: 'newsletter_broadcast',
+            status: 'error',
+            error_message: body
+          });
+          continue;
+        }
+
+        sent += 1;
+        await supabaseAdmin.from('email_logs').insert({
+          recipient: email,
+          email_type: 'newsletter_broadcast',
+          status: 'sent'
+        });
+      } catch (sendError) {
+        const errorMessage = sendError.message || String(sendError);
+        failures.push({ email, error: errorMessage });
+        await supabaseAdmin.from('email_logs').insert({
+          recipient: email,
+          email_type: 'newsletter_broadcast',
+          status: 'error',
+          error_message: errorMessage
+        });
+      }
+    }
+
+    res.status(failures.length ? 207 : 200).json({
+      success: failures.length === 0,
+      sent,
+      failed: failures.length,
+      failures: failures.slice(0, 10)
+    });
+  } catch (error) {
+    res.status(error.status || 400).json({ error: error.message });
+  }
+});
+
 app.post('/api/create-order', async (req, res) => {
   try {
     const payload = req.body;
-    const { customer, shipping, cart, discountCode } = payload;
+    const { customer, shipping, cart, discountCode, termsAccepted, newsletterOptIn } = payload;
 
     if (!customer || !shipping || !cart || cart.length === 0) {
       throw new Error('Invalid order payload');
+    }
+    if (termsAccepted !== true) {
+      throw new Error('You must read and accept the Terms and Conditions before placing an order.');
     }
 
     let subtotal = 0;
@@ -460,6 +596,19 @@ app.post('/api/create-order', async (req, res) => {
       .insert(orderItems);
 
     if (itemsError) throw itemsError;
+
+    if (newsletterOptIn && customer.email) {
+      const { error: newsletterError } = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .upsert({
+          email: String(customer.email).trim().toLowerCase(),
+          source: 'checkout',
+          is_active: true
+        }, { onConflict: 'email' });
+      if (newsletterError) {
+        console.warn('[Newsletter] Checkout opt-in could not be saved:', newsletterError.message);
+      }
+    }
 
     // Resend Email Logic
     const RESEND_API_KEY = process.env.RESEND_API_KEY;

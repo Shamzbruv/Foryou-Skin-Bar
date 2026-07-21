@@ -333,6 +333,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
+      if (data.termsAccepted !== 'yes') {
+        errorMessage.innerText = 'Please read and accept the Terms and Conditions before continuing to payment.';
+        errorMessage.classList.remove('hidden');
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.disabled = false;
+        return;
+      }
 
       // Prepare payload exactly as requested
       const payload = {
@@ -352,6 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
           deliveryMethod: data.deliveryMethod,
           notes: data.notes
         },
+        termsAccepted: true,
+        newsletterOptIn: data.newsletterOptIn === 'yes',
         discountCode: window.appliedDiscount ? window.appliedDiscount.code : null,
         cart: cart.map(item => ({
           productId: item.productId,

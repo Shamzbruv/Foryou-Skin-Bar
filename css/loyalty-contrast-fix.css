@@ -1,7 +1,7 @@
 /* Loyalty page contrast safeguard.
    The global brand theme deliberately recolors generic main headings and text.
-   These scoped rules restore the light-on-sage treatment required by the
-   loyalty hero, tier headers, and closing banner. */
+   The loyalty hero now follows the site-wide gold/ivory header direction;
+   tier headers and the closing banner keep their dark treatments. */
 
 .loyalty-page .loyalty-hero,
 .loyalty-page .loyalty-hero h1,
@@ -12,22 +12,22 @@
 .loyalty-page .loyalty-hero strong,
 .loyalty-page .loyalty-hero .loyalty-hero-copy,
 .loyalty-page .loyalty-hero .loyalty-hero-proof span {
-  color: #fffdf8 !important;
+  color: #171312 !important;
 }
 
 .loyalty-page .loyalty-hero h1,
 .loyalty-page .loyalty-hero h1 em {
-  color: #fffdf8 !important;
+  color: #171312 !important;
 }
 
 .loyalty-page .loyalty-hero h1 em,
 .loyalty-page .loyalty-hero .loyalty-kicker i,
 .loyalty-page .loyalty-hero-proof i {
-  color: #f4d98e !important;
+  color: #a57822 !important;
 }
 
 .loyalty-page .loyalty-hero .loyalty-kicker {
-  color: #fffdf8 !important;
+  color: #171312 !important;
 }
 
 .loyalty-page .loyalty-tier-top,

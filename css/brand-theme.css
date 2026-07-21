@@ -2,8 +2,8 @@
    For You Skin Bar — Client-Corrected Brand Theme
    Main experience: Soft Ivory (#F8F5EF)
    Action color: Golden Glow (#C89B3C)
-   Supporting color: Deep Sage (#6E7F67) for banners/feature strips
-   Text/contrast: Rich Cocoa (#3A2E27)
+   Supporting color: Deep Sage (#6E7F67) as a restrained accent
+   Text/contrast: Soft Black (#171312)
    ========================================================== */
 :root {
   --brand-soft-ivory: #F8F5EF;
@@ -16,8 +16,8 @@
   --brand-golden-glow: #C89B3C;
   --brand-golden-hover: #B0852F;
   --brand-gold-soft: rgba(200, 155, 60, 0.16);
-  --brand-rich-cocoa: #3A2E27;
-  --brand-cocoa-soft: #5A4C3A;
+  --brand-rich-cocoa: #171312;
+  --brand-cocoa-soft: #37302A;
 
   --bg-color: var(--brand-soft-ivory) !important;
   --bg-secondary: var(--brand-paper) !important;
@@ -72,7 +72,7 @@ nav.glass-nav {
   color: var(--brand-golden-hover) !important;
 }
 
-/* Announcement and support banners use sage, not the full page. */
+/* Announcement and page-header banners use gold/ivory; sage stays as a restrained accent. */
 body > .bg-amber-900\/90:first-child,
 .bg-amber-900\/90,
 .brand-sage-panel,
@@ -82,9 +82,11 @@ body > .bg-amber-900\/90:first-child,
 section.bg-gradient-to-r.from-amber-800,
 section.bg-gradient-to-r.from-amber-900,
 section.bg-gradient-to-r {
-  background: linear-gradient(135deg, var(--brand-sage-darker) 0%, var(--brand-deep-sage) 65%, var(--brand-sage-dark) 100%) !important;
-  color: var(--brand-soft-ivory) !important;
-  border-color: rgba(200, 155, 60, 0.45) !important;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.95) 0%, rgba(248, 245, 239, 0.9) 46%, rgba(225, 199, 125, 0.76) 100%),
+    radial-gradient(circle at 92% 18%, rgba(110, 127, 103, 0.18), transparent 34%) !important;
+  color: var(--brand-rich-cocoa) !important;
+  border-color: rgba(200, 155, 60, 0.34) !important;
 }
 
 .brand-sage-panel h1,
@@ -101,7 +103,7 @@ section.bg-gradient-to-r {
 section.bg-gradient-to-r h2,
 section.bg-gradient-to-r p,
 section.bg-gradient-to-r .text-white {
-  color: var(--brand-soft-ivory) !important;
+  color: var(--brand-rich-cocoa) !important;
 }
 
 /* Home welcome hero: product-photo background with readable overlay. */
@@ -176,7 +178,7 @@ main .text-stone-700 {
 .trust-bar p,
 .bg-gradient-to-br.from-\[\#6E7F67\] p,
 section.bg-gradient-to-r p {
-  color: var(--brand-soft-ivory) !important;
+  color: var(--brand-cocoa-soft) !important;
 }
 
 /* Cards and drawers should sit on the ivory experience neatly. */
@@ -481,6 +483,11 @@ footer .text-amber-700 {
 .brand-sage-bg { background: var(--brand-deep-sage) !important; color: var(--brand-soft-ivory) !important; }
 .brand-gold-bg { background: var(--brand-golden-glow) !important; color: #fff !important; }
 .brand-gold-text { color: var(--brand-golden-glow) !important; }
+
+.process-step-number {
+  background: var(--brand-rich-cocoa) !important;
+  color: var(--brand-golden-glow) !important;
+}
 .brand-ivory-card { background: var(--brand-paper) !important; color: var(--brand-rich-cocoa) !important; }
 
 /* Keep the home trust strip as a sage banner instead of separate ivory cards. */
@@ -493,4 +500,334 @@ footer .text-amber-700 {
 .trust-bar .trust-item span,
 .trust-bar .trust-item i {
   color: var(--brand-soft-ivory) !important;
+}
+
+/* Homepage trust redesign: final overrides, loaded after shared styles. */
+.bliss-hero {
+  min-height: 640px !important;
+  background: linear-gradient(90deg, #fbf6ed 0%, #fbf6ed 47%, #efe2cd 100%) !important;
+}
+
+.bliss-hero::before {
+  opacity: 0.12 !important;
+}
+
+.bliss-hero-bg {
+  background: linear-gradient(90deg, rgba(251, 246, 237, 0.98) 0%, rgba(251, 246, 237, 0.96) 45%, rgba(251, 246, 237, 0.22) 68%, rgba(251, 246, 237, 0) 100%) !important;
+}
+
+.bliss-hero-shell {
+  width: 48vw !important;
+  min-height: 640px !important;
+  padding: 64px 24px 80px !important;
+}
+
+.bliss-hero-copy {
+  max-width: 620px !important;
+  transform: none !important;
+}
+
+.bliss-eyebrow {
+  color: var(--brand-sage-darker) !important;
+}
+
+.bliss-hero-copy h1 {
+  font-size: clamp(3.7rem, 6.2vw, 6.45rem) !important;
+  line-height: 0.94 !important;
+  letter-spacing: -0.025em !important;
+  margin: 24px 0 !important;
+  color: #171312 !important;
+}
+
+.bliss-hero-copy h1 em {
+  color: var(--brand-sage-darker) !important;
+}
+
+.bliss-hero-copy p {
+  max-width: 560px !important;
+  color: #2c211b !important;
+  font-size: clamp(1rem, 1.1vw, 1.14rem) !important;
+  line-height: 1.72 !important;
+}
+
+.bliss-hero-visual {
+  width: 52vw !important;
+  clip-path: none !important;
+  border-left: 0 !important;
+}
+
+.bliss-image-card {
+  background-image: url("../assets/brand/welcome-lifestyle-bg.png") !important;
+  background-position: 62% center !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+.bliss-hero-visual::before {
+  background: linear-gradient(90deg, rgba(251, 246, 237, 0.78), rgba(251, 246, 237, 0.12) 38%, rgba(251, 246, 237, 0) 100%) !important;
+}
+
+.bliss-hero-visual::after,
+.bliss-orb,
+.bliss-feature-strip {
+  display: none !important;
+}
+
+.bliss-mini-proof {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  max-width: 620px !important;
+  gap: 12px !important;
+}
+
+.bliss-mini-proof div {
+  padding: 14px 16px !important;
+  background: transparent !important;
+  border-left: 1px solid rgba(53, 66, 50, 0.26) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.home-proof-strip {
+  background: var(--brand-soft-ivory) !important;
+  padding-top: 30px !important;
+  padding-bottom: 50px !important;
+}
+
+.home-proof-strip > .max-w-7xl {
+  padding: 18px !important;
+  border: 1px solid rgba(58, 46, 39, 0.08) !important;
+  border-radius: 8px !important;
+  background: rgba(255, 253, 248, 0.88) !important;
+  box-shadow: 0 18px 42px rgba(58, 46, 39, 0.07) !important;
+}
+
+.home-stat-card {
+  min-height: 118px !important;
+  padding: 18px 14px !important;
+  border: 0 !important;
+  border-right: 1px solid rgba(58, 46, 39, 0.09) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  text-align: center !important;
+  box-shadow: none !important;
+}
+
+.home-stat-card:last-child {
+  border-right: 0 !important;
+}
+
+.home-stat-card i {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  margin-bottom: 10px !important;
+  border: 1px solid rgba(53, 66, 50, 0.2) !important;
+  border-radius: 999px !important;
+  color: var(--brand-sage-darker) !important;
+  font-size: 0.95rem !important;
+}
+
+.home-stat-card strong {
+  font-family: "Inter", sans-serif !important;
+  font-size: clamp(1.45rem, 2.5vw, 2.15rem) !important;
+  line-height: 1 !important;
+  color: #171312 !important;
+}
+
+.home-stat-card span {
+  margin-top: 8px !important;
+  color: var(--brand-cocoa-soft) !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.home-story-section {
+  padding-top: 72px !important;
+  padding-bottom: 72px !important;
+}
+
+.home-section-heading {
+  align-items: flex-start !important;
+  margin-bottom: 26px !important;
+}
+
+.home-section-heading h2 {
+  font-size: clamp(2.25rem, 4vw, 3.8rem) !important;
+  line-height: 1.02 !important;
+}
+
+.home-concern-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.home-concern-card,
+.home-concern-card:nth-child(1),
+.home-concern-card:nth-child(2) {
+  grid-column: auto !important;
+  min-height: 0 !important;
+  display: block !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(58, 46, 39, 0.08) !important;
+  border-radius: 8px !important;
+  background: var(--brand-paper) !important;
+  color: #2c211b !important;
+  box-shadow: 0 12px 28px rgba(58, 46, 39, 0.06) !important;
+}
+
+.home-concern-card::after {
+  display: none !important;
+}
+
+.home-concern-card img {
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: 218px !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  border-radius: 0 !important;
+  transform: none !important;
+}
+
+.home-concern-card span,
+.home-concern-card small {
+  position: static !important;
+  z-index: auto !important;
+  margin-inline: 0 !important;
+}
+
+.home-concern-card span {
+  display: block !important;
+  padding: 18px 20px 0 !important;
+  color: var(--brand-sage-darker) !important;
+  font-size: clamp(1.5rem, 2.2vw, 2rem) !important;
+}
+
+.home-concern-card small {
+  display: block !important;
+  max-width: none !important;
+  margin-bottom: 0 !important;
+  padding: 7px 20px 20px !important;
+  color: var(--brand-cocoa-soft) !important;
+  font-size: 0.92rem !important;
+}
+
+.home-social-proof {
+  background: #efe8da !important;
+}
+
+.home-customer-img {
+  aspect-ratio: 5 / 4 !important;
+  max-height: 245px !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 8px !important;
+}
+
+.home-shop-cta {
+  padding-top: 58px !important;
+  padding-bottom: 58px !important;
+}
+
+.home-shop-cta .home-kicker,
+.home-shop-cta .serif-heading,
+.home-shop-cta p {
+  color: #f5d77a !important;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.38) !important;
+}
+
+main > section.home-shop-cta h2.serif-heading,
+.home-shop-cta h2.serif-heading.text-white {
+  color: #f5d77a !important;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.38) !important;
+}
+
+@media (max-width: 1100px) {
+  .bliss-hero {
+    min-height: 0 !important;
+  }
+
+  .bliss-hero-shell {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 48px 24px 26px !important;
+  }
+
+  .bliss-hero-copy {
+    max-width: 780px !important;
+  }
+
+  .bliss-hero-visual {
+    position: relative !important;
+    width: calc(100% - 48px) !important;
+    min-height: 420px !important;
+    margin: 0 auto !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-concern-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .home-stat-card:nth-child(2) {
+    border-right: 0 !important;
+  }
+
+  .home-stat-card:nth-child(1),
+  .home-stat-card:nth-child(2) {
+    border-bottom: 1px solid rgba(58, 46, 39, 0.09) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .bliss-hero-shell {
+    padding: 38px 18px 22px !important;
+  }
+
+  .bliss-hero-copy h1 {
+    font-size: clamp(3rem, 14vw, 4.4rem) !important;
+  }
+
+  .bliss-mini-proof {
+    grid-template-columns: 1fr !important;
+    margin-top: 28px !important;
+  }
+
+  .bliss-hero-visual {
+    width: calc(100% - 28px) !important;
+    min-height: 340px !important;
+  }
+
+  .home-proof-strip > .max-w-7xl {
+    padding: 10px !important;
+  }
+
+  .home-stat-card {
+    min-height: 108px !important;
+  }
+
+  .home-concern-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home-concern-card img {
+    height: 210px !important;
+  }
+
+  .home-story-section {
+    padding-top: 58px !important;
+    padding-bottom: 58px !important;
+  }
+
+  .home-customer-img {
+    max-height: none !important;
+  }
 }

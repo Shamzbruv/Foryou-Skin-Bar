@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orders - For You Skin Bar Admin</title>
-    
+
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/brand/favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/apple-touch-icon.png">
@@ -74,12 +74,13 @@
             <a href="#" id="logoutBtn" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Logout</a>
         </div>
     </div>
-    
+
     <div class="flex-1 p-8 overflow-y-auto">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-2xl font-bold text-stone-800">Orders</h1>
+            <button onclick="window.openManualOrderModal()" class="bg-amber-800 text-white px-4 py-2 rounded-lg shadow hover:bg-amber-900 transition font-medium"><i class="fas fa-plus mr-2"></i>Add Manual Order</button>
         </div>
-        
+
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -112,10 +113,53 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Manual Order Modal -->
+    <div id="manualOrderModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                <h2 class="text-xl font-bold">Add Manual Order</h2>
+                <button onclick="document.getElementById('manualOrderModal').classList.add('hidden')" class="text-gray-400 hover:text-stone-800"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form id="manualOrderForm" class="p-6 space-y-4">
+                <div>
+                    <h3 class="font-bold text-stone-800 mb-2 border-b pb-1">Customer Info</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="moName" placeholder="Customer Name" required class="border border-gray-300 rounded p-2 text-sm w-full">
+                        <input type="email" id="moEmail" placeholder="Email (Optional)" class="border border-gray-300 rounded p-2 text-sm w-full">
+                        <input type="text" id="moPhone" placeholder="Phone (Optional)" class="border border-gray-300 rounded p-2 text-sm w-full">
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-stone-800 mb-2 border-b pb-1">Order Details</h3>
+                    <div class="grid grid-cols-1 gap-2 mb-2">
+                        <label class="text-xs font-bold text-stone-500">Manual Entry Description (e.g. 2x Clear Skin Serum)</label>
+                        <textarea id="moDescription" required placeholder="Products bought..." class="border border-gray-300 rounded p-2 text-sm w-full" rows="2"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-stone-500">Total Amount Paid (JMD)</label>
+                            <input type="number" id="moTotal" required min="0" step="0.01" class="border border-gray-300 rounded p-2 text-sm w-full">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-stone-500">Payment Status</label>
+                            <select id="moPayment" class="border border-gray-300 rounded p-2 text-sm w-full">
+                                <option value="paid">Paid</option>
+                                <option value="unpaid">Unpaid</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+                    <button type="submit" id="moSubmit" class="bg-amber-800 text-white px-6 py-2 rounded-lg hover:bg-amber-900 transition font-medium">Save Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script type="module">
         import { supabase, checkAuth, formatCurrency } from '/admin/js/supabase-client.js';
-        
+
         let currentOrders = [];
         const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({
             '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
@@ -124,7 +168,7 @@
         window.openOrderModal = async function(orderId) {
             const order = currentOrders.find(o => o.id === orderId);
             if (!order) return;
-            
+
             document.getElementById('modalTitle').innerText = `Order ${order.order_number}`;
             const content = document.getElementById('modalContent');
             content.innerHTML = '<div class="col-span-2 text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-blue-500"></i></div>';
@@ -159,7 +203,7 @@
                     <p class="text-sm mb-1"><strong>Phone:</strong> ${escapeHtml(order.customers?.phone || 'N/A')}</p>
 
                     <h3 class="font-bold text-stone-800 mb-3 mt-6 border-b pb-2">Delivery Details</h3>
-                    <p class="text-sm mb-1"><strong>Method:</strong> <span class="capitalize">${escapeHtml(order.delivery_method || 'N/A')}</span></p>
+                    <p class="text-sm mb-1"><strong>Method:</strong> <span class="capitalize">${escapeHtml(order.delivery_method || 'N/A')}</span> ${order.delivery_service ? `(<span class="capitalize font-semibold">${escapeHtml(order.delivery_service)}</span>)` : ''}</p>
                     <p class="text-sm mb-1"><strong>Address:</strong> ${escapeHtml(order.shipping_address || 'N/A')}</p>
                     <p class="text-sm mb-1"><strong>Parish:</strong> ${escapeHtml(order.parish || 'N/A')}</p>
                     <p class="text-sm mb-1"><strong>Notes:</strong> ${escapeHtml(order.customer_notes || 'None')}</p>
@@ -213,11 +257,11 @@
                 .from('orders')
                 .update({ [field]: value })
                 .eq('id', orderId);
-            
+
             if (error) {
                 alert(`Error updating ${field}: ` + error.message);
             } else {
-                // If payment changed to paid, ideally we reduce inventory via edge function, 
+                // If payment changed to paid, ideally we reduce inventory via edge function,
                 // but for now we just rely on admin managing it manually or edge func in future.
                 alert(`Successfully updated ${field} to ${value}`);
                 loadOrders(); // Refresh table behind
@@ -234,7 +278,7 @@
 
         async function loadOrders() {
             await checkAuth();
-            
+
             const { data: orders, error } = await supabase
                 .from('orders')
                 .select(`
@@ -242,21 +286,21 @@
                     customers (full_name, email, phone)
                 `)
                 .order('created_at', { ascending: false });
-                
+
             const tbody = document.getElementById('ordersTableBody');
-            
+
             if (error) {
                 tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-red-500">Error: ${error.message}</td></tr>`;
                 return;
             }
-            
+
             currentOrders = orders;
 
             if (orders.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-stone-500 text-center">No orders found.</td></tr>`;
                 return;
             }
-            
+
             tbody.innerHTML = orders.map(o => `
                 <tr class="hover:bg-stone-50 font-sans">
                     <td class="p-4 font-bold text-stone-800">${escapeHtml(o.order_number)}</td>
@@ -271,13 +315,67 @@
                 </tr>
             `).join('');
         }
-        
+
         document.getElementById('logoutBtn').addEventListener('click', async (e) => {
             e.preventDefault();
             await supabase.auth.signOut();
             window.location.href = '/admin/login.html';
         });
-        
+
+        window.openManualOrderModal = function() {
+            document.getElementById('manualOrderForm').reset();
+            document.getElementById('manualOrderModal').classList.remove('hidden');
+        };
+
+        document.getElementById('manualOrderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('moSubmit');
+            btn.innerText = 'Saving...';
+            btn.disabled = true;
+
+            try {
+                // Generate a random order number
+                const orderNum = 'MO-' + Math.floor(100000 + Math.random() * 900000);
+
+                const { data: orderData, error: orderError } = await supabase
+                    .from('orders')
+                    .insert({
+                        order_number: orderNum,
+                        status: 'delivered',
+                        payment_status: document.getElementById('moPayment').value,
+                        fulfillment_status: 'picked_up',
+                        delivery_method: 'pickup',
+                        grand_total_jmd: parseFloat(document.getElementById('moTotal').value) || 0,
+                        admin_notes: 'Manual Order: ' + document.getElementById('moName').value + ' (' + document.getElementById('moEmail').value + ')\n' + document.getElementById('moDescription').value
+                    })
+                    .select()
+                    .single();
+
+                if (orderError) throw orderError;
+
+                // Also insert a dummy item so it shows up in the order viewer
+                const { error: itemError } = await supabase
+                    .from('order_items')
+                    .insert({
+                        order_id: orderData.id,
+                        product_name: document.getElementById('moDescription').value,
+                        quantity: 1,
+                        line_total_jmd: parseFloat(document.getElementById('moTotal').value) || 0
+                    });
+
+                if (itemError) throw itemError;
+
+                alert('Manual order added successfully!');
+                document.getElementById('manualOrderModal').classList.add('hidden');
+                loadOrders();
+            } catch (err) {
+                alert('Error creating manual order: ' + err.message);
+            } finally {
+                btn.innerText = 'Save Order';
+                btn.disabled = false;
+            }
+        });
+
         loadOrders();
     </script>
 </div>

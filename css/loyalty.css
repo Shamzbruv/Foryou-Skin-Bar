@@ -21,10 +21,10 @@
   isolation: isolate;
   padding: clamp(4.5rem, 10vw, 8rem) 1.5rem clamp(5rem, 11vw, 8.5rem);
   background:
-    radial-gradient(circle at 87% 22%, rgba(200, 155, 60, 0.38) 0, transparent 19rem),
-    radial-gradient(circle at 10% 105%, rgba(200, 155, 60, 0.18) 0, transparent 22rem),
-    linear-gradient(135deg, #354232 0%, #465640 47%, #6e7f67 100%);
-  color: var(--loyalty-ivory);
+    linear-gradient(135deg, rgba(255, 253, 248, 0.96) 0%, rgba(248, 245, 239, 0.92) 48%, rgba(225, 199, 125, 0.78) 100%),
+    radial-gradient(circle at 87% 22%, rgba(200, 155, 60, 0.28) 0, transparent 19rem),
+    radial-gradient(circle at 10% 105%, rgba(110, 127, 103, 0.1) 0, transparent 22rem);
+  color: #171312;
 }
 
 .loyalty-hero::before,
@@ -41,8 +41,8 @@
   height: 28rem;
   top: -16rem;
   right: -8rem;
-  border: 1px solid rgba(248, 245, 239, 0.22);
-  box-shadow: 0 0 0 3rem rgba(248, 245, 239, 0.04), 0 0 0 8rem rgba(248, 245, 239, 0.025);
+  border: 1px solid rgba(200, 155, 60, 0.24);
+  box-shadow: 0 0 0 3rem rgba(200, 155, 60, 0.06), 0 0 0 8rem rgba(200, 155, 60, 0.035);
 }
 
 .loyalty-hero::after {
@@ -50,7 +50,7 @@
   height: 19rem;
   bottom: -13rem;
   left: 12%;
-  background: rgba(248, 245, 239, 0.055);
+  background: rgba(200, 155, 60, 0.09);
 }
 
 .loyalty-hero-image {
@@ -59,8 +59,8 @@
   width: min(47vw, 45rem);
   background-position: center;
   background-size: cover;
-  opacity: 0.5;
-  mix-blend-mode: luminosity;
+  opacity: 0.18;
+  mix-blend-mode: multiply;
   mask-image: linear-gradient(90deg, transparent 0%, black 35%, black 100%);
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 35%, black 100%);
   z-index: -2;
@@ -81,11 +81,11 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0.55rem 0.85rem;
-  border: 1px solid rgba(248, 245, 239, 0.28);
+  border: 1px solid rgba(200, 155, 60, 0.32);
   border-radius: 999px;
-  background: rgba(248, 245, 239, 0.1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  color: #fffdf8;
+  background: rgba(255, 253, 248, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  color: #171312;
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -95,7 +95,7 @@
 .loyalty-hero h1 {
   max-width: 52rem;
   margin: 1.2rem 0 1.1rem;
-  color: #fffdf8;
+  color: #171312;
   font-family: 'Cormorant Garamond', serif;
   font-size: clamp(3.2rem, 7.3vw, 6.8rem);
   line-height: 0.88;
@@ -103,13 +103,13 @@
 }
 
 .loyalty-hero h1 em {
-  color: #f4d98e;
+  color: #a57822;
   font-style: italic;
 }
 
 .loyalty-hero-copy {
   max-width: 38rem;
-  color: rgba(255, 253, 248, 0.86);
+  color: #37302a;
   font-size: clamp(1.02rem, 2vw, 1.2rem);
   line-height: 1.75;
   font-family: 'Inter', sans-serif;
@@ -150,13 +150,13 @@
 }
 
 .loyalty-btn-secondary {
-  border: 1px solid rgba(255, 253, 248, 0.34);
-  background: rgba(255, 253, 248, 0.07);
-  color: #fffdf8;
+  border: 1px solid rgba(200, 155, 60, 0.42);
+  background: rgba(255, 253, 248, 0.62);
+  color: #171312;
 }
 
 .loyalty-btn-secondary:hover {
-  background: rgba(255, 253, 248, 0.14);
+  background: rgba(255, 253, 248, 0.9);
 }
 
 .loyalty-hero-proof {
@@ -170,12 +170,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  color: rgba(255, 253, 248, 0.8);
+  color: #37302a;
   font-size: 0.84rem;
 }
 
 .loyalty-hero-proof i {
-  color: #f4d98e;
+  color: #a57822;
 }
 
 .loyalty-section {
@@ -508,7 +508,8 @@
     padding-right: 1.25rem;
   }
 }
-/* Specific Gold Overrides for Headings */
-#loyaltyRoot .loyalty-hero h1, #loyaltyRoot .loyalty-tier h3, #loyaltyRoot .loyalty-cta h2 { color: var(--loyalty-gold) !important; }
-#loyaltyRoot .loyalty-hero h1 em { color: #f4d98e !important; }
+/* Specific heading overrides */
+#loyaltyRoot .loyalty-hero h1 { color: #171312 !important; }
+#loyaltyRoot .loyalty-hero h1 em { color: #a57822 !important; }
+#loyaltyRoot .loyalty-tier h3, #loyaltyRoot .loyalty-cta h2 { color: var(--loyalty-gold) !important; }
 #loyaltyRoot .loyalty-tier:nth-child(2) h3 { color: var(--loyalty-cocoa) !important; }

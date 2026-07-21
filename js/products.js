@@ -52,9 +52,12 @@ window.loadProductsData = async function() {
                     body: section.body || ''
                 }));
 
-            const recommendationProfile = (p.product_recommendation_profiles && p.product_recommendation_profiles.length > 0) 
-                ? p.product_recommendation_profiles[0] 
+            const hasRecommendationProfile = Boolean(p.product_recommendation_profiles && p.product_recommendation_profiles.length > 0);
+            const recommendationProfile = hasRecommendationProfile
+                ? p.product_recommendation_profiles[0]
                 : {};
+            const routineStepValue = hasRecommendationProfile ? (recommendationProfile.routine_step || '') : '';
+            const routineSteps = String(routineStepValue || '').split(/[,\|]/).map(step => step.trim()).filter(Boolean);
 
             const reviews = (p.product_reviews || []).filter(r => r.approved);
             const reviewCount = reviews.length;
@@ -90,7 +93,9 @@ window.loadProductsData = async function() {
                     ? recommendationProfile.skin_types 
                     : tags.filter(t => t.type === 'skin_type').map(t => t.name),
                 avoidFor: recommendationProfile.avoid_for || [],
-                routineStep: recommendationProfile.routine_step || p.routine_step || '',
+                hasRecommendationProfile,
+                routineStep: routineStepValue,
+                routineSteps,
                 productUse: recommendationProfile.product_use || 'both',
                 isSensitiveFriendly: !!recommendationProfile.is_sensitive_friendly,
                 ingredients: (p.product_ingredients || []).map(i => i.ingredient_name).concat(tags.filter(t => t.type === 'ingredient').map(t => t.name)),
@@ -104,6 +109,12 @@ window.loadProductsData = async function() {
                 allowBackorder: p.allow_backorder,
                 reviewCount,
                 reviewAverage,
+                is_sulphate_free: !!p.is_sulphate_free,
+                is_paraben_free: !!p.is_paraben_free,
+                is_mineral_oil_free: !!p.is_mineral_oil_free,
+                is_cruelty_free: !!p.is_cruelty_free,
+                is_handmade_in_jamaica: !!p.is_handmade_in_jamaica,
+                has_results_disclaimer: p.has_results_disclaimer !== false,
                 relatedProducts: [],
                 variants
             };

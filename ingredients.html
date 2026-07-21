@@ -62,7 +62,228 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="css/brand-theme.css">
+  <link rel="stylesheet" href="css/brand-theme.css?v=gold-headers-1">
+  <style>
+    .ingredients-story-page {
+      background: #f8f5ef;
+      color: #2c211b;
+    }
+
+    .ingredients-hero {
+      position: relative;
+      min-height: 520px;
+      display: grid;
+      align-items: center;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(248,245,239,0.98) 0%, rgba(248,245,239,0.9) 46%, rgba(248,245,239,0.18) 100%),
+        url("assets/ingredients-story/turmeric.jpg") right center / cover no-repeat;
+    }
+
+    .ingredients-kicker {
+      color: #5a6b53;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .ingredients-hero h1,
+    .ingredients-section-title {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      color: #2c211b;
+      line-height: 0.98;
+    }
+
+    .ingredients-hero h1 {
+      font-size: clamp(3.6rem, 8vw, 7.25rem);
+      font-weight: 600;
+      max-width: 780px;
+      margin: 1rem 0;
+    }
+
+    .ingredients-hero p {
+      color: #171312 !important;
+      max-width: 620px;
+      line-height: 1.75;
+    }
+
+    .ingredients-hero .ingredients-kicker,
+    .ingredients-hero h1 {
+      color: #171312 !important;
+    }
+
+    .ingredients-quiz-cta .ingredients-kicker,
+    .ingredients-quiz-cta .serif-heading,
+    .ingredients-quiz-cta p {
+      color: #f5d77a !important;
+      -webkit-text-fill-color: #f5d77a !important;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.32);
+    }
+
+    .ingredient-process-card,
+    .ingredient-story-card,
+    .ingredient-goal-card,
+    .ingredient-feature-card {
+      border: 1px solid rgba(58, 46, 39, 0.08);
+      background: #fffdf8;
+      box-shadow: 0 18px 38px rgba(58, 46, 39, 0.06);
+    }
+
+    .ingredient-feature-card {
+      display: grid;
+      grid-template-columns: minmax(220px, 0.72fr) 1fr;
+      overflow: hidden;
+      border-radius: 8px;
+      min-height: 310px;
+    }
+
+    .ingredient-feature-card:nth-child(even) {
+      grid-template-columns: 1fr minmax(220px, 0.72fr);
+    }
+
+    .ingredient-feature-card:nth-child(even) img {
+      order: 2;
+    }
+
+    .ingredient-feature-card img,
+    .ingredient-story-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .ingredient-feature-card h3,
+    .ingredient-story-card h3,
+    .ingredient-goal-card h3 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      color: #354232;
+      line-height: 1;
+    }
+
+    .ingredient-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 0.8rem;
+      border-radius: 999px;
+      background: rgba(200, 155, 60, 0.14);
+      color: #805f1f;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .ingredient-story-card {
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.24s ease, box-shadow 0.24s ease;
+    }
+
+    .ingredient-story-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 24px 42px rgba(58, 46, 39, 0.1);
+    }
+
+    .ingredient-story-card img {
+      height: 220px;
+    }
+
+    .ingredient-story-card p,
+    .ingredient-feature-card p,
+    .ingredient-goal-card p,
+    .ingredient-process-card p {
+      color: #5a4c3a;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 820px) {
+      .ingredients-story-page {
+        overflow-x: hidden;
+      }
+
+      .ingredients-story-page section {
+        overflow-x: hidden;
+      }
+
+      .ingredients-story-page .max-w-7xl {
+        width: 100%;
+        max-width: calc(100vw - 2rem);
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .ingredients-hero {
+        min-height: auto;
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+        background:
+          linear-gradient(180deg, rgba(248,245,239,0.98) 0%, rgba(248,245,239,0.9) 60%, rgba(248,245,239,0.58) 100%),
+          url("assets/ingredients-story/turmeric.jpg") center / cover no-repeat;
+      }
+
+      .ingredients-hero h1,
+      .ingredients-section-title {
+        font-size: clamp(2.45rem, 11vw, 3.6rem) !important;
+        line-height: 1;
+        max-width: 100%;
+      }
+
+      .ingredients-hero p,
+      .ingredient-feature-card p,
+      .ingredient-story-card p,
+      .ingredient-goal-card p,
+      .ingredient-process-card p {
+        max-width: 100%;
+      }
+
+      .ingredient-feature-card,
+      .ingredient-feature-card:nth-child(even) {
+        grid-template-columns: 1fr;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .ingredient-feature-card:nth-child(even) img {
+        order: 0;
+      }
+
+      .ingredient-feature-card img {
+        height: 240px;
+      }
+
+      .ingredient-process-card,
+      .ingredient-story-card,
+      .ingredient-goal-card {
+        min-width: 0;
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .ingredients-hero {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+      }
+
+      .ingredients-hero h1,
+      .ingredients-section-title {
+        font-size: clamp(2.25rem, 10vw, 3rem) !important;
+      }
+
+      .ingredients-hero .btn-primary,
+      .ingredients-hero a {
+        width: 100%;
+      }
+
+      .ingredient-story-card img {
+        height: 205px;
+      }
+    }
+  </style>
 </head>
 <body class="antialiased">
 
@@ -101,7 +322,83 @@
     </div>
   </nav>
 
-  <main>
+  <main class="ingredients-story-page">
+    <section class="ingredients-hero px-6 md:px-16">
+      <div class="max-w-7xl mx-auto w-full">
+        <h1>From raw botanicals to real skin goals.</h1>
+        <p class="text-lg">Every formula starts with a reason: brighten the look of uneven tone, calm breakout-prone skin, soften dry areas, or support a healthier glow. This page walks through the ingredients behind that story.</p>
+        <div class="mt-8 flex flex-col sm:flex-row gap-3">
+          <a href="#ingredient-library" class="btn-primary text-white px-7 py-3 rounded-full font-semibold inline-flex justify-center">Explore Ingredients</a>
+          <a href="quiz.html" class="border border-amber-700 text-amber-900 px-7 py-3 rounded-full font-semibold inline-flex justify-center hover:bg-amber-50 transition">Find Your Routine</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-6 md:px-16 py-16">
+      <div class="max-w-7xl mx-auto grid lg:grid-cols-[0.7fr_1.3fr] gap-10 items-start">
+        <div>
+          <p class="ingredients-kicker">How we think about formulas</p>
+          <h2 class="ingredients-section-title text-4xl md:text-5xl mt-3">The story is not just what goes in. It is why it belongs.</h2>
+        </div>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="ingredient-process-card rounded-lg p-6"><span class="ingredient-chip mb-4">1. Select</span><h3 class="font-bold text-stone-800 mb-2">Start with the skin goal</h3><p class="text-sm">Acne, dark spots, dryness, sensitivity, or dullness guides the ingredient choice first.</p></div>
+          <div class="ingredient-process-card rounded-lg p-6"><span class="ingredient-chip mb-4">2. Balance</span><h3 class="font-bold text-stone-800 mb-2">Pair nature with proven actives</h3><p class="text-sm">Botanicals support comfort and nourishment while actives help target visible concerns.</p></div>
+          <div class="ingredient-process-card rounded-lg p-6"><span class="ingredient-chip mb-4">3. Craft</span><h3 class="font-bold text-stone-800 mb-2">Keep routines practical</h3><p class="text-sm">Each ingredient is chosen to support a routine customers can actually use consistently.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-6 md:px-16 pb-16" aria-label="Featured ingredient story">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <article class="ingredient-feature-card">
+          <img src="assets/ingredients-story/turmeric.jpg" alt="Turmeric roots and turmeric powder in a ceramic bowl">
+          <div class="p-7 md:p-10 flex flex-col justify-center"><span class="ingredient-chip mb-5">Brightening roots</span><h2 class="ingredients-section-title text-4xl md:text-5xl mb-4">Turmeric brings warmth to uneven-looking skin.</h2><p>Known for its golden color and long history in natural care, turmeric helps tell the brand story of visible glow without harshness. It fits routines focused on dullness, post-breakout marks, and uneven tone.</p></div>
+        </article>
+        <article class="ingredient-feature-card">
+          <img src="assets/ingredients-story/neem.jpg" alt="Neem leaves with botanical oil">
+          <div class="p-7 md:p-10 flex flex-col justify-center"><span class="ingredient-chip mb-5">Calm and clarify</span><h2 class="ingredients-section-title text-4xl md:text-5xl mb-4">Neem supports skin that needs a gentler reset.</h2><p>For customers dealing with breakouts or irritation, neem gives the ingredient story a calmer chapter: purifying, botanical, and chosen for skin that needs support without feeling stripped.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="ingredient-library" class="px-6 md:px-16 py-16 bg-[#efe8da]">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-[0.8fr_1.2fr] gap-8 items-end mb-10">
+          <div><p class="ingredients-kicker">Ingredient library</p><h2 class="ingredients-section-title text-4xl md:text-5xl mt-3">Meet the ingredients behind the routines.</h2></div>
+          <p class="text-stone-600 max-w-2xl">Click any ingredient to learn how it supports the skin and see products that feature it when available.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="ingredientGridContainer">
+          <article class="ingredient-story-card" onclick="openIngredientModal('Turmeric')"><img src="assets/ingredients-story/turmeric.jpg" alt="Turmeric roots and turmeric powder"><div class="p-6"><span class="ingredient-chip mb-4">Uneven tone</span><h3 class="text-3xl mb-3">Turmeric</h3><p class="text-sm">Supports brighter-looking skin and routines for visible post-breakout marks.</p></div></article>
+          <article class="ingredient-story-card" onclick="openIngredientModal('Kojic Acid')"><img src="assets/ingredients-story/kojic-acid.jpg" alt="Mushrooms cosmetic powder and clear serum dish representing kojic acid"><div class="p-6"><span class="ingredient-chip mb-4">Dark spots</span><h3 class="text-3xl mb-3">Kojic Acid</h3><p class="text-sm">Chosen for routines focused on hyperpigmentation, sun marks, and acne scars.</p></div></article>
+          <article class="ingredient-story-card" onclick="openIngredientModal('Niacinamide')"><img src="assets/ingredients-story/niacinamide.jpg" alt="Clear serum drops in a glass dish"><div class="p-6"><span class="ingredient-chip mb-4">Texture</span><h3 class="text-3xl mb-3">Niacinamide</h3><p class="text-sm">Helps support the look of pores, balance, and smoother-looking skin.</p></div></article>
+          <article class="ingredient-story-card" onclick="openIngredientModal('Neem')"><img src="assets/ingredients-story/neem.jpg" alt="Neem leaves with botanical oil"><div class="p-6"><span class="ingredient-chip mb-4">Breakouts</span><h3 class="text-3xl mb-3">Neem</h3><p class="text-sm">A botanical choice for breakout-prone and easily irritated skin.</p></div></article>
+          <article class="ingredient-story-card" onclick="openIngredientModal('Vitamin C')"><img src="assets/ingredients-story/vitamin-c.jpg" alt="Fresh orange slices and vitamin C gel"><div class="p-6"><span class="ingredient-chip mb-4">Radiance</span><h3 class="text-3xl mb-3">Vitamin C</h3><p class="text-sm">Supports daily glow maintenance and antioxidant-focused routines.</p></div></article>
+          <article class="ingredient-story-card" onclick="openIngredientModal('Shea Butter')"><img src="assets/ingredients-story/shea-butter.jpg" alt="Raw shea butter and whipped shea in a ceramic bowl"><div class="p-6"><span class="ingredient-chip mb-4">Moisture</span><h3 class="text-3xl mb-3">Shea Butter</h3><p class="text-sm">A rich comfort ingredient for dry skin, body care, and barrier support.</p></div></article>
+          <article class="ingredient-story-card" onclick="openIngredientModal('Botanical Oils')"><img src="assets/ingredients-story/botanical-oils.jpg" alt="Botanical oils with nuts seeds and rosehip berries"><div class="p-6"><span class="ingredient-chip mb-4">Nourish</span><h3 class="text-3xl mb-3">Botanical Oils</h3><p class="text-sm">Plant oils help seal in moisture and leave skin soft without feeling flat.</p></div></article>
+          <article class="ingredient-story-card" onclick="openIngredientModal('Aloe Vera')"><img src="assets/ingredients-story/aloe-vera.jpg" alt="Fresh aloe vera leaves and clear aloe gel"><div class="p-6"><span class="ingredient-chip mb-4">Soothe</span><h3 class="text-3xl mb-3">Aloe Vera</h3><p class="text-sm">A cooling, gentle ingredient for sensitive, red, or uncomfortable skin.</p></div></article>
+          <article class="ingredient-story-card" onclick="openIngredientModal('Coffee')"><img src="assets/ingredients-story/jamaican-coffee.jpg" alt="Roasted coffee beans and coffee scrub texture"><div class="p-6"><span class="ingredient-chip mb-4">Polish</span><h3 class="text-3xl mb-3">Jamaican Coffee</h3><p class="text-sm">Used for body exfoliation, smoother feel, and a more energized-looking glow.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-6 md:px-16 py-16">
+      <div class="max-w-7xl mx-auto grid lg:grid-cols-[0.78fr_1.22fr] gap-10 items-start">
+        <div><p class="ingredients-kicker">How to read the ingredients</p><h2 class="ingredients-section-title text-4xl md:text-5xl mt-3">Each ingredient has a role in the routine.</h2></div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="ingredient-goal-card rounded-lg p-6"><h3 class="text-3xl mb-2">Dark spots</h3><p class="text-sm">Turmeric, kojic acid, vitamin C, and niacinamide support routines for uneven-looking tone.</p></div>
+          <div class="ingredient-goal-card rounded-lg p-6"><h3 class="text-3xl mb-2">Breakouts</h3><p class="text-sm">Neem, clarifying clays, charcoal, and balancing actives help support oily or blemish-prone skin.</p></div>
+          <div class="ingredient-goal-card rounded-lg p-6"><h3 class="text-3xl mb-2">Dryness</h3><p class="text-sm">Shea butter and botanical oils help replenish comfort for face and body care routines.</p></div>
+          <div class="ingredient-goal-card rounded-lg p-6"><h3 class="text-3xl mb-2">Sensitivity</h3><p class="text-sm">Aloe vera and gentle botanical choices help keep the routine calm and approachable.</p></div>
+        </div>
+      </div>
+      <div class="ingredients-quiz-cta mt-16 text-center max-w-3xl mx-auto p-8 md:p-10 bg-[#354232] rounded-lg">
+        <p class="ingredients-kicker text-amber-200">Need help choosing?</p>
+        <h3 class="serif-heading text-4xl text-white mb-3 mt-2">Let the quiz connect your skin goal to the right routine.</h3>
+        <p class="text-sage-50 text-sm mb-6">Answer a few questions and get product suggestions based on the skin concerns you select.</p>
+        <a href="quiz.html" class="bg-white text-sage-900 px-7 py-3 rounded-full font-semibold inline-block hover:bg-amber-50 transition">Take the Skin Quiz</a>
+      </div>
+    </section>
+    <div hidden>
     <section class="bg-gradient-to-br from-[#6E7F67] via-[#5A6B53] to-[#6E7F67] px-6 md:px-16 py-16 text-center text-white">
       <div class="max-w-3xl mx-auto">
         <h1 class="serif-heading text-5xl md:text-6xl font-bold text-white mb-4">The Glow Lab</h1>
@@ -110,7 +407,7 @@
     </section>
 
     <section class="px-6 md:px-16 max-w-7xl mx-auto py-12">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="ingredientGridContainer">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="ingredientGridContainerLegacy">
         <!-- Turmeric -->
         <div class="ingredient-card-about" onclick="openIngredientModal('Turmeric')">
           <div class="text-4xl mb-3">🌿</div>
@@ -191,6 +488,7 @@
         <a href="quiz.html" class="btn-primary text-white px-6 py-3 rounded-full font-semibold inline-block">Take the Skin Quiz →</a>
       </div>
     </section>
+    </div>
   </main>
 
   <!-- Ingredient Modal -->
@@ -303,7 +601,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-public-client.js?v=5"></script>
   <script src="js/analytics.js"></script>
-  <script src="js/products.js?v=6"></script>
+  <script src="js/products.js?v=7"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=2"></script>
   <script>

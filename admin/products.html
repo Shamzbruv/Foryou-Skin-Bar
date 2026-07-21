@@ -194,12 +194,25 @@
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">Full Product Description</label>
-                            <textarea id="productDescription" rows="3" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-amber-800 focus:outline-none" placeholder="Full product description"></textarea>
+                            <textarea id="productDescription" rows="7" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-amber-800 focus:outline-none" placeholder="Use short paragraphs and bullets. Example:&#10;Hydrates dry skin.&#10;&#10;- Lightweight daily moisture&#10;- Made for sensitive skin"></textarea>
+                            <p class="mt-1 text-xs text-stone-500">Line breaks and bullet lists entered here are preserved on the product page.</p>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-bold text-gray-700 mb-1">Best For</label>
                             <input type="text" id="productBestFor" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:border-amber-800 focus:outline-none" placeholder="Oily Skin, Acne-prone skin">
                         </div>
+                    </div>
+                </section>
+
+                <section class="rounded-xl border border-teal-200 p-5 bg-teal-50/50 mb-6">
+                    <h3 class="font-bold text-teal-900 mb-4"><i class="fas fa-check-circle mr-2"></i>Product Attributes & Badges</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" id="attrSulphateFree" class="w-4 h-4 accent-teal-800"> Sulphate Free</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" id="attrParabenFree" class="w-4 h-4 accent-teal-800"> Paraben Free</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" id="attrMineralOilFree" class="w-4 h-4 accent-teal-800"> Mineral Oil Free</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" id="attrCrueltyFree" class="w-4 h-4 accent-teal-800"> Cruelty Free</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" id="attrHandmade" class="w-4 h-4 accent-teal-800"> Handmade in Jamaica</label>
+                        <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer font-semibold text-teal-900 md:border-l md:border-teal-300 md:pl-4"><input type="checkbox" id="attrDisclaimer" class="w-4 h-4 accent-teal-800"> Show Global Disclaimer</label>
                     </div>
                 </section>
 
@@ -279,17 +292,17 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block font-bold text-sm text-stone-700 mb-1">Routine Step</label>
-                            <select id="recRoutineStep" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
-                                <option value="">Not set</option>
-                                <option value="cleanse">Cleanse</option>
-                                <option value="tone">Tone</option>
-                                <option value="treat">Treat</option>
-                                <option value="moisturize">Moisturize</option>
-                                <option value="exfoliate">Exfoliate</option>
-                                <option value="protect">Protect</option>
-                                <option value="body-care">Body Care</option>
-                            </select>
+                            <label class="block font-bold text-sm text-stone-700 mb-1">Routine Steps</label>
+                            <p class="text-xs text-stone-500 mb-2">Select every role this product can safely fill in the quiz. Simple uses Cleanse, Tone, Treat. Balanced adds Moisturize. Full adds Exfoliate.</p>
+                            <div class="grid grid-cols-2 gap-2 rounded-lg border border-gray-300 bg-white p-3">
+                                <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="rec_routine_steps" value="cleanse" class="w-4 h-4 accent-rose-800"> Cleanse</label>
+                                <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="rec_routine_steps" value="tone" class="w-4 h-4 accent-rose-800"> Tone</label>
+                                <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="rec_routine_steps" value="treat" class="w-4 h-4 accent-rose-800"> Treat</label>
+                                <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="rec_routine_steps" value="moisturize" class="w-4 h-4 accent-rose-800"> Moisturize</label>
+                                <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="rec_routine_steps" value="exfoliate" class="w-4 h-4 accent-rose-800"> Exfoliate</label>
+                                <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="rec_routine_steps" value="protect" class="w-4 h-4 accent-rose-800"> Protect</label>
+                                <label class="flex items-center gap-2 text-sm text-stone-700 cursor-pointer"><input type="checkbox" name="rec_routine_steps" value="body-care" class="w-4 h-4 accent-rose-800"> Body Care</label>
+                            </div>
                         </div>
                         <div>
                             <label class="block font-bold text-sm text-stone-700 mb-1">Product Use Area</label>
@@ -362,6 +375,12 @@
         const numberOrNull = (value) => value === '' || value === null || value === undefined ? null : Number(value);
         const intOrZero = (value) => Number.isFinite(parseInt(value, 10)) ? parseInt(value, 10) : 0;
         const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+        const parseRoutineSteps = (value) => String(value || '').split(/[,\|]/).map(step => step.trim()).filter(Boolean);
+        const selectedRoutineSteps = () => Array.from(document.querySelectorAll('input[name="rec_routine_steps"]:checked')).map(cb => cb.value);
+        const setRoutineSteps = (value) => {
+            const selected = new Set(parseRoutineSteps(value));
+            document.querySelectorAll('input[name="rec_routine_steps"]').forEach(cb => { cb.checked = selected.has(cb.value); });
+        };
 
         window.closeProductModal = function() {
             $('productModal').classList.add('hidden');
@@ -521,6 +540,13 @@
                     $('imageUrls').value = (p.product_images || []).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(img => img.image_url).join('\n');
                     (p.product_variants || []).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).forEach(window.addVariantRow);
                     (p.product_info_sections || []).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).forEach(window.addInfoSectionRow);
+
+                    $('attrSulphateFree').checked = !!p.is_sulphate_free;
+                    $('attrParabenFree').checked = !!p.is_paraben_free;
+                    $('attrMineralOilFree').checked = !!p.is_mineral_oil_free;
+                    $('attrCrueltyFree').checked = !!p.is_cruelty_free;
+                    $('attrHandmade').checked = !!p.is_handmade_in_jamaica;
+                    $('attrDisclaimer').checked = p.has_results_disclaimer !== false;
                     
                     document.querySelectorAll('input[name="product_concerns"]').forEach(cb => cb.checked = false);
                     if (p.product_concerns) {
@@ -532,7 +558,7 @@
 
                     document.querySelectorAll('input[name="recommendation_skin_types"]').forEach(cb => cb.checked = false);
                     document.querySelectorAll('input[name="recommendation_avoid_for"]').forEach(cb => cb.checked = false);
-                    $('recRoutineStep').value = p.routine_step || '';
+                    setRoutineSteps(p.routine_step || '');
                     $('recProductUse').value = 'both';
                     $('recIsSensitiveFriendly').checked = false;
                     $('recIngredientTags').value = (p.product_ingredients || []).map(i => i.ingredient_name).join(', ');
@@ -547,7 +573,7 @@
                             const cb = document.querySelector(`input[name="recommendation_avoid_for"][value="${af}"]`);
                             if (cb) cb.checked = true;
                         });
-                        $('recRoutineStep').value = rec.routine_step || p.routine_step || '';
+                        setRoutineSteps(rec.routine_step || p.routine_step || '');
                         $('recProductUse').value = rec.product_use || 'both';
                         $('recIsSensitiveFriendly').checked = !!rec.is_sensitive_friendly;
                     }
@@ -558,10 +584,17 @@
                 document.querySelectorAll('input[name="product_concerns"]').forEach(cb => cb.checked = false);
                 document.querySelectorAll('input[name="recommendation_skin_types"]').forEach(cb => cb.checked = false);
                 document.querySelectorAll('input[name="recommendation_avoid_for"]').forEach(cb => cb.checked = false);
-                $('recRoutineStep').value = '';
+                setRoutineSteps('');
                 $('recProductUse').value = 'both';
                 $('recIsSensitiveFriendly').checked = false;
                 $('recIngredientTags').value = '';
+
+                $('attrSulphateFree').checked = false;
+                $('attrParabenFree').checked = false;
+                $('attrMineralOilFree').checked = false;
+                $('attrCrueltyFree').checked = false;
+                $('attrHandmade').checked = false;
+                $('attrDisclaimer').checked = true;
             }
             $('productModal').classList.remove('hidden');
         };
@@ -600,12 +633,18 @@
                     ingredients_html: $('productIngredients').value.trim() || null,
                     how_to_use_html: $('productHowToUse').value.trim() || null,
                     return_policy_html: $('returnPolicy').value.trim() || null,
-                    routine_step: $('recRoutineStep').value || null,
+                    routine_step: selectedRoutineSteps().join(',') || null,
                     track_inventory: $('trackInventory').checked,
                     stock_quantity: intOrZero($('stockQuantity').value),
                     low_stock_threshold: intOrZero($('lowStockThreshold').value || 5),
                     allow_backorder: $('allowBackorder').checked,
-                    type: 'physical'
+                    type: 'physical',
+                    is_sulphate_free: $('attrSulphateFree').checked,
+                    is_paraben_free: $('attrParabenFree').checked,
+                    is_mineral_oil_free: $('attrMineralOilFree').checked,
+                    is_cruelty_free: $('attrCrueltyFree').checked,
+                    is_handmade_in_jamaica: $('attrHandmade').checked,
+                    has_results_disclaimer: $('attrDisclaimer').checked
                 };
 
                 if (!id) productData.slug = slugify(name) || `product-${Date.now()}`;
@@ -664,7 +703,7 @@
                     product_id: savedProductId,
                     skin_types: Array.from(document.querySelectorAll('input[name="recommendation_skin_types"]:checked')).map(cb => cb.value),
                     avoid_for: Array.from(document.querySelectorAll('input[name="recommendation_avoid_for"]:checked')).map(cb => cb.value),
-                    routine_step: $('recRoutineStep').value || null,
+                    routine_step: selectedRoutineSteps().join(',') || null,
                     product_use: $('recProductUse').value || 'both',
                     is_sensitive_friendly: $('recIsSensitiveFriendly').checked,
                     updated_at: new Date().toISOString()
