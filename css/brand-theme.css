@@ -488,6 +488,84 @@ footer .text-amber-700 {
   background: var(--brand-rich-cocoa) !important;
   color: var(--brand-golden-glow) !important;
 }
+
+.about-final-cta,
+.about-final-cta p {
+  color: var(--brand-soft-ivory) !important;
+}
+
+.about-final-cta {
+  background:
+    linear-gradient(90deg, rgba(23, 19, 18, 0.96), rgba(23, 19, 18, 0.82) 48%, rgba(23, 19, 18, 0.18) 100%),
+    #171312 !important;
+}
+
+.about-final-cta h2 {
+  color: #f5d77a !important;
+}
+
+.about-final-cta a:first-of-type {
+  background: var(--brand-soft-ivory) !important;
+  color: var(--brand-rich-cocoa) !important;
+}
+
+.about-final-cta a:last-of-type {
+  color: var(--brand-soft-ivory) !important;
+  border-color: rgba(248, 245, 239, 0.72) !important;
+}
+
+.about-page main {
+  overflow-x: hidden;
+}
+
+@media (max-width: 767px) {
+  body.about-page,
+  .about-page main {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  .about-page main section {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .about-page main section,
+  .about-page main section > *,
+  .about-page main .grid,
+  .about-page main .grid > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .about-page main section > .max-w-7xl,
+  .about-page main section > .max-w-4xl,
+  .about-page main section > .max-w-lg {
+    width: calc(100vw - 2rem) !important;
+    max-width: calc(100vw - 2rem) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .about-page main .serif-heading {
+    max-width: 100% !important;
+    font-size: clamp(2rem, 10vw, 2.85rem) !important;
+    line-height: 1.04 !important;
+  }
+
+  .about-page main p,
+  .about-page main h2,
+  .about-page main h3,
+  .about-page main li {
+    max-width: 100% !important;
+    overflow-wrap: anywhere;
+  }
+}
 .brand-ivory-card { background: var(--brand-paper) !important; color: var(--brand-rich-cocoa) !important; }
 
 /* Keep the home trust strip as a sage banner instead of separate ivory cards. */
