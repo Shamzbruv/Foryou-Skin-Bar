@@ -1,0 +1,193 @@
+:root {
+    --admin-sidebar-bg: #211e1c;
+    --admin-sidebar-hover: #312d2a;
+    --admin-sidebar-active: #3b352f;
+    --admin-sidebar-gold: #b8892f;
+}
+
+.admin-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    flex: 0 0 244px;
+    flex-direction: column;
+    width: 244px;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    color: #f8f5ef;
+    background: var(--admin-sidebar-bg);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    scrollbar-color: #817a74 var(--admin-sidebar-bg);
+    scrollbar-width: thin;
+}
+
+.admin-sidebar::-webkit-scrollbar { width: 7px; }
+.admin-sidebar::-webkit-scrollbar-track { background: var(--admin-sidebar-bg); }
+.admin-sidebar::-webkit-scrollbar-thumb { background: #817a74; border-radius: 999px; }
+
+.sidebar-brand {
+    display: flex;
+    min-height: 86px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-eyebrow {
+    margin: 0 0 2px;
+    color: #d7bd7b;
+    font-family: Inter, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.sidebar-brand h2 {
+    margin: 0;
+    color: #fff;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 27px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.sidebar-close,
+.admin-mobile-menu {
+    display: none;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    border: 0;
+    border-radius: 6px;
+}
+
+.sidebar-close {
+    color: #fff;
+    background: transparent;
+}
+
+.admin-nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 10px;
+}
+
+.admin-nav a,
+.sidebar-footer a,
+.sidebar-footer button {
+    display: flex;
+    width: 100%;
+    min-height: 42px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    color: #c9c3bd;
+    font-family: Inter, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.25;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    transition: color 160ms ease, background 160ms ease;
+}
+
+.admin-nav a i,
+.sidebar-footer i {
+    width: 18px;
+    flex: 0 0 18px;
+    color: #9c948e;
+    text-align: center;
+}
+
+.admin-nav a:hover,
+.admin-nav a:focus-visible,
+.sidebar-footer a:hover,
+.sidebar-footer button:hover,
+.sidebar-close:hover {
+    color: #fff;
+    background: var(--admin-sidebar-hover);
+}
+
+.admin-nav a.active {
+    color: #fff;
+    background: var(--admin-sidebar-active);
+    box-shadow: inset 3px 0 0 var(--admin-sidebar-gold);
+}
+
+.admin-nav a.active i { color: #e1c77d; }
+
+.sidebar-footer {
+    padding: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-page-main {
+    min-width: 0;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    display: none;
+    background: rgba(25, 21, 18, 0.58);
+    backdrop-filter: blur(2px);
+}
+
+.admin-mobile-menu {
+    color: #2d2723;
+    background: #fff;
+    border: 1px solid #e2dcd3;
+    box-shadow: 0 4px 14px rgba(43, 35, 30, 0.08);
+}
+
+@media (max-width: 900px) {
+    .admin-sidebar {
+        position: fixed;
+        left: 0;
+        width: min(286px, 90vw);
+        transform: translateX(-100%);
+        transition: transform 200ms ease;
+    }
+
+    body.sidebar-open,
+    body.admin-drawer-open { overflow: hidden; }
+
+    body.sidebar-open .admin-sidebar,
+    body.admin-drawer-open .admin-sidebar { transform: translateX(0); }
+
+    body.sidebar-open .sidebar-overlay,
+    body.admin-drawer-open .sidebar-overlay { display: block; }
+
+    .sidebar-close,
+    .admin-mobile-menu { display: inline-flex; }
+
+    .admin-page-main { width: 100%; }
+
+    .admin-page-main > .admin-mobile-menu { margin-bottom: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-sidebar { transition-duration: 0.01ms; }
+}
