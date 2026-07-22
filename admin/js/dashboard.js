@@ -574,10 +574,11 @@ function renderRecentOrders() {
     body.innerHTML = orders.map((order) => {
         const createdAt = parseDate(order.created_at);
         const payment = order.payment_status || 'unpaid';
+        const orderStatus = order.status || 'pending';
         const fulfillment = order.fulfillment_status || 'unfulfilled';
         return `
-            <tr>
-                <td><a href="/admin/orders.html">${escapeHtml(order.order_number || 'Order')}</a></td>
+            <tr class="${orderStatus === 'cancelled' ? 'cancelled-order' : ''}">
+                <td class="order-cell"><a href="/admin/orders.html">${escapeHtml(order.order_number || 'Order')}</a><span class="status-badge ${statusClass(orderStatus)}">${escapeHtml(titleCase(orderStatus))}</span></td>
                 <td>${escapeHtml(order.customers?.full_name || 'Manual customer')}</td>
                 <td class="muted">${createdAt ? escapeHtml(dateFormatter.format(createdAt)) : '-'}</td>
                 <td class="money">${escapeHtml(formatCurrency(order.grand_total_jmd))}</td>

@@ -531,10 +531,14 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 
 .dashboard-table tbody tr:hover { background: #fbfaf8; }
+.dashboard-table tbody tr.cancelled-order { background: #fff7f5; }
+.dashboard-table tbody tr.cancelled-order:hover { background: #fff0ed; }
 .dashboard-table a { color: #2c2724; font-weight: 700; text-decoration: none; }
 .dashboard-table a:hover { color: #8a651c; }
 .dashboard-table .money { color: #2c2724; font-weight: 700; }
 .dashboard-table .muted { color: #8a817b; }
+.dashboard-table .order-cell a { display: block; overflow-wrap: anywhere; }
+.dashboard-table .order-cell .status-badge { margin-top: 6px; }
 
 .status-badge {
     display: inline-flex;
@@ -550,8 +554,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
     border-radius: 999px;
 }
 
-.status-paid, .status-delivered, .status-picked-up { color: #3f6847; background: #e5f0e7; }
-.status-unpaid, .status-awaiting-confirmation, .status-unfulfilled, .status-pending { color: #80601d; background: #f8edcf; }
+.status-paid, .status-confirmed, .status-delivered, .status-picked-up, .status-ready-for-pickup { color: #3f6847; background: #e5f0e7; }
+.status-unpaid, .status-awaiting-confirmation, .status-partially-paid, .status-unfulfilled, .status-pending { color: #80601d; background: #f8edcf; }
 .status-refunded, .status-cancelled, .status-failed { color: #8a3933; background: #f5dfdd; }
 .status-packed, .status-shipped, .status-processing { color: #405e71; background: #e2edf2; }
 
@@ -571,8 +575,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .ranked-item {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr) minmax(44px, max-content);
+    align-items: start;
     gap: 12px;
     min-height: 49px;
     padding: 8px 0;
@@ -580,10 +584,24 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 
 .ranked-item:last-child { border-bottom: 0; }
-.ranked-item a { overflow: hidden; color: #332d29; font-size: 11px; font-weight: 700; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.ranked-item > div { min-width: 0; }
+.ranked-item a {
+    display: -webkit-box;
+    min-width: 0;
+    overflow: hidden;
+    color: #332d29;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
 .ranked-item a:hover { color: #8a651c; }
 .ranked-item small { display: block; margin-top: 2px; color: #8a817b; font-size: 9px; }
-.ranked-value { color: #4d4641; font-size: 11px; font-weight: 700; text-align: right; white-space: nowrap; }
+.ranked-value { align-self: start; padding-top: 1px; color: #4d4641; font-size: 11px; font-weight: 700; text-align: right; white-space: nowrap; }
 .ranked-value.danger { color: #a14a43; }
 .ranked-value.warning { color: #88651f; }
 
@@ -611,6 +629,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 1380px) {
     .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1280px) {
+    .operational-row { grid-template-columns: minmax(0, 1fr); }
+    .side-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 1120px) {
