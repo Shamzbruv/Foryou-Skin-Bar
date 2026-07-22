@@ -29,8 +29,11 @@ app.use((req, res, next) => {
 // ── Fygaro Helpers ──
 const FYGARO_API_KEY    = process.env.FYGARO_API_KEY    || '';
 const FYGARO_API_SECRET = process.env.FYGARO_API_SECRET || '';
-const FYGARO_BUTTON_URL = process.env.FYGARO_BUTTON_URL || '';
+const FYGARO_BUTTON_URL = process.env.FYGARO_BUTTON_URL || 'https://www.fygaro.com/en/pb/00c0f5ec-24aa-4069-97ce-9495f7798ab4/';
 const SERVER_BASE_URL   = (process.env.SERVER_BASE_URL || `http://localhost:${PORT}`).replace(/\/+$/, '');
+const RESEND_API_KEY    = process.env.RESEND_API_KEY || '';
+const OWNER_EMAIL       = process.env.OWNER_EMAIL || 'clientemail@example.com';
+const FROM_EMAIL        = process.env.FROM_EMAIL || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
 
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>'"]/g, (char) => ({
@@ -61,33 +64,55 @@ function verifyOrderAccessToken(orderNumber, token) {
 }
 
 /**
- * Generates a JWT-signed Fygaro payment URL.
- * Amount is locked server-side so the customer cannot tamper with it.
+ * Builds an order-specific Fygaro payment URL. When API credentials are
+ * configured, the amount and reference are protected by a signed JWT. Until
+ * then, Fygaro's documented URL parameters keep checkout operational and the
+ * webhook still verifies the paid amount before confirming an order.
  */
 function buildFygaroPaymentUrl(orderNumber, amountJmd) {
-  if (!FYGARO_BUTTON_URL || FYGARO_BUTTON_URL.includes('BUTTON_ID_HERE')) {
+  const amount = Number(amountJmd);
+  if (!FYGARO_BUTTON_URL || !orderNumber || !Number.isFinite(amount) || amount <= 0) return null;
+  if (!FYGARO_API_SECRET) {
+    console.error('[Fygaro] Checkout blocked because FYGARO_API_SECRET is not configured.');
     return null;
   }
-  if (!FYGARO_API_KEY || !FYGARO_API_SECRET) {
-    console.warn('[Fygaro] Payment URL disabled because FYGARO_API_KEY or FYGARO_API_SECRET is missing.');
+
+  try {
+    const paymentUrl = new URL(FYGARO_BUTTON_URL);
+    if (FYGARO_API_KEY && FYGARO_API_SECRET) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const token = jwt.sign({
+        amount: amount.toFixed(2),
+        currency: 'JMD',
+        custom_reference: orderNumber,
+        exp: nowSec + 3600,
+        nbf: nowSec,
+      }, FYGARO_API_SECRET, {
+        algorithm: 'HS256',
+        header: { alg: 'HS256', typ: 'JWT', kid: FYGARO_API_KEY },
+      });
+      paymentUrl.searchParams.set('jwt', token);
+      return { url: paymentUrl.toString(), mode: 'signed_jwt' };
+    }
+
+    paymentUrl.searchParams.set('amount', amount.toFixed(2));
+    paymentUrl.searchParams.set('client_reference', orderNumber);
+    paymentUrl.searchParams.set('client_note', `For You Skin Bar order ${orderNumber}`);
+    return { url: paymentUrl.toString(), mode: 'payment_link' };
+  } catch (error) {
+    console.error('[Fygaro] Invalid payment button URL:', error.message);
     return null;
   }
-  const nowSec  = Math.floor(Date.now() / 1000);
-  const payload = {
-    amount: Number(amountJmd || 0).toFixed(2),
-    currency: 'JMD',
-    custom_reference: orderNumber,
-    exp: nowSec + 3600,
-    nbf: nowSec,
-    success_url: `${SERVER_BASE_URL}/payment-success.html?ref=${encodeURIComponent(orderNumber)}&token=${orderAccessToken(orderNumber)}`,
-    cancel_url:  `${SERVER_BASE_URL}/checkout.html?status=cancelled&ref=${encodeURIComponent(orderNumber)}`,
-    hook_url:    `${SERVER_BASE_URL}/api/fygaro-webhook`,
-  };
-  const token = jwt.sign(payload, FYGARO_API_SECRET, {
-    algorithm: 'HS256',
-    header: { alg: 'HS256', typ: 'JWT', kid: FYGARO_API_KEY },
-  });
-  return `${FYGARO_BUTTON_URL}?jwt=${token}`;
+}
+
+function jamaicaDateStamp(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Jamaica',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date).reduce((all, part) => ({ ...all, [part.type]: part.value }), {});
+  return `${parts.year}${parts.month}${parts.day}`;
 }
 
 /**
@@ -146,6 +171,162 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || '', // Railway provides this via environment variables
   { realtime: { transport: WebSocket } }
 );
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+}
+
+async function deliverEmailLog(logId, message) {
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: message.recipient,
+        subject: message.subject,
+        html: message.html
+      })
+    });
+    const responseBody = await response.json().catch(async () => ({ message: await response.text().catch(() => '') }));
+    await supabaseAdmin.from('email_logs').update({
+      status: response.ok ? 'sent' : 'error',
+      resend_email_id: responseBody?.id || null,
+      error_message: response.ok ? null : JSON.stringify(responseBody),
+      updated_at: new Date().toISOString()
+    }).eq('id', logId);
+    return { sent: response.ok, error: response.ok ? null : responseBody };
+  } catch (error) {
+    await supabaseAdmin.from('email_logs').update({
+      status: 'error',
+      error_message: error.message || String(error),
+      updated_at: new Date().toISOString()
+    }).eq('id', logId);
+    return { sent: false, error: error.message || String(error) };
+  }
+}
+
+async function queueEmail({ orderId = null, recipient, emailType, subject, html, metadata = {}, scheduledFor = null }) {
+  const normalizedRecipient = String(recipient || '').trim().toLowerCase();
+  if (!isValidEmail(normalizedRecipient)) return { queued: false, sent: false, error: 'Invalid recipient' };
+
+  const scheduledDate = scheduledFor ? new Date(scheduledFor) : null;
+  const isScheduled = scheduledDate && Number.isFinite(scheduledDate.getTime()) && scheduledDate.getTime() > Date.now();
+  const initialStatus = isScheduled ? 'scheduled' : (RESEND_API_KEY ? 'queued' : 'pending_resend_setup');
+  const { data: log, error: logError } = await supabaseAdmin.from('email_logs').insert({
+    order_id: orderId,
+    recipient: normalizedRecipient,
+    email_type: emailType,
+    subject,
+    html_body: html,
+    metadata,
+    scheduled_for: isScheduled ? scheduledDate.toISOString() : null,
+    status: initialStatus,
+    error_message: RESEND_API_KEY ? null : 'RESEND_API_KEY missing'
+  }).select('id').single();
+
+  if (logError) {
+    console.error('[Email Outbox] Could not queue email:', logError.message);
+    return { queued: false, sent: false, error: logError.message };
+  }
+  if (isScheduled) return { queued: true, sent: false, scheduled: true };
+  if (!RESEND_API_KEY) return { queued: true, sent: false, pendingSetup: true };
+
+  const result = await deliverEmailLog(log.id, { recipient: normalizedRecipient, subject, html });
+  return { queued: true, ...result };
+}
+
+async function processPendingEmails(limit = 50) {
+  if (!RESEND_API_KEY) return;
+  const { data: pending, error } = await supabaseAdmin
+    .from('email_logs')
+    .select('id,recipient,subject,html_body')
+    .in('status', ['pending_resend_setup', 'scheduled'])
+    .not('subject', 'is', null)
+    .not('html_body', 'is', null)
+    .or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`)
+    .order('created_at', { ascending: true })
+    .limit(limit);
+  if (error) {
+    console.error('[Email Outbox] Could not load pending messages:', error.message);
+    return;
+  }
+  for (const message of pending || []) {
+    await supabaseAdmin.from('email_logs').update({ status: 'queued', updated_at: new Date().toISOString() }).eq('id', message.id);
+    await deliverEmailLog(message.id, {
+      recipient: message.recipient,
+      subject: message.subject,
+      html: message.html_body
+    });
+  }
+}
+
+async function materializePaidCheckoutSession(session) {
+  const shipping = session.shipping_data || {};
+  const cart = Array.isArray(session.cart_data) ? session.cart_data : [];
+  if (!cart.length) throw new Error('Paid checkout session has no items.');
+
+  const { data: order, error: orderError } = await supabaseAdmin.from('orders').insert({
+    order_number: session.checkout_reference,
+    customer_id: session.customer_id,
+    country: shipping.country,
+    address_line_1: shipping.addressLine1,
+    address_line_2: shipping.addressLine2,
+    city: shipping.city,
+    parish: shipping.parish,
+    state_province: shipping.stateProvince,
+    postal_code: shipping.postalCode,
+    shipping_address: shipping.formattedAddress,
+    delivery_method: shipping.deliveryMethod,
+    delivery_service: shipping.deliveryService,
+    customer_notes: shipping.notes,
+    subtotal_jmd: session.subtotal_jmd,
+    discount_code: session.discount_code,
+    discount_total_jmd: session.discount_total_jmd,
+    shipping_total_jmd: session.shipping_total_jmd,
+    grand_total_jmd: session.grand_total_jmd,
+    points_earned: session.points_earned,
+    payment_method: 'Fygaro',
+    status: 'pending',
+    payment_status: 'awaiting_confirmation',
+    fulfillment_status: 'unfulfilled'
+  }).select('id,order_number,status,payment_status,grand_total_jmd,customer_id,delivery_service,admin_notes').single();
+  if (orderError) throw orderError;
+
+  const orderItems = cart.map((item) => ({
+    order_id: order.id,
+    product_id: item.productId,
+    variant_id: item.variantId || null,
+    variant_name: item.variantName || null,
+    product_name: item.name,
+    unit_price_jmd: item.price,
+    quantity: item.quantity,
+    line_total_jmd: item.price * item.quantity
+  }));
+  const { error: itemsError } = await supabaseAdmin.from('order_items').insert(orderItems);
+  if (itemsError) {
+    await supabaseAdmin.from('orders').delete().eq('id', order.id);
+    throw itemsError;
+  }
+
+  if (session.discount_code) {
+    const { data: discount } = await supabaseAdmin
+      .from('discount_codes')
+      .select('id,used_count')
+      .eq('code', session.discount_code)
+      .maybeSingle();
+    if (discount) {
+      await supabaseAdmin.from('discount_codes')
+        .update({ used_count: (Number(discount.used_count) || 0) + 1 })
+        .eq('id', discount.id);
+    }
+  }
+
+  return order;
+}
 
 async function requireAdmin(req) {
   const authHeader = req.headers.authorization || '';
@@ -238,105 +419,165 @@ app.post('/api/validate-discount', async (req, res) => {
   }
 });
 
+app.post('/api/newsletter/subscribe', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const source = String(req.body?.source || 'website').trim().slice(0, 80);
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid email address.' });
+
+    const { data: existingSubscriber } = await supabaseAdmin
+      .from('newsletter_subscribers')
+      .select('email,is_active')
+      .eq('email', email)
+      .maybeSingle();
+
+    const { error } = await supabaseAdmin.from('newsletter_subscribers').upsert({
+      email,
+      source,
+      is_active: true
+    }, { onConflict: 'email' });
+    if (error) throw error;
+
+    if (existingSubscriber?.is_active) {
+      return res.status(200).json({ success: true, email_status: 'already_subscribed' });
+    }
+
+    const welcomeHtml = `
+      <p>Welcome to Glow Letters.</p>
+      <p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from For You Skin Bar.</p>
+      <p>Thank you for joining us.</p>
+      <hr>
+      <p style="font-size:12px;color:#666;">To unsubscribe, reply to this email with "unsubscribe".</p>
+    `;
+    const emailResult = await queueEmail({
+      recipient: email,
+      emailType: 'newsletter_welcome',
+      subject: 'Welcome to Glow Letters',
+      html: welcomeHtml,
+      metadata: { source }
+    });
+
+    return res.status(201).json({
+      success: true,
+      email_status: emailResult.sent ? 'sent' : (emailResult.queued ? 'queued' : 'not_queued')
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
 app.post('/api/newsletter/send', async (req, res) => {
   try {
     await requireAdmin(req);
-
     const subject = String(req.body.subject || '').trim();
     const message = String(req.body.message || '').trim();
     if (!subject) throw new Error('Subject is required.');
     if (!message) throw new Error('Message is required.');
 
-    const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    if (!RESEND_API_KEY) {
-      const error = new Error('RESEND_API_KEY is not configured on the server.');
-      error.status = 503;
-      throw error;
-    }
-
-    const FROM_EMAIL = process.env.FROM_EMAIL || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
     const { data: subscribers, error: subscribersError } = await supabaseAdmin
       .from('newsletter_subscribers')
       .select('email')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
-
     if (subscribersError) throw subscribersError;
 
     const uniqueEmails = [...new Set((subscribers || [])
       .map((row) => String(row.email || '').trim().toLowerCase())
-      .filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))];
-
+      .filter(isValidEmail))];
     if (uniqueEmails.length === 0) {
-      return res.status(200).json({ success: true, sent: 0, failed: 0, message: 'No active subscribers found.' });
+      return res.status(200).json({ success: true, sent: 0, queued: 0, failed: 0, message: 'No active subscribers found.' });
     }
 
     const htmlMessage = escapeHtml(message)
       .split(/\n{2,}/)
       .map((paragraph) => `<p>${paragraph.replace(/\n/g, '<br>')}</p>`)
       .join('');
-    const html = `
-      ${htmlMessage}
-      <hr>
-      <p style="font-size:12px;color:#666;">You are receiving this email because you subscribed to Glow Letters from For You Skin Bar. To unsubscribe, reply to this email with "unsubscribe".</p>
-    `;
+    const html = `${htmlMessage}<hr><p style="font-size:12px;color:#666;">You are receiving this email because you subscribed to Glow Letters from For You Skin Bar. To unsubscribe, reply to this email with "unsubscribe".</p>`;
 
     let sent = 0;
+    let queued = 0;
     const failures = [];
     for (const email of uniqueEmails) {
-      try {
-        const resendResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: FROM_EMAIL,
-            to: email,
-            subject,
-            html
-          })
-        });
-
-        if (!resendResponse.ok) {
-          const body = await resendResponse.text();
-          failures.push({ email, error: body });
-          await supabaseAdmin.from('email_logs').insert({
-            recipient: email,
-            email_type: 'newsletter_broadcast',
-            status: 'error',
-            error_message: body
-          });
-          continue;
-        }
-
-        sent += 1;
-        await supabaseAdmin.from('email_logs').insert({
-          recipient: email,
-          email_type: 'newsletter_broadcast',
-          status: 'sent'
-        });
-      } catch (sendError) {
-        const errorMessage = sendError.message || String(sendError);
-        failures.push({ email, error: errorMessage });
-        await supabaseAdmin.from('email_logs').insert({
-          recipient: email,
-          email_type: 'newsletter_broadcast',
-          status: 'error',
-          error_message: errorMessage
-        });
-      }
+      const result = await queueEmail({ recipient: email, emailType: 'newsletter_broadcast', subject, html });
+      if (result.sent) sent += 1;
+      else if (result.queued) queued += 1;
+      else failures.push({ email, error: result.error });
     }
 
-    res.status(failures.length ? 207 : 200).json({
+    return res.status(failures.length ? 207 : (RESEND_API_KEY ? 200 : 202)).json({
       success: failures.length === 0,
       sent,
+      queued,
       failed: failures.length,
+      resend_configured: !!RESEND_API_KEY,
       failures: failures.slice(0, 10)
     });
   } catch (error) {
-    res.status(error.status || 400).json({ error: error.message });
+    return res.status(error.status || 400).json({ error: error.message });
+  }
+});
+
+app.post('/api/blogs/:postId/notify-subscribers', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const { data: post, error: postError } = await supabaseAdmin
+      .from('blog_posts')
+      .select('id,title,slug,excerpt,status,published_at,newsletter_notified_at')
+      .eq('id', req.params.postId)
+      .maybeSingle();
+    if (postError || !post) return res.status(404).json({ error: 'Blog post not found.' });
+    if (post.status !== 'published') return res.status(400).json({ error: 'Only published posts can notify subscribers.' });
+    if (post.newsletter_notified_at) {
+      return res.status(200).json({ success: true, already_notified: true, sent: 0, queued: 0 });
+    }
+    const publishTime = post.published_at ? new Date(post.published_at) : null;
+    const scheduledFor = publishTime && publishTime.getTime() > Date.now() ? publishTime.toISOString() : null;
+
+    const { data: subscribers, error: subscribersError } = await supabaseAdmin
+      .from('newsletter_subscribers')
+      .select('email')
+      .eq('is_active', true);
+    if (subscribersError) throw subscribersError;
+
+    const emails = [...new Set((subscribers || []).map((row) => String(row.email || '').trim().toLowerCase()).filter(isValidEmail))];
+    const articleUrl = `${SERVER_BASE_URL}/blog-post.html?slug=${encodeURIComponent(post.slug)}`;
+    const html = `
+      <p>A new article is now available from For You Skin Bar.</p>
+      <h2>${escapeHtml(post.title)}</h2>
+      ${post.excerpt ? `<p>${escapeHtml(post.excerpt)}</p>` : ''}
+      <p><a href="${escapeHtml(articleUrl)}">Read the article</a></p>
+      <hr>
+      <p style="font-size:12px;color:#666;">You are receiving this email because you subscribed to Glow Letters. To unsubscribe, reply with "unsubscribe".</p>
+    `;
+    let sent = 0;
+    let queued = 0;
+    const failures = [];
+    for (const email of emails) {
+      const result = await queueEmail({
+        recipient: email,
+        emailType: 'blog_published',
+        subject: `New from For You Skin Bar: ${post.title}`,
+        html,
+        metadata: { post_id: post.id, slug: post.slug },
+        scheduledFor
+      });
+      if (result.sent) sent += 1;
+      else if (result.queued) queued += 1;
+      else failures.push({ email, error: result.error });
+    }
+    if (failures.length === 0) {
+      await supabaseAdmin.from('blog_posts').update({ newsletter_notified_at: new Date().toISOString() }).eq('id', post.id);
+    }
+    return res.status(failures.length ? 207 : (RESEND_API_KEY ? 200 : 202)).json({
+      success: failures.length === 0,
+      sent,
+      queued,
+      failed: failures.length,
+      resend_configured: !!RESEND_API_KEY,
+      scheduled_for: scheduledFor
+    });
+  } catch (error) {
+    return res.status(error.status || 400).json({ error: error.message });
   }
 });
 
@@ -444,8 +685,6 @@ app.post('/api/create-order', async (req, res) => {
           }
           if (discountAmount > subtotal) discountAmount = subtotal;
           appliedDiscountCode = discountData.code;
-          
-          await supabaseAdmin.from('discount_codes').update({ used_count: discountData.used_count + 1 }).eq('id', discountData.id);
         }
       }
     }
@@ -473,6 +712,16 @@ app.post('/api/create-order', async (req, res) => {
 
     const total = subtotalAfterDiscount + shippingCost;
 
+    const dateStr = jamaicaDateStamp();
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const orderNumber = `FSB-${dateStr}-${randomNum}`;
+    const fygaroPayment = buildFygaroPaymentUrl(orderNumber, total);
+    if (!fygaroPayment) {
+      const error = new Error('Secure payment is temporarily unavailable. No order was created. Please try again shortly.');
+      error.status = 503;
+      throw error;
+    }
+
     let customerId = null;
     if (customer.email) {
       const { data: existingByEmail } = await supabaseAdmin.from('customers').select('id').eq('email', customer.email).maybeSingle();
@@ -497,10 +746,6 @@ app.post('/api/create-order', async (req, res) => {
       customerId = newCustomer.id;
     }
 
-    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = `FSB-${dateStr}-${randomNum}`;
-    
     let formattedAddress = shipping.addressLine1;
     if (shipping.addressLine2) formattedAddress += `, ${shipping.addressLine2}`;
     if (shipping.city) formattedAddress += `, ${shipping.city}`;
@@ -547,66 +792,56 @@ app.post('/api/create-order', async (req, res) => {
         console.error("Error calculating loyalty multiplier", e);
     }
 
-    const { data: orderData, error: orderError } = await supabaseAdmin
-      .from('orders')
+    const { error: checkoutSessionError } = await supabaseAdmin
+      .from('payment_checkout_sessions')
       .insert({
-        order_number: orderNumber,
+        checkout_reference: orderNumber,
         customer_id: customerId,
-        country: shipping.country,
-        address_line_1: shipping.addressLine1,
-        address_line_2: shipping.addressLine2,
-        city: shipping.city,
-        parish: shipping.parish,
-        state_province: shipping.stateProvince,
-        postal_code: shipping.postalCode,
-        shipping_address: formattedAddress,
-        delivery_method: deliveryMethod,
-        delivery_service: deliveryService,
-        customer_notes: shipping.notes,
+        customer_data: customer,
+        shipping_data: {
+          ...shipping,
+          formattedAddress,
+          deliveryMethod,
+          deliveryService,
+          shippingStatus
+        },
+        cart_data: validatedCart,
         subtotal_jmd: subtotal,
         discount_code: appliedDiscountCode,
         discount_total_jmd: discountAmount,
         shipping_total_jmd: shippingCost,
         grand_total_jmd: total,
         points_earned: pointsEarned,
-        payment_method: 'Fygaro',
-        status: 'pending',
-        payment_status: 'unpaid',
-        fulfillment_status: 'unfulfilled'
-      })
-      .select('id')
-      .single();
+        status: 'pending'
+      });
+    if (checkoutSessionError) throw checkoutSessionError;
 
-    if (orderError) throw orderError;
-    const orderId = orderData.id;
-
-    const orderItems = validatedCart.map((item) => ({
-      order_id: orderId,
-      product_id: item.productId,
-      variant_id: item.variantId,
-      variant_name: item.variantName,
-      product_name: item.name,
-      unit_price_jmd: item.price,
-      quantity: item.quantity,
-      line_total_jmd: item.price * item.quantity
-    }));
-
-    const { error: itemsError } = await supabaseAdmin
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) throw itemsError;
+    // There is deliberately no orders row until Fygaro confirms payment.
+    const orderId = null;
 
     if (newsletterOptIn && customer.email) {
+      const normalizedEmail = String(customer.email).trim().toLowerCase();
+      const { data: existingSubscriber } = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .select('email,is_active')
+        .eq('email', normalizedEmail)
+        .maybeSingle();
       const { error: newsletterError } = await supabaseAdmin
         .from('newsletter_subscribers')
         .upsert({
-          email: String(customer.email).trim().toLowerCase(),
+          email: normalizedEmail,
           source: 'checkout',
           is_active: true
         }, { onConflict: 'email' });
       if (newsletterError) {
         console.warn('[Newsletter] Checkout opt-in could not be saved:', newsletterError.message);
+      } else if (!existingSubscriber?.is_active) {
+        await queueEmail({
+          recipient: normalizedEmail,
+          emailType: 'newsletter_welcome',
+          subject: 'Welcome to Glow Letters',
+          html: '<p>Welcome to Glow Letters.</p><p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from For You Skin Bar.</p><p>Thank you for joining us.</p>'
+        });
       }
     }
 
@@ -620,7 +855,8 @@ app.post('/api/create-order', async (req, res) => {
 
       const customerHtml = `
         <p>Hi ${customer.fullName},</p>
-        <p>Thank you for your order with For You Skin Bar.</p>
+        <p>Your checkout details have been saved with For You Skin Bar.</p>
+        <p><strong>Your order is not confirmed until payment is completed through Fygaro.</strong></p>
         <p><b>Order Number:</b> ${orderNumber}<br>
         <b>Payment Status:</b> Awaiting Fygaro payment<br>
         <b>Delivery Method:</b> ${deliveryService}</p>
@@ -636,12 +872,12 @@ app.post('/api/create-order', async (req, res) => {
         ${shipping.parish ? shipping.parish + '<br>' : ''}
         ${shipping.postalCode ? shipping.postalCode + '<br>' : ''}
         ${shipping.country}</p>
-        <p>Please note: this is an order confirmation, not a tax invoice. Card payment is completed securely through Fygaro.</p>
+        <p>This is a payment-pending notice, not an order confirmation or tax invoice. Card payment is completed securely through Fygaro.</p>
         <p>Thank you for shopping with us.</p>
       `;
 
       const ownerHtml = `
-        <p>A new order was submitted.</p>
+        <p>A customer started Fygaro checkout. Do not fulfil this order until its payment status changes to Paid.</p>
         <p><b>Customer:</b><br>
         Name: ${customer.fullName}<br>
         Phone: ${customer.phone}<br>
@@ -670,7 +906,7 @@ app.post('/api/create-order', async (req, res) => {
           body: JSON.stringify({
             from: FROM_EMAIL,
             to: customer.email,
-            subject: `Your For You Skin Bar order has been received — ${orderNumber}`,
+            subject: `Complete payment for For You Skin Bar order ${orderNumber}`,
             html: customerHtml
           })
         });
@@ -700,7 +936,7 @@ app.post('/api/create-order', async (req, res) => {
           body: JSON.stringify({
             from: FROM_EMAIL,
             to: OWNER_EMAIL,
-            subject: `New For You Skin Bar order — ${orderNumber}`,
+            subject: `Payment pending - ${orderNumber}`,
             html: ownerHtml
           })
         });
@@ -718,25 +954,40 @@ app.post('/api/create-order', async (req, res) => {
         error_message: ownerErrorMsg
       });
     } else {
-      await supabaseAdmin.from('email_logs').insert({ order_id: orderId, recipient: customer.email, email_type: 'customer_confirmation', status: 'pending_resend_setup', error_message: 'RESEND_API_KEY missing' });
-      await supabaseAdmin.from('email_logs').insert({ order_id: orderId, recipient: OWNER_EMAIL, email_type: 'owner_notification', status: 'pending_resend_setup', error_message: 'RESEND_API_KEY missing' });
+      const pendingItemsHtml = validatedCart.map((item, index) =>
+        `${index + 1}. ${escapeHtml(item.name)} x ${escapeHtml(item.quantity)} - J$${(item.price * item.quantity).toLocaleString()}`
+      ).join('<br>');
+      await queueEmail({
+        orderId,
+        recipient: customer.email,
+        emailType: 'payment_pending',
+        subject: `Complete payment for For You Skin Bar order ${orderNumber}`,
+        html: `<p>Hi ${escapeHtml(customer.fullName)},</p><p>Your checkout details have been saved for <strong>${escapeHtml(orderNumber)}</strong>.</p><p><strong>Your order is not confirmed until payment is completed through Fygaro.</strong></p><p>${pendingItemsHtml}</p><p>Total due: J$${total.toLocaleString()}</p>`,
+        metadata: { order_number: orderNumber }
+      });
+      await queueEmail({
+        orderId,
+        recipient: OWNER_EMAIL,
+        emailType: 'owner_payment_pending',
+        subject: `Payment pending - ${orderNumber}`,
+        html: `<p>A customer started Fygaro checkout for <strong>${escapeHtml(orderNumber)}</strong>.</p><p>Amount awaiting payment: J$${total.toLocaleString()}</p><p>Do not fulfil this order until its payment status changes to Paid.</p>`,
+        metadata: { order_number: orderNumber }
+      });
     }
 
     // ── Build Fygaro Payment URL ──
-    const fygaroUrl = buildFygaroPaymentUrl(orderNumber, total);
-
-    res.status(200).json({ 
+    res.status(201).json({
       success: true, 
       order_number: orderNumber,
       grand_total: total,
       shipping_status: shippingStatus,
-      email_status: RESEND_API_KEY ? 'processed' : 'pending_setup',
-      // Frontend will redirect the customer here to complete payment
-      fygaro_url: fygaroUrl,
-      fygaro_configured: !!fygaroUrl,
+      email_status: RESEND_API_KEY ? 'processed' : 'queued',
+      fygaro_url: fygaroPayment.url,
+      fygaro_mode: fygaroPayment.mode,
+      payment_access_token: orderAccessToken(orderNumber)
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(error.status || 400).json({ error: error.message });
   }
 });
 
@@ -781,20 +1032,33 @@ app.post('/api/fygaro-webhook', async (req, res) => {
       return res.status(200).json({ received: true, action: 'ignored' });
     }
 
-    // Fetch the order
-    const { data: order, error: fetchErr } = await supabaseAdmin
+    // Paid orders are created from the saved checkout session only after this
+    // signed webhook passes reference, currency, and amount validation.
+    const { data: existingOrder, error: fetchErr } = await supabaseAdmin
       .from('orders')
       .select('id, order_number, status, payment_status, grand_total_jmd, customer_id, delivery_service, admin_notes')
       .eq('order_number', orderRef)
       .maybeSingle();
+    if (fetchErr) throw fetchErr;
+    let order = existingOrder;
+    let checkoutSession = null;
 
-    if (fetchErr || !order) {
-      console.error('[Fygaro Webhook] Order not found:', orderRef, fetchErr);
-      return res.status(404).json({ error: 'Order not found' });
+    if (!order) {
+      const { data: session, error: sessionError } = await supabaseAdmin
+        .from('payment_checkout_sessions')
+        .select('*')
+        .eq('checkout_reference', orderRef)
+        .maybeSingle();
+      if (sessionError) throw sessionError;
+      if (!session) {
+        console.error('[Fygaro Webhook] Checkout reference not found:', orderRef);
+        return res.status(404).json({ error: 'Checkout reference not found' });
+      }
+      checkoutSession = session;
     }
 
     // Idempotency — skip if already marked paid
-    if (order.payment_status === 'paid') {
+    if (order?.payment_status === 'paid') {
       console.log('[Fygaro Webhook] Already paid, skipping:', orderRef);
       return res.status(200).json({ received: true, action: 'already_paid' });
     }
@@ -804,10 +1068,18 @@ app.post('/api/fygaro-webhook', async (req, res) => {
       return res.status(400).json({ error: 'Currency mismatch' });
     }
 
-    const expectedTotal = Number(order.grand_total_jmd || 0);
-    if (amountPaid !== null && amountPaid + 1 < expectedTotal) {
+    const expectedTotal = Number(order?.grand_total_jmd ?? checkoutSession?.grand_total_jmd ?? 0);
+    if (amountPaid === null) {
+      console.error('[Fygaro Webhook] Payment amount missing:', orderRef);
+      return res.status(400).json({ error: 'Payment amount is required' });
+    }
+    if (amountPaid + 1 < expectedTotal) {
       console.error('[Fygaro Webhook] Amount mismatch:', { orderRef, expectedTotal, amountPaid });
       return res.status(400).json({ error: 'Payment amount does not match order total' });
+    }
+
+    if (!order) {
+      order = await materializePaidCheckoutSession(checkoutSession);
     }
 
     const paymentNote = [
@@ -830,6 +1102,13 @@ app.post('/api/fygaro-webhook', async (req, res) => {
       .eq('id', order.id);
 
     if (updateErr) throw updateErr;
+
+    await supabaseAdmin.from('payment_checkout_sessions').update({
+      status: 'paid',
+      order_id: order.id,
+      fygaro_transaction_id: paymentRef,
+      updated_at: new Date().toISOString()
+    }).eq('checkout_reference', orderRef);
 
     console.log(`[Fygaro Webhook] Order ${orderRef} marked as PAID.`);
 
@@ -907,6 +1186,26 @@ app.post('/api/fygaro-webhook', async (req, res) => {
           }),
         });
       } catch (e) { console.error('[Fygaro Webhook] Owner email error:', e); }
+    } else if (customer?.email) {
+      const pendingItemsHtml = (items || []).map((item, index) =>
+        `${index + 1}. ${escapeHtml(item.product_name)} x ${escapeHtml(item.quantity)} - J$${Number(item.line_total_jmd).toLocaleString()}`
+      ).join('<br>');
+      await queueEmail({
+        orderId: order.id,
+        recipient: customer.email,
+        emailType: 'payment_confirmed',
+        subject: `Payment confirmed - For You Skin Bar order ${order.order_number}`,
+        html: `<p>Hi ${escapeHtml(customer.full_name)},</p><p>Your Fygaro payment for <strong>${escapeHtml(order.order_number)}</strong> has been confirmed.</p><p>${pendingItemsHtml}</p><p>Amount paid: J$${Number(order.grand_total_jmd).toLocaleString()}</p><p>We are now preparing your order.</p>`,
+        metadata: { order_number: order.order_number }
+      });
+      await queueEmail({
+        orderId: order.id,
+        recipient: OWNER_EMAIL,
+        emailType: 'owner_payment_confirmed',
+        subject: `Payment received - ${order.order_number}`,
+        html: `<p>Payment was confirmed for <strong>${escapeHtml(order.order_number)}</strong>.</p><p>Amount: J$${Number(order.grand_total_jmd).toLocaleString()}</p><p>Please prepare this order for fulfilment.</p>`,
+        metadata: { order_number: order.order_number }
+      });
     }
 
     res.status(200).json({ received: true, action: 'paid', order: orderRef });
@@ -929,7 +1228,37 @@ app.get('/api/orders/payment-status', async (req, res) => {
       .eq('order_number', ref)
       .maybeSingle();
 
-    if (orderError || !order) return res.status(404).json({ error: 'Order not found.' });
+    if (orderError) throw orderError;
+    if (!order) {
+      const { data: checkoutSession, error: sessionError } = await supabaseAdmin
+        .from('payment_checkout_sessions')
+        .select('checkout_reference,status,shipping_data,cart_data,subtotal_jmd,discount_total_jmd,shipping_total_jmd,grand_total_jmd')
+        .eq('checkout_reference', ref)
+        .maybeSingle();
+      if (sessionError) throw sessionError;
+      if (!checkoutSession) return res.status(404).json({ error: 'Checkout reference not found.' });
+      const shipping = checkoutSession.shipping_data || {};
+      const items = (Array.isArray(checkoutSession.cart_data) ? checkoutSession.cart_data : []).map((item) => ({
+        product_name: item.name,
+        quantity: item.quantity,
+        unit_price_jmd: item.price,
+        line_total_jmd: item.price * item.quantity
+      }));
+      return res.status(200).json({
+        order: {
+          order_number: checkoutSession.checkout_reference,
+          status: 'pending',
+          payment_status: 'awaiting_confirmation',
+          delivery_service: shipping.deliveryService,
+          shipping_address: shipping.formattedAddress,
+          subtotal_jmd: checkoutSession.subtotal_jmd,
+          discount_total_jmd: checkoutSession.discount_total_jmd,
+          shipping_total_jmd: checkoutSession.shipping_total_jmd,
+          grand_total_jmd: checkoutSession.grand_total_jmd
+        },
+        items
+      });
+    }
 
     const { data: items, error: itemsError } = await supabaseAdmin
       .from('order_items')
@@ -1061,6 +1390,23 @@ app.post('/api/orders/cancel', async (req, res) => {
           }),
         });
       } catch (e) { console.error('[Cancel Order] Owner email error:', e); }
+    } else if (customerEmail) {
+      await queueEmail({
+        orderId: order.id,
+        recipient: customerEmail,
+        emailType: 'order_cancelled',
+        subject: `Order cancellation received - ${order.order_number}`,
+        html: `<p>Hi ${escapeHtml(order.customers?.full_name || 'Valued Customer')},</p><p>Your request to cancel <strong>${escapeHtml(order.order_number)}</strong> has been received.</p>${order.payment_status === 'paid' ? '<p>Our team will review the payment and process the refund manually.</p>' : ''}`,
+        metadata: { order_number: order.order_number }
+      });
+      await queueEmail({
+        orderId: order.id,
+        recipient: OWNER_EMAIL,
+        emailType: 'owner_order_cancelled',
+        subject: `Order cancelled by customer - ${order.order_number}`,
+        html: `<p>Order <strong>${escapeHtml(order.order_number)}</strong> was cancelled by the customer.</p><p>Reason: ${escapeHtml(reason || 'No reason provided')}</p><p>Payment status: ${escapeHtml(order.payment_status)}</p>`,
+        metadata: { order_number: order.order_number }
+      });
     }
 
     return res.status(200).json({ success: true, orderNumber });
@@ -1083,4 +1429,15 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  if (RESEND_API_KEY) {
+    setTimeout(() => processPendingEmails().catch((error) => {
+      console.error('[Email Outbox] Startup processing failed:', error.message);
+    }), 1500);
+    const emailOutboxTimer = setInterval(() => processPendingEmails().catch((error) => {
+      console.error('[Email Outbox] Scheduled processing failed:', error.message);
+    }), 5 * 60 * 1000);
+    emailOutboxTimer.unref();
+  } else {
+    console.log('[Email Outbox] Resend is prewired but inactive. Add RESEND_API_KEY, FROM_EMAIL, and OWNER_EMAIL to enable delivery.');
+  }
 });

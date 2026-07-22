@@ -266,7 +266,9 @@
                     throw new Error(result.error || 'Newsletter broadcast failed.');
                 }
 
-                statusEl.textContent = `Newsletter sent to ${result.sent || 0} subscriber(s).${result.failed ? ` ${result.failed} failed.` : ''}`;
+                statusEl.textContent = result.resend_configured
+                    ? `Newsletter sent to ${result.sent || 0} subscriber(s).${result.failed ? ` ${result.failed} failed.` : ''}`
+                    : `Newsletter queued for ${result.queued || 0} subscriber(s). It will send after Resend is configured.`;
                 statusEl.className = result.failed ? 'text-sm text-amber-700' : 'text-sm text-green-700';
             } catch (error) {
                 statusEl.textContent = error.message || 'Newsletter broadcast failed.';

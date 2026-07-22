@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Checkout | Foryou Skin Bar</title>
-  <meta name="description" content="Complete your For You Skin Bar order. Review your cart, enter delivery details, and submit your order via WhatsApp.">
+  <meta name="description" content="Complete your For You Skin Bar order with secure card payment through Fygaro.">
   <meta property="og:title" content="Checkout | Foryou Skin Bar">
-  <meta property="og:description" content="Complete your For You Skin Bar order. Review your cart, enter delivery details, and submit your order via WhatsApp.">
+  <meta property="og:description" content="Complete your For You Skin Bar order with secure card payment through Fygaro.">
   <meta property="og:image" content="assets/brand/logo.png">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
@@ -116,11 +116,11 @@
     </div>
 
     <!-- Checkout Content -->
-    <div id="checkoutFormWrapper" class="grid md:grid-cols-2 gap-10">
+    <div id="checkoutFormWrapper" class="grid grid-cols-1 md:grid-cols-2 gap-10 min-w-0">
       
       <!-- Left Column: Form -->
-      <div>
-        <form id="checkoutForm" class="bg-white p-8 rounded-3xl border border-stone-100 shadow-sm text-stone-800">
+      <div class="min-w-0">
+        <form id="checkoutForm" class="bg-white p-5 sm:p-8 rounded-3xl border border-stone-100 shadow-sm text-stone-800 min-w-0 w-full overflow-hidden">
           <h3 class="font-bold text-xl mb-6">Contact Information</h3>
           
           <div class="space-y-4 mb-8">
@@ -238,11 +238,14 @@
              </label>
           </div>
 
+          <!-- On phones the live summary is moved here, before payment. -->
+          <div id="mobileSummaryMount" class="md:hidden mb-8"></div>
+
           <h3 class="font-bold text-xl mb-6">Payment Method</h3>
           <div class="space-y-3 mb-8">
             <label class="flex items-center gap-3 p-4 border-2 border-amber-800 bg-amber-50 rounded-xl cursor-pointer">
               <input type="radio" name="paymentMethod" value="Fygaro" class="accent-amber-800 w-4 h-4" required checked>
-              <div class="flex-1">
+              <div class="flex-1 min-w-0">
                 <div class="font-medium text-stone-800 flex items-center gap-2">
                   <i class="fas fa-credit-card text-amber-800"></i>
                   Pay by Card (Visa / Mastercard)
@@ -282,16 +285,6 @@
             <i class="fas fa-lock"></i> Continue to Payment
           </button>
           
-          <!-- Messages -->
-          <div id="successMessage" class="hidden mt-6 p-6 bg-green-50 border border-green-200 rounded-xl text-center">
-            <h4 class="text-green-800 font-bold text-lg mb-2">Thank you! Your order has been received.</h4>
-            <p class="text-green-700 mb-2">Order Number: <strong id="successOrderNumber"></strong></p>
-            <p class="text-green-700 text-sm mb-4">A confirmation email has been sent to your inbox.</p>
-            <a id="whatsappFollowupBtn" href="#" target="_blank" class="inline-flex items-center gap-2 bg-[#25D366] text-white px-6 py-2.5 rounded-full font-bold hover:bg-[#128C7E] transition text-sm">
-              <i class="fab fa-whatsapp text-lg"></i> Message us on WhatsApp
-            </a>
-          </div>
-
           <div id="errorMessage" class="hidden mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-center text-red-700 text-sm">
             Something went wrong while submitting your order. Please try again or contact us on WhatsApp.
           </div>
@@ -299,8 +292,8 @@
       </div>
 
       <!-- Right Column: Summary -->
-      <div>
-        <div class="checkout-summary-clean p-8 rounded-3xl border border-amber-100 sticky top-28 text-stone-800 bg-white">
+      <div id="desktopSummaryMount" class="hidden md:block">
+        <div id="checkoutSummaryPanel" class="checkout-summary-clean p-0 md:p-8 rounded-none md:rounded-3xl border-0 md:border border-amber-100 md:sticky md:top-28 text-stone-800 bg-transparent md:bg-white">
           <h3 class="font-bold text-xl mb-6">Order Summary</h3>
           
           <div id="orderItems" class="space-y-4 mb-6 pb-6 border-b border-amber-200">
@@ -309,7 +302,7 @@
 
           <div class="mb-6 pb-6 border-b border-amber-200">
             <div class="flex gap-2">
-              <input type="text" id="discountCodeInput" placeholder="Discount code" class="flex-1 p-3 rounded-xl text-stone-800 text-sm border-0 focus:ring-2 focus:ring-amber-500">
+              <input type="text" id="discountCodeInput" placeholder="Discount code" class="flex-1 min-w-0 p-3 rounded-xl text-stone-800 text-sm border-0 focus:ring-2 focus:ring-amber-500">
               <button id="applyDiscountBtn" class="bg-amber-800 text-white px-4 rounded-xl font-bold hover:bg-amber-900 transition text-sm">Apply</button>
             </div>
             <div id="discountMessage" class="text-sm mt-2 font-medium hidden"></div>
@@ -432,7 +425,7 @@
   <script src="js/analytics.js"></script>
   <script src="js/products.js?v=7"></script>
   <script src="js/cart.js"></script>
-  <script src="js/main.js?v=2"></script>
-  <script src="js/checkout.js"></script>
+  <script src="js/main.js?v=3"></script>
+  <script src="js/checkout.js?v=2"></script>
 </body>
 </html>

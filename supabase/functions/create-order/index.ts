@@ -11,6 +11,16 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Checkout is handled by the Node API so Fygaro webhook verification and
+  // order creation remain in one payment-authoritative flow.
+  return new Response(JSON.stringify({
+    error: 'This legacy checkout endpoint is disabled. Use /api/create-order.'
+  }), {
+    status: 410,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  })
+
+  /* Legacy implementation retained temporarily for deployment rollback.
   try {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -371,4 +381,5 @@ serve(async (req) => {
       status: 400,
     })
   }
+  */
 })

@@ -423,6 +423,19 @@
             await loadComments();
         };
 
+        async function notifyBlogSubscribers(postId) {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const token = sessionData?.session?.access_token;
+            if (!token) throw new Error('Your admin session expired before notifications could be queued.');
+            const response = await fetch(`/api/blogs/${encodeURIComponent(postId)}/notify-subscribers`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || 'Subscriber notifications could not be queued.');
+            return result;
+        }
+
         document.getElementById('savePostBtn').addEventListener('click', async () => {
             const form = document.getElementById('postForm');
             
@@ -474,15 +487,30 @@
                     updated_at: new Date().toISOString(),
                 };
 
+                let savedPostId = id;
                 if (id) {
                     const { error } = await supabase.from('blog_posts').update(payload).eq('id', id);
                     if (error) throw error;
-                    showToast('Post updated successfully!');
                 } else {
-                    const { error } = await supabase.from('blog_posts').insert(payload);
+                    const { data: createdPost, error } = await supabase.from('blog_posts').insert(payload).select('id').single();
                     if (error) throw error;
-                    showToast('Post created successfully!');
+                    savedPostId = createdPost.id;
                 }
+
+                let notificationMessage = '';
+                if (status === 'published' && savedPostId) {
+                    try {
+                        const notification = await notifyBlogSubscribers(savedPostId);
+                        if (notification.scheduled_for) notificationMessage = ' Subscriber emails are scheduled.';
+                        else if (notification.already_notified) notificationMessage = '';
+                        else if (notification.sent > 0) notificationMessage = ` ${notification.sent} subscriber email(s) sent.`;
+                        else if (notification.queued > 0) notificationMessage = ` ${notification.queued} subscriber email(s) queued.`;
+                    } catch (notificationError) {
+                        console.warn(notificationError.message);
+                        notificationMessage = ' The post was saved, but subscriber emails need attention.';
+                    }
+                }
+                showToast(`${id ? 'Post updated' : 'Post created'} successfully!${notificationMessage}`);
                 document.getElementById('postModal').classList.add('hidden');
                 loadPosts();
             } catch (err) {

@@ -170,28 +170,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const input = newsletterForm.querySelector('input[type="email"]');
       const email = input.value.trim().toLowerCase();
       if (email) {
-        // Track the event
-        if (window.trackEvent) window.trackEvent('newsletter_signup', { email });
-
-        if (window.supabase) {
-          const { error } = await window.supabase
-            .from('newsletter_subscribers')
-            .insert({ email, source: 'footer', is_active: true });
-          if (error && error.code !== '23505') {
-            console.warn('Newsletter signup could not be saved:', error.message);
-          }
-        }
-
-        // Show success feedback
         const btn = newsletterForm.querySelector('button');
         const originalText = btn.innerHTML;
-        btn.innerHTML = '✓';
-        btn.classList.add('bg-green-600');
-        input.value = '';
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.classList.remove('bg-green-600');
-        }, 2000);
+        btn.disabled = true;
+        try {
+          if (window.trackEvent) window.trackEvent('newsletter_signup', { email });
+          const response = await fetch('/api/newsletter/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, source: 'footer' })
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'Newsletter signup could not be saved.');
+          btn.innerHTML = 'Done';
+          btn.classList.add('bg-green-600');
+          input.value = '';
+        } catch (error) {
+          console.warn(error.message);
+          btn.innerHTML = 'Retry';
+          btn.classList.add('bg-red-700');
+        } finally {
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('bg-green-600', 'bg-red-700');
+            btn.disabled = false;
+          }, 2000);
+        }
       }
     });
   }

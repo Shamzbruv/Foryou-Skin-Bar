@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let cart = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
   
   const FREE_SHIPPING_THRESHOLD = 10000;
-  const WHATSAPP_NUMBER = '18763094374';
 
   // ── Handle return states from Fygaro ──
   const urlParams = new URLSearchParams(window.location.search);
@@ -55,10 +54,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const overseasDelivery = document.querySelector('.delivery-overseas');
   const overseasRadio = document.querySelector('input[name="deliveryMethod"][value="Overseas"]');
 
-  const successMessage = document.getElementById('successMessage');
   const errorMessage = document.getElementById('errorMessage');
-  const successOrderNumber = document.getElementById('successOrderNumber');
-  const whatsappFollowupBtn = document.getElementById('whatsappFollowupBtn');
+  const checkoutSummaryPanel = document.getElementById('checkoutSummaryPanel');
+  const mobileSummaryMount = document.getElementById('mobileSummaryMount');
+  const desktopSummaryMount = document.getElementById('desktopSummaryMount');
+  const mobileSummaryQuery = window.matchMedia('(max-width: 767px)');
+
+  function syncSummaryPosition() {
+    const target = mobileSummaryQuery.matches ? mobileSummaryMount : desktopSummaryMount;
+    if (checkoutSummaryPanel && target && checkoutSummaryPanel.parentElement !== target) {
+      target.appendChild(checkoutSummaryPanel);
+    }
+  }
+
+  syncSummaryPosition();
+  mobileSummaryQuery.addEventListener?.('change', syncSummaryPosition);
 
   async function prefillUserData() {
     try {
@@ -134,15 +144,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     orderItemsContainer.innerHTML = cart.map(item => `
       <div class="flex gap-4 mb-4">
-        <div class="relative">
+        <div class="relative shrink-0">
           <img src="${item.image}" class="w-16 h-16 rounded-xl object-cover border border-stone-200">
           <span class="absolute -top-2 -right-2 bg-stone-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">${item.qty}</span>
         </div>
-        <div class="flex-1">
+        <div class="flex-1 min-w-0">
           <h4 class="text-sm font-bold text-stone-800 leading-tight">${item.name}</h4>
           <p class="text-stone-500 text-sm mt-1">J$${item.price.toLocaleString()}</p>
         </div>
-        <div class="font-bold text-stone-800">
+        <div class="font-bold text-stone-800 text-sm shrink-0">
           J$${(item.price * item.qty).toLocaleString()}
         </div>
       </div>
@@ -329,7 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting your order...';
       submitBtn.disabled = true;
       errorMessage.classList.add('hidden');
-      successMessage.classList.add('hidden');
 
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
@@ -395,7 +404,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (result.fygaro_url) {
           // ── Fygaro redirect flow ──
-          sessionStorage.setItem('foryou_pending_payment', JSON.stringify({ orderNumber, fygaroUrl: result.fygaro_url }));
+          sessionStorage.setItem('foryou_pending_payment', JSON.stringify({
+            orderNumber,
+            fygaroUrl: result.fygaro_url,
+            paymentAccessToken: result.payment_access_token || ''
+          }));
           submitBtn.innerHTML = '<i class="fas fa-lock mr-2"></i> Redirecting to secure payment...';
 
           // Show a friendly redirect UI
@@ -407,8 +420,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i class="fas fa-lock text-amber-800 text-xl"></i>
               </div>
               <div>
-                <h4 class="font-bold text-lg mb-1">Order Confirmed — Proceed to Payment</h4>
-                <p class="text-stone-600 text-sm mb-1">Your order <strong>${orderNumber}</strong> has been saved.</p>
+                <h4 class="font-bold text-lg mb-1">Secure payment is ready</h4>
+                <p class="text-stone-600 text-sm mb-1">Reference <strong>${orderNumber}</strong> will be confirmed only after payment.</p>
                 <p class="text-stone-500 text-xs">You are being redirected to our secure payment page…</p>
               </div>
               <div class="flex gap-2 items-center text-amber-800 text-xs">
@@ -426,24 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 1800);
 
         } else {
-          // ── Fallback: Fygaro not yet configured ──
-          // Show legacy success + WhatsApp message
-          localStorage.removeItem(STORAGE_KEY);
-          cart = [];
-          if (window.cartManager) window.cartManager.clearCart();
-          form.reset();
-          successOrderNumber.innerText = orderNumber;
-
-          let message = `Hello For You Skin Bar, I just placed an order on the website.\n\n`;
-          message += `*Order Number:* ${orderNumber}\n`;
-          message += `*Name:* ${data.fullName}\n`;
-          message += `\nPayment will be arranged separately.`;
-
-          const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-          whatsappFollowupBtn.href = url;
-
-          successMessage.classList.remove('hidden');
-          submitBtn.classList.add('hidden');
+          throw new Error('Secure payment could not be started. Your cart has not been cleared.');
         }
         
       } catch (err) {
