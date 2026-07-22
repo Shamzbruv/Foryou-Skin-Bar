@@ -211,11 +211,21 @@
   <script src="js/products.js?v=7"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=2"></script>
-  <script src="js/blog.js"></script>
+  <script src="js/blog.js?v=2"></script>
   <script>
     // Render Blog Posts
     (async function() {
       await window.loadBlogPosts();
+
+      function formatPublishedAt(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return new Intl.DateTimeFormat('en-US', {
+          month: 'long', day: 'numeric', year: 'numeric',
+          hour: 'numeric', minute: '2-digit', timeZone: 'America/Jamaica'
+        }).format(date);
+      }
       
       function renderBlogGrid() {
         const posts = window.blogPosts || [];
@@ -225,7 +235,7 @@
           return;
         }
         grid.innerHTML = posts.map(post => {
-          const dateStr = post.date ? new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+          const dateStr = formatPublishedAt(post.publishedAt || post.date);
           return `
             <div class="blog-card flex flex-col cursor-pointer revealed opacity-100 transform-none" style="opacity: 1 !important; transform: none !important; filter: none !important;" onclick="window.location.href='blog-post.html?slug=${post.slug}'">
               <div class="h-56 overflow-hidden relative">

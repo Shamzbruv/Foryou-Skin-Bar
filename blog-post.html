@@ -197,10 +197,21 @@
   <script src="js/products.js?v=7"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=2"></script>
-  <script src="js/blog.js"></script>
+  <script src="js/blog.js?v=2"></script>
+  <script src="js/blog-engagement.js?v=1"></script>
   <script>
     (async function() {
       await window.loadBlogPosts();
+
+      function formatPublishedAt(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return new Intl.DateTimeFormat('en-US', {
+          month: 'long', day: 'numeric', year: 'numeric',
+          hour: 'numeric', minute: '2-digit', timeZone: 'America/Jamaica'
+        }).format(date);
+      }
 
       function renderPost() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -222,7 +233,7 @@
         }
         
         document.title = `${post.title} | Glow Journal`;
-        const dateStr = post.date ? new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+        const dateStr = formatPublishedAt(post.publishedAt || post.date);
 
         container.innerHTML = `
           <div class="max-w-4xl mx-auto px-6 md:px-12 py-12 md:py-20 animate-fade-in">
@@ -248,8 +259,44 @@
                 <button onclick="window.open('https://wa.me/?text=' + encodeURIComponent(document.title + ' ' + window.location.href), '_blank')" class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 hover:bg-amber-800 hover:text-white transition flex items-center justify-center"><i class="fab fa-whatsapp"></i></button>
               </div>
             </div>
+
+            <section id="blogEngagement" class="w-full max-w-2xl mx-auto mt-14 pt-10 border-t border-stone-200" aria-label="Article likes and comments">
+              <div class="flex flex-wrap items-center justify-between gap-4 mb-10">
+                <div>
+                  <p class="text-xs font-bold uppercase tracking-widest text-amber-800 mb-1">Reader response</p>
+                  <h2 class="serif-heading text-3xl text-stone-800">Join the conversation</h2>
+                </div>
+                <button id="blogLikeButton" type="button" aria-pressed="false" class="h-11 px-4 border border-stone-300 bg-white text-stone-800 hover:border-amber-800 transition flex items-center gap-2 disabled:opacity-50">
+                  <i class="far fa-heart" aria-hidden="true"></i>
+                  <span>Like this article</span>
+                  <strong id="blogLikeCount" class="min-w-5 text-center">0</strong>
+                </button>
+              </div>
+
+              <form id="blogCommentForm" class="w-full max-w-full box-border overflow-hidden bg-stone-50 border border-stone-200 p-5 md:p-6 mb-8">
+                <div class="mb-4">
+                  <label for="commentName" class="block text-sm font-semibold text-stone-800 mb-2">Your name</label>
+                  <input id="commentName" name="commentName" type="text" minlength="2" maxlength="80" required autocomplete="name" class="block w-full max-w-full box-border border border-stone-300 bg-white px-3 py-3 focus:outline-none focus:border-amber-800" placeholder="Enter your name">
+                </div>
+                <div class="mb-4">
+                  <label for="commentText" class="block text-sm font-semibold text-stone-800 mb-2">Comment</label>
+                  <textarea id="commentText" name="commentText" rows="4" maxlength="2000" required class="block w-full max-w-full box-border border border-stone-300 bg-white px-3 py-3 focus:outline-none focus:border-amber-800 resize-y" placeholder="Share your thoughts"></textarea>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <p id="commentStatus" class="text-sm text-stone-600" role="status" aria-live="polite"></p>
+                  <button id="commentSubmitButton" type="submit" class="w-full sm:w-auto bg-amber-800 hover:bg-amber-900 text-white px-5 py-3 font-semibold whitespace-nowrap transition disabled:opacity-50">Post comment</button>
+                </div>
+              </form>
+
+              <h3 class="serif-heading text-2xl text-stone-800 mb-2">Comments (<span id="blogCommentCount">0</span>)</h3>
+              <div id="blogCommentList" aria-live="polite">
+                <p class="text-stone-500 py-5">Loading comments...</p>
+              </div>
+            </section>
           </div>
         `;
+
+        window.initBlogEngagement?.(post);
 
         // Inject JSON-LD Schema
         const script = document.createElement('script');
@@ -259,7 +306,7 @@
           "@type": "Article",
           "headline": post.title,
           "image": [ window.location.origin + "/" + post.image ],
-          "datePublished": post.date,
+          "datePublished": post.publishedAt || post.date,
           "author": [{
             "@type": "Organization",
             "name": "For You Skin Bar",

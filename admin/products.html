@@ -778,10 +778,42 @@
                     <td class="p-4 text-gray-600">${variantCount ? `<span class="px-2 py-1 rounded-full bg-sage-100 text-sage-800 text-xs font-bold">${variantCount}</span>` : '<span class="text-stone-400 text-xs">None</span>'}</td>
                     <td class="p-4 text-gray-600">${p.track_inventory ? (p.stock_quantity ?? 0) : '∞'}</td>
                     <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full capitalize ${getStatusBadgeClass(p.status)}">${escapeHtml(p.status || 'draft')}</span></td>
-                    <td class="p-4 text-right"><button class="bg-amber-50 text-amber-900 hover:bg-amber-100 px-3 py-1.5 rounded text-sm font-medium transition" onclick="window.openProductModal('${p.id}')"><i class="fas fa-pen mr-1"></i>Edit</button></td>
+                    <td class="p-4">
+                        <div class="flex justify-end gap-2">
+                            <button type="button" class="bg-amber-50 text-amber-900 hover:bg-amber-100 px-3 py-1.5 rounded text-sm font-medium transition" onclick="window.openProductModal('${p.id}')"><i class="fas fa-pen mr-1"></i>Edit</button>
+                            <button type="button" class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded text-sm font-medium transition" onclick="window.deleteProduct('${p.id}')"><i class="fas fa-trash mr-1"></i>Delete</button>
+                        </div>
+                    </td>
                 </tr>`;
             }).join('');
         }
+
+        window.deleteProduct = async function(productId) {
+            const product = currentProducts.find(item => item.id === productId);
+            if (!product) return;
+            const confirmed = window.confirm(`Delete "${product.name}"? This removes it from the shop and cannot be undone. Existing order history will be preserved.`);
+            if (!confirmed) return;
+
+            const imageUrls = (product.product_images || []).map(image => image.image_url).filter(Boolean);
+            const { error } = await supabase.from('products').delete().eq('id', productId);
+            if (error) {
+                showToast(`Unable to delete product: ${error.message}`, 'error');
+                return;
+            }
+
+            const storagePrefix = '/storage/v1/object/public/product-images/';
+            const storagePaths = imageUrls.map(url => {
+                const markerIndex = url.indexOf(storagePrefix);
+                return markerIndex >= 0 ? decodeURIComponent(url.slice(markerIndex + storagePrefix.length)) : null;
+            }).filter(Boolean);
+            if (storagePaths.length) {
+                const { error: storageError } = await supabase.storage.from('product-images').remove(storagePaths);
+                if (storageError) console.warn('Product deleted, but an uploaded image could not be removed.', storageError);
+            }
+
+            showToast('Product deleted successfully.');
+            await loadProducts();
+        };
 
         $('logoutBtn').addEventListener('click', async (e) => {
             e.preventDefault();

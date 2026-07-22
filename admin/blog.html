@@ -101,6 +101,32 @@
             </table>
         </div>
 
+        <section class="mt-10" aria-labelledby="commentsHeading">
+            <div class="flex items-end justify-between gap-4 mb-4">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-amber-800 mb-1">Community</p>
+                    <h2 id="commentsHeading" class="text-xl font-bold text-stone-800">Blog Comments</h2>
+                </div>
+                <button type="button" onclick="window.loadComments()" class="text-sm font-semibold text-amber-900 hover:text-amber-700 transition"><i class="fas fa-rotate mr-1"></i>Refresh</button>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-x-auto">
+                <table class="w-full min-w-[760px] text-left border-collapse">
+                    <thead>
+                        <tr class="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold text-sm">
+                            <th class="p-4">Name</th>
+                            <th class="p-4">Comment</th>
+                            <th class="p-4">Post</th>
+                            <th class="p-4">Submitted</th>
+                            <th class="p-4 w-24 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="commentsTableBody" class="divide-y divide-stone-100 text-sm">
+                        <tr><td colspan="5" class="p-8 text-center text-stone-500">Loading comments...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
         <!-- Post Modal -->
         <div id="postModal" class="fixed inset-0 bg-stone-900/50 hidden flex items-center justify-center z-50 p-4">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
@@ -154,6 +180,12 @@
                                 </select>
                             </div>
 
+                            <div class="col-span-2 md:col-span-1">
+                                <label class="block text-sm font-bold text-stone-700 mb-1">Publish date & time</label>
+                                <input type="datetime-local" id="postPublishedAt" name="published_at" step="60" class="w-full border border-stone-300 rounded p-2 text-sm focus:border-amber-800 focus:outline-none focus:ring-1 focus:ring-amber-800">
+                                <p class="text-xs text-stone-500 mt-1">Displayed on the journal in Jamaica time.</p>
+                            </div>
+
                             <div class="col-span-2 bg-stone-50 p-4 rounded-lg border border-stone-200">
                                 <h3 class="font-bold text-stone-800 mb-3 text-sm"><i class="fas fa-search mr-2"></i>SEO Settings</h3>
                                 <div class="space-y-3">
@@ -194,6 +226,35 @@
         let currentPosts = [];
         let quill;
 
+        const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+
+        function toDateTimeLocal(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Jamaica', year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+            }).formatToParts(date).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+            return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+        }
+
+        function parseJamaicaDateTime(value) {
+            if (!value) return null;
+            const date = new Date(`${value}:00-05:00`);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function formatPublishedAt(value) {
+            if (!value) return 'Not scheduled';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 'Invalid date';
+            return new Intl.DateTimeFormat('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric',
+                hour: 'numeric', minute: '2-digit', timeZone: 'America/Jamaica'
+            }).format(date);
+        }
+
         async function init() {
             await checkAuth();
             
@@ -215,7 +276,7 @@
             document.querySelector('.ql-toolbar').classList.add('rounded-t', 'border-stone-300');
             document.querySelector('.ql-container').classList.add('rounded-b', 'border-stone-300');
             
-            loadPosts();
+            await Promise.all([loadPosts(), loadComments()]);
         }
         
         function showToast(message, type = 'success') {
@@ -255,11 +316,11 @@
             tbody.innerHTML = data.map(p => {
                 const img = p.featured_image_url || 'https://placehold.co/100x100/eeeeee/cccccc?text=No+Img';
                 const statusClass = p.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-stone-200 text-stone-800';
-                const date = new Date(p.created_at).toLocaleDateString();
+                const date = formatPublishedAt(p.published_at || p.created_at);
                 return `
                 <tr class="hover:bg-stone-50 transition">
-                    <td class="p-4"><img src="${img}" class="w-12 h-12 object-cover rounded shadow-sm"></td>
-                    <td class="p-4 font-bold text-stone-800">${p.title}<br><span class="text-xs text-stone-400 font-normal">/${p.slug}</span></td>
+                    <td class="p-4"><img src="${escapeHtml(img)}" class="w-12 h-12 object-cover rounded shadow-sm" alt=""></td>
+                    <td class="p-4 font-bold text-stone-800">${escapeHtml(p.title)}<br><span class="text-xs text-stone-400 font-normal">/${escapeHtml(p.slug)}</span></td>
                     <td class="p-4"><span class="px-2 py-1 text-xs font-semibold rounded-full uppercase ${statusClass}">${p.status}</span></td>
                     <td class="p-4 text-stone-600">${date}</td>
                     <td class="p-4 text-right">
@@ -271,11 +332,49 @@
             }).join('');
         }
 
+        async function loadComments() {
+            const tbody = document.getElementById('commentsTableBody');
+            const { data, error } = await supabase
+                .from('blog_comments')
+                .select('id,author_name,comment_text,created_at,blog_posts(title,slug)')
+                .order('created_at', { ascending: false })
+                .limit(100);
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-red-500">Error: ${escapeHtml(error.message)}</td></tr>`;
+                return;
+            }
+
+            if (!data?.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-stone-500">No blog comments yet.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(comment => {
+                const preview = comment.comment_text.length > 180 ? `${comment.comment_text.slice(0, 180)}...` : comment.comment_text;
+                const postTitle = comment.blog_posts?.title || 'Deleted post';
+                return `
+                    <tr class="hover:bg-stone-50 transition align-top">
+                        <td class="p-4 font-semibold text-stone-800">${escapeHtml(comment.author_name)}</td>
+                        <td class="p-4 text-stone-700 whitespace-pre-wrap break-words max-w-md">${escapeHtml(preview)}</td>
+                        <td class="p-4 text-stone-600">${escapeHtml(postTitle)}</td>
+                        <td class="p-4 text-stone-600 whitespace-nowrap">${formatPublishedAt(comment.created_at)}</td>
+                        <td class="p-4 text-right">
+                            <button type="button" class="text-red-600 hover:text-red-800 font-semibold text-sm" onclick="window.deleteComment('${comment.id}')" title="Delete comment"><i class="fas fa-trash mr-1"></i>Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        window.loadComments = loadComments;
+
         window.openPostModal = (id = null) => {
             const form = document.getElementById('postForm');
             form.reset();
             document.getElementById('postId').value = '';
             document.getElementById('postImageUpload').value = '';
+            document.getElementById('postPublishedAt').value = '';
             document.getElementById('modalTitle').innerText = id ? 'Edit Post' : 'Add New Post';
             
             // Clear Quill editor
@@ -294,6 +393,7 @@
                     document.getElementById('postImage').value = post.featured_image_url || '';
                     document.getElementById('postImageUpload').value = '';
                     document.getElementById('postStatus').value = post.status || 'draft';
+                    document.getElementById('postPublishedAt').value = toDateTimeLocal(post.published_at || post.created_at);
                     document.getElementById('postSeoTitle').value = post.seo_title || '';
                     document.getElementById('postSeoDesc').value = post.seo_description || '';
                 }
@@ -308,8 +408,19 @@
                 showToast(error.message, 'error');
             } else {
                 showToast('Post deleted successfully');
-                loadPosts();
+                await Promise.all([loadPosts(), loadComments()]);
             }
+        };
+
+        window.deleteComment = async (id) => {
+            if (!confirm('Delete this comment? This cannot be undone.')) return;
+            const { error } = await supabase.from('blog_comments').delete().eq('id', id);
+            if (error) {
+                showToast(error.message, 'error');
+                return;
+            }
+            showToast('Comment deleted successfully.');
+            await loadComments();
         };
 
         document.getElementById('savePostBtn').addEventListener('click', async () => {
@@ -344,15 +455,23 @@
                     featuredImageUrl = publicUrlData.publicUrl;
                 }
 
+                const status = document.getElementById('postStatus').value;
+                const publishedInput = document.getElementById('postPublishedAt').value;
+                let publishedAt = parseJamaicaDateTime(publishedInput);
+                if (publishedInput && !publishedAt) throw new Error('Enter a valid publication date and time.');
+                if (status === 'published' && !publishedAt) publishedAt = new Date();
+
                 const payload = {
                     title: document.getElementById('postTitle').value,
                     slug: document.getElementById('postSlug').value.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
                     excerpt: document.getElementById('postExcerpt').value,
                     content: document.getElementById('postContent').value,
                     featured_image_url: featuredImageUrl,
-                    status: document.getElementById('postStatus').value,
+                    status,
+                    published_at: publishedAt ? publishedAt.toISOString() : null,
                     seo_title: document.getElementById('postSeoTitle').value,
                     seo_description: document.getElementById('postSeoDesc').value,
+                    updated_at: new Date().toISOString(),
                 };
 
                 if (id) {
@@ -371,6 +490,13 @@
             } finally {
                 btn.innerText = 'Save Post';
                 btn.disabled = false;
+            }
+        });
+
+        document.getElementById('postStatus').addEventListener('change', (event) => {
+            const publishedInput = document.getElementById('postPublishedAt');
+            if (event.target.value === 'published' && !publishedInput.value) {
+                publishedInput.value = toDateTimeLocal(new Date());
             }
         });
         
