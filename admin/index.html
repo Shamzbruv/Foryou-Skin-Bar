@@ -4,145 +4,227 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - For You Skin Bar Admin</title>
-    
-  <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/assets/brand/favicon-16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/apple-touch-icon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            stone: {
-              50: '#F8F5EF',
-              100: '#EBE3D5',
-              200: '#D1C5B5',
-              300: '#B8AFA4',
-              400: '#8A7D6E',
-              500: '#6B5D50',
-              600: '#5A4C3A',
-              700: '#3A2E27',
-              800: '#3A2E27',
-              900: '#2C211B',
-            },
-            amber: {
-              50: '#F8F5EF',
-              100: '#F3E6C7',
-              200: '#E1C77D',
-              300: '#C89B3C',
-              400: '#C89B3C',
-              500: '#C89B3C',
-              600: '#B0852F',
-              700: '#C89B3C',
-              800: '#B0852F',
-              900: '#8B5A2B',
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            serif: ['"Cormorant Garamond"', 'serif'],
-          }
-        }
-      }
-    }
-  </script>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; }
-    </style>
-</head>
-<body class="bg-stone-50 font-sans">
-    <div class="flex h-screen overflow-hidden"><div class="w-64 bg-stone-900 text-white py-5 flex flex-col shrink-0 h-screen sticky top-0 overflow-y-auto overflow-x-hidden">
-        <h2 class="px-5 text-2xl font-serif mb-8 text-amber-200">Foryou Admin</h2>
-        <a href="/admin/index.html" class="block bg-stone-800 text-white border-l-4 border-amber-800 px-4 py-3">Dashboard</a>
-        <a href="/admin/orders.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Orders</a>
-        <a href="/admin/products.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Products</a>
-        <a href="/admin/inventory.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Inventory</a>
-        <a href="/admin/customers.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Customers</a>
-        <a href="/admin/discounts.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Discounts</a>
-        <a href="/admin/loyalty.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Loyalty Program</a>
-        <a href="/admin/recommendation-rules.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Quiz Rules</a>
-        <a href="/admin/reviews.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Reviews</a>
-        <a href="/admin/blog.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Blog & Content</a>
-        <a href="/admin/content.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Site Content (CMS)</a>
-        <a href="/admin/policies.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Policies</a>
-        <a href="/admin/settings.html" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Settings</a>
-        <div class="mt-auto border-t border-stone-800 pt-3">
-            <a href="#" id="logoutBtn" class="block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition">Logout</a>
-        </div>
-    </div>
-    
-    <div class="flex-1 p-8 overflow-y-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-bold text-stone-800">Dashboard Overview</h1>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-stone-500 font-medium text-sm mb-2">Total Sales (Paid)</h3>
-                <div class="text-3xl font-bold text-gray-900" id="totalSales">...</div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-stone-500 font-medium text-sm mb-2">Pending Orders</h3>
-                <div class="text-3xl font-bold text-amber-800" id="pendingOrders">...</div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-stone-500 font-medium text-sm mb-2">Active Products</h3>
-                <div class="text-3xl font-bold text-gray-900" id="activeProducts">...</div>
-            </div>
-        </div>
-    </div>
-    
-    <script type="module">
-        import { supabase, checkAuth, formatCurrency } from '/admin/js/supabase-client.js';
-        
-        async function loadDashboard() {
-            await checkAuth();
-            
-            try {
-                // Pending orders count
-                const { count: pendingCount, error: pendingErr } = await supabase
-                    .from('orders')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('status', 'pending');
-                    
-                if (!pendingErr) document.getElementById('pendingOrders').textContent = pendingCount;
-                
-                // Active products count
-                const { count: productsCount, error: prodErr } = await supabase
-                    .from('products')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('status', 'active');
-                    
-                if (!prodErr) document.getElementById('activeProducts').textContent = productsCount;
-                
-                // Total Sales (completed/paid)
-                const { data: sales, error: salesErr } = await supabase
-                    .from('orders')
-                    .select('grand_total_jmd')
-                    .eq('payment_status', 'paid');
-                    
-                if (!salesErr) {
-                    const total = sales.reduce((sum, order) => sum + order.grand_total_jmd, 0);
-                    document.getElementById('totalSales').textContent = formatCurrency(total);
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/brand/favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        stone: {
+                            50: '#F8F5EF', 100: '#EBE3D5', 200: '#D1C5B5', 300: '#B8AFA4',
+                            400: '#8A7D6E', 500: '#6B5D50', 600: '#5A4C3A', 700: '#3A2E27',
+                            800: '#3A2E27', 900: '#2C211B'
+                        },
+                        amber: {
+                            50: '#F8F5EF', 100: '#F3E6C7', 200: '#E1C77D', 300: '#C89B3C',
+                            400: '#C89B3C', 500: '#C89B3C', 600: '#B0852F', 700: '#C89B3C',
+                            800: '#B0852F', 900: '#8B5A2B'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Cormorant Garamond', 'serif']
+                    }
                 }
-                
-            } catch (e) {
-                console.error("Dashboard error:", e);
             }
-        }
-        
-        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
-            e.preventDefault();
-            await supabase.auth.signOut();
-            window.location.href = '/admin/login.html';
-        });
-        
-        loadDashboard();
+        };
     </script>
-</div>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/admin/dashboard.css?v=1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+</head>
+<body class="bg-[#f5f4f1] font-sans text-stone-900">
+    <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
+
+    <div class="admin-shell">
+        <aside id="adminSidebar" class="admin-sidebar" aria-label="Admin navigation">
+            <div class="sidebar-brand">
+                <div>
+                    <p class="sidebar-eyebrow">For You Skin Bar</p>
+                    <h2>Admin</h2>
+                </div>
+                <button id="closeSidebarBtn" class="sidebar-close" type="button" aria-label="Close navigation" title="Close navigation">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <nav class="admin-nav">
+                <a href="/admin/index.html" class="active"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+                <a href="/admin/orders.html"><i class="fas fa-receipt"></i><span>Orders</span></a>
+                <a href="/admin/products.html"><i class="fas fa-box-open"></i><span>Products</span></a>
+                <a href="/admin/inventory.html"><i class="fas fa-boxes-stacked"></i><span>Inventory</span></a>
+                <a href="/admin/customers.html"><i class="fas fa-users"></i><span>Customers</span></a>
+                <a href="/admin/discounts.html"><i class="fas fa-tags"></i><span>Discounts</span></a>
+                <a href="/admin/loyalty.html"><i class="fas fa-gift"></i><span>Loyalty Program</span></a>
+                <a href="/admin/recommendation-rules.html"><i class="fas fa-wand-magic-sparkles"></i><span>Quiz Rules</span></a>
+                <a href="/admin/reviews.html"><i class="fas fa-star"></i><span>Reviews</span></a>
+                <a href="/admin/blog.html"><i class="fas fa-newspaper"></i><span>Blog &amp; Content</span></a>
+                <a href="/admin/content.html"><i class="fas fa-pen-ruler"></i><span>Site Content</span></a>
+                <a href="/admin/policies.html"><i class="fas fa-file-shield"></i><span>Policies</span></a>
+                <a href="/admin/settings.html"><i class="fas fa-gear"></i><span>Settings</span></a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="/index.html" target="_blank"><i class="fas fa-arrow-up-right-from-square"></i><span>View website</span></a>
+                <button id="logoutBtn" type="button"><i class="fas fa-right-from-bracket"></i><span>Logout</span></button>
+            </div>
+        </aside>
+
+        <main class="dashboard-main">
+            <header class="dashboard-header">
+                <div class="header-title-group">
+                    <button id="openSidebarBtn" class="icon-button mobile-menu-button" type="button" aria-label="Open navigation" title="Open navigation">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
+                    </button>
+                    <div>
+                        <p class="page-eyebrow">Store performance</p>
+                        <h1>Dashboard</h1>
+                        <p id="lastUpdated" class="last-updated" aria-live="polite">Loading live store data...</p>
+                    </div>
+                </div>
+
+                <div class="header-controls">
+                    <div class="period-control" role="group" aria-label="Dashboard reporting period">
+                        <button type="button" data-period="30" class="active" aria-pressed="true">30D</button>
+                        <button type="button" data-period="90" aria-pressed="false">90D</button>
+                        <button type="button" data-period="365" aria-pressed="false">12M</button>
+                    </div>
+                    <button id="refreshDashboard" class="icon-button" type="button" aria-label="Refresh dashboard" title="Refresh dashboard">
+                        <i class="fas fa-rotate" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div id="dashboardError" class="dashboard-error" role="alert" hidden>
+                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                <div><strong>Dashboard data could not be loaded.</strong><span id="dashboardErrorMessage"></span></div>
+                <button id="retryDashboard" type="button">Try again</button>
+            </div>
+
+            <section class="kpi-grid" aria-label="Key store metrics">
+                <article class="kpi-card">
+                    <div class="kpi-heading"><span class="kpi-icon gold"><i class="fas fa-sack-dollar"></i></span><span id="periodRevenueLabel">Revenue (30 days)</span></div>
+                    <strong id="totalSales" class="kpi-value loading-value">--</strong>
+                    <p id="totalSalesTrend" class="kpi-note">Compared with the previous period</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-heading"><span class="kpi-icon sage"><i class="fas fa-circle-check"></i></span><span>Paid orders</span></div>
+                    <strong id="paidOrders" class="kpi-value loading-value">--</strong>
+                    <p id="paidOrdersTrend" class="kpi-note">Compared with the previous period</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-heading"><span class="kpi-icon cocoa"><i class="fas fa-basket-shopping"></i></span><span>Average order</span></div>
+                    <strong id="averageOrderValue" class="kpi-value loading-value">--</strong>
+                    <p id="averageOrderNote" class="kpi-note">Across paid orders in this period</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-heading"><span class="kpi-icon coral"><i class="fas fa-box"></i></span><span>To fulfil</span></div>
+                    <strong id="pendingFulfillment" class="kpi-value loading-value">--</strong>
+                    <p class="kpi-note">Paid orders awaiting completion</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-heading"><span class="kpi-icon blue"><i class="fas fa-envelope-open-text"></i></span><span>Glow Letters</span></div>
+                    <strong id="activeSubscribers" class="kpi-value loading-value">--</strong>
+                    <p id="subscriberNote" class="kpi-note">Active newsletter subscribers</p>
+                </article>
+                <article class="kpi-card">
+                    <div class="kpi-heading"><span class="kpi-icon red"><i class="fas fa-boxes-stacked"></i></span><span>Low stock</span></div>
+                    <strong id="lowStockCount" class="kpi-value loading-value">--</strong>
+                    <p class="kpi-note">Active products at or below threshold</p>
+                </article>
+            </section>
+
+            <section class="dashboard-grid primary-charts" aria-label="Sales analytics">
+                <article class="dashboard-card sales-card">
+                    <div class="card-heading">
+                        <div><p class="card-eyebrow">Paid sales</p><h2>Revenue trend</h2><p id="salesChartSummary">Revenue and order volume for the selected period.</p></div>
+                        <span class="live-badge"><span></span>Live</span>
+                    </div>
+                    <div class="chart-frame chart-frame-large">
+                        <canvas id="salesTrendChart" role="img" aria-label="Paid revenue and order volume trend"></canvas>
+                        <p id="salesTrendEmpty" class="chart-empty" hidden>No paid sales are recorded in this period.</p>
+                    </div>
+                </article>
+
+                <article class="dashboard-card payment-card">
+                    <div class="card-heading"><div><p class="card-eyebrow">Checkout health</p><h2>Payment status</h2><p>Orders in the selected period.</p></div></div>
+                    <div class="chart-frame chart-frame-doughnut">
+                        <canvas id="paymentStatusChart" role="img" aria-label="Order payment status distribution"></canvas>
+                        <p id="paymentStatusEmpty" class="chart-empty" hidden>No orders are recorded in this period.</p>
+                    </div>
+                    <div id="paymentLegend" class="metric-legend" aria-label="Payment totals"></div>
+                </article>
+            </section>
+
+            <section class="dashboard-grid secondary-charts" aria-label="Product and fulfilment analytics">
+                <article class="dashboard-card">
+                    <div class="card-heading"><div><p class="card-eyebrow">Product performance</p><h2>Top products</h2><p>Paid item revenue in the selected period.</p></div><a href="/admin/products.html">View products <i class="fas fa-arrow-right"></i></a></div>
+                    <div class="chart-frame">
+                        <canvas id="topProductsChart" role="img" aria-label="Top products by paid revenue"></canvas>
+                        <p id="topProductsEmpty" class="chart-empty" hidden>No paid product sales are recorded in this period.</p>
+                    </div>
+                </article>
+
+                <article class="dashboard-card">
+                    <div class="card-heading"><div><p class="card-eyebrow">Order operations</p><h2>Fulfilment pipeline</h2><p>Current stage of paid orders in the selected period.</p></div><a href="/admin/orders.html">Manage orders <i class="fas fa-arrow-right"></i></a></div>
+                    <div class="chart-frame">
+                        <canvas id="fulfillmentChart" role="img" aria-label="Paid order fulfilment stages"></canvas>
+                        <p id="fulfillmentEmpty" class="chart-empty" hidden>No paid orders are recorded in this period.</p>
+                    </div>
+                </article>
+            </section>
+
+            <section class="dashboard-grid community-row" aria-label="Audience and operational activity">
+                <article class="dashboard-card engagement-card">
+                    <div class="card-heading"><div><p class="card-eyebrow">Audience growth</p><h2>Community activity</h2><p>Newsletter signups, blog likes, and comments.</p></div><a href="/admin/customers.html">Glow Letters <i class="fas fa-arrow-right"></i></a></div>
+                    <div class="chart-frame">
+                        <canvas id="engagementChart" role="img" aria-label="Newsletter and blog engagement trend"></canvas>
+                        <p id="engagementEmpty" class="chart-empty" hidden>No community activity is recorded in this period.</p>
+                    </div>
+                </article>
+
+                <article class="dashboard-card action-card">
+                    <div class="card-heading"><div><p class="card-eyebrow">Needs attention</p><h2>Action centre</h2><p>Current work across the store.</p></div></div>
+                    <div class="action-list">
+                        <a href="/admin/orders.html"><span class="action-icon amber"><i class="fas fa-credit-card"></i></span><span><strong>Pending payments</strong><small>Fygaro checkouts not confirmed</small></span><b id="pendingPaymentsAction">--</b></a>
+                        <a href="/admin/orders.html"><span class="action-icon sage"><i class="fas fa-box"></i></span><span><strong>Orders to fulfil</strong><small>Paid and awaiting completion</small></span><b id="unfulfilledAction">--</b></a>
+                        <a href="/admin/inventory.html"><span class="action-icon coral"><i class="fas fa-boxes-stacked"></i></span><span><strong>Low stock items</strong><small>At or below stock threshold</small></span><b id="lowStockAction">--</b></a>
+                        <div class="action-item"><span class="action-icon blue"><i class="fas fa-inbox"></i></span><span><strong>New messages</strong><small>Customer enquiries received</small></span><b id="newMessagesAction">--</b></div>
+                        <a href="/admin/reviews.html"><span class="action-icon cocoa"><i class="fas fa-star"></i></span><span><strong>Reviews to approve</strong><small>Waiting for moderation</small></span><b id="pendingReviewsAction">--</b></a>
+                    </div>
+                </article>
+            </section>
+
+            <section class="dashboard-grid operational-row" aria-label="Recent store activity">
+                <article class="dashboard-card recent-orders-card">
+                    <div class="card-heading"><div><p class="card-eyebrow">Latest activity</p><h2>Recent orders</h2><p>The newest orders across online and manual sales.</p></div><a href="/admin/orders.html">View all <i class="fas fa-arrow-right"></i></a></div>
+                    <div class="table-scroll">
+                        <table class="dashboard-table">
+                            <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Total</th><th>Payment</th><th>Fulfilment</th></tr></thead>
+                            <tbody id="recentOrdersBody"><tr><td colspan="6" class="table-loading">Loading recent orders...</td></tr></tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <div class="side-stack">
+                    <article class="dashboard-card compact-card">
+                        <div class="card-heading"><div><p class="card-eyebrow">Inventory</p><h2>Stock alerts</h2></div><a href="/admin/inventory.html" title="Open inventory" aria-label="Open inventory"><i class="fas fa-arrow-right"></i></a></div>
+                        <div id="inventoryAlerts" class="ranked-list"><p class="list-loading">Loading inventory...</p></div>
+                    </article>
+
+                    <article class="dashboard-card compact-card">
+                        <div class="card-heading"><div><p class="card-eyebrow">Content</p><h2>Top blog posts</h2></div><a href="/admin/blog.html" title="Open blog manager" aria-label="Open blog manager"><i class="fas fa-arrow-right"></i></a></div>
+                        <div id="topBlogs" class="ranked-list"><p class="list-loading">Loading engagement...</p></div>
+                    </article>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="/admin/js/dashboard.js?v=1"></script>
 </body>
 </html>
