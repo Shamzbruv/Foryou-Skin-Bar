@@ -9,6 +9,7 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5500;
+app.set('trust proxy', 1);
 
 app.use(cors());
 // Raw body middleware needed for Fygaro webhook signature verification
@@ -69,6 +70,26 @@ function verifyOrderAccessToken(orderNumber, token) {
  * then, Fygaro's documented URL parameters keep checkout operational and the
  * webhook still verifies the paid amount before confirming an order.
  */
+function requestOrigin(req) {
+  const forwardedProto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  const forwardedHost = String(req.headers['x-forwarded-host'] || '').split(',')[0].trim();
+  const protocol = forwardedProto || req.protocol || 'http';
+  const host = forwardedHost || req.get('host');
+  return host ? `${protocol}://${host}`.replace(/\/+$/, '') : SERVER_BASE_URL;
+}
+
+function paymentCallbackUrls(origin, orderNumber) {
+  const safeOrigin = String(origin || SERVER_BASE_URL).replace(/\/+$/, '');
+  const token = orderAccessToken(orderNumber);
+  const encodedRef = encodeURIComponent(orderNumber);
+  const encodedToken = encodeURIComponent(token);
+  return {
+    returnUrl: `${safeOrigin}/api/fygaro-return?ref=${encodedRef}&token=${encodedToken}`,
+    cancelUrl: `${safeOrigin}/checkout.html?status=cancelled&ref=${encodedRef}`,
+    webhookUrl: `${safeOrigin}/api/fygaro-webhook`
+  };
+}
+
 function buildFygaroPaymentUrl(orderNumber, amountJmd) {
   const amount = Number(amountJmd);
   if (!FYGARO_BUTTON_URL || !orderNumber || !Number.isFinite(amount) || amount <= 0) return null;
@@ -86,7 +107,7 @@ function buildFygaroPaymentUrl(orderNumber, amountJmd) {
         currency: 'JMD',
         custom_reference: orderNumber,
         exp: nowSec + 3600,
-        nbf: nowSec,
+        nbf: nowSec
       }, FYGARO_API_SECRET, {
         algorithm: 'HS256',
         header: { alg: 'HS256', typ: 'JWT', kid: FYGARO_API_KEY },
@@ -121,7 +142,7 @@ function jamaicaDateStamp(date = new Date()) {
 function verifyFygaroSignature(rawBody, signatureHeader, keyIdHeader) {
   if (!FYGARO_API_SECRET || !signatureHeader) return false;
   const keyId = String(keyIdHeader || '').trim();
-  if (FYGARO_API_KEY && keyId && keyId !== FYGARO_API_KEY) return false;
+  if (FYGARO_API_KEY && keyId !== FYGARO_API_KEY) return false;
 
   const parts = String(signatureHeader).split(',').map(part => part.trim()).filter(Boolean);
   let timestamp = '';
@@ -324,6 +345,78 @@ async function materializePaidCheckoutSession(session) {
         .eq('id', discount.id);
     }
   }
+
+  return order;
+}
+
+async function reconcileCheckoutSessionPayment(orderRef, paymentReference, source = 'admin') {
+  const { data: reusedPayment, error: reusedPaymentError } = await supabaseAdmin
+    .from('payment_checkout_sessions')
+    .select('checkout_reference')
+    .eq('fygaro_transaction_id', paymentReference)
+    .neq('checkout_reference', orderRef)
+    .maybeSingle();
+  if (reusedPaymentError) throw reusedPaymentError;
+  if (reusedPayment) {
+    const error = new Error(`This Fygaro reference is already linked to ${reusedPayment.checkout_reference}.`);
+    error.status = 409;
+    throw error;
+  }
+
+  const { data: checkoutSession, error: sessionError } = await supabaseAdmin
+    .from('payment_checkout_sessions')
+    .select('*')
+    .eq('checkout_reference', orderRef)
+    .maybeSingle();
+  if (sessionError) throw sessionError;
+  if (!checkoutSession) {
+    const error = new Error('Saved checkout session was not found.');
+    error.status = 404;
+    throw error;
+  }
+
+  const { data: existingOrder, error: orderFetchError } = await supabaseAdmin
+    .from('orders')
+    .select('id,order_number,status,payment_status,grand_total_jmd,customer_id,delivery_service,admin_notes')
+    .eq('order_number', orderRef)
+    .maybeSingle();
+  if (orderFetchError) throw orderFetchError;
+
+  let order = existingOrder;
+  if (!order) order = await materializePaidCheckoutSession(checkoutSession);
+
+  if (order.payment_status !== 'paid') {
+    const paymentNote = [
+      `[Fygaro Payment Confirmed - ${source === 'webhook' ? 'Webhook' : 'Admin Reconciliation'}]`,
+      `Reference: ${paymentReference}`,
+      `Recorded: ${new Date().toISOString()}`
+    ].join(' ');
+    const { data: updatedOrder, error: updateError } = await supabaseAdmin
+      .from('orders')
+      .update({
+        payment_status: 'paid',
+        payment_method: 'Fygaro',
+        status: order.status === 'pending' ? 'confirmed' : order.status,
+        admin_notes: order.admin_notes ? `${paymentNote}\n\n${order.admin_notes}` : paymentNote,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', order.id)
+      .select('id,order_number,status,payment_status,grand_total_jmd,customer_id,delivery_service,admin_notes')
+      .single();
+    if (updateError) throw updateError;
+    order = updatedOrder;
+  }
+
+  const { error: checkoutUpdateError } = await supabaseAdmin
+    .from('payment_checkout_sessions')
+    .update({
+      status: 'paid',
+      order_id: order.id,
+      fygaro_transaction_id: paymentReference,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', checkoutSession.id);
+  if (checkoutUpdateError) throw checkoutUpdateError;
 
   return order;
 }
@@ -715,6 +808,7 @@ app.post('/api/create-order', async (req, res) => {
     const dateStr = jamaicaDateStamp();
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const orderNumber = `FSB-${dateStr}-${randomNum}`;
+    const checkoutOrigin = requestOrigin(req);
     const fygaroPayment = buildFygaroPaymentUrl(orderNumber, total);
     if (!fygaroPayment) {
       const error = new Error('Secure payment is temporarily unavailable. No order was created. Please try again shortly.');
@@ -984,16 +1078,61 @@ app.post('/api/create-order', async (req, res) => {
       email_status: RESEND_API_KEY ? 'processed' : 'queued',
       fygaro_url: fygaroPayment.url,
       fygaro_mode: fygaroPayment.mode,
-      payment_access_token: orderAccessToken(orderNumber)
+      payment_access_token: orderAccessToken(orderNumber),
+      payment_return_url: paymentCallbackUrls(checkoutOrigin, orderNumber).returnUrl
     });
   } catch (error) {
     res.status(error.status || 400).json({ error: error.message });
   }
 });
 
-// ── Fygaro Webhook Handler ──
-// Fygaro calls this URL after a successful payment.
-// The Fygaro-Signature header is verified before any DB changes.
+// ── Payment confirmation routes ──
+app.post('/api/admin/payment-checkouts/:reference/confirm', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const orderRef = String(req.params.reference || '').trim();
+    const paymentReference = String(req.body?.paymentReference || '').trim();
+    if (!/^FSB-\d{8}-\d{4}$/.test(orderRef)) {
+      return res.status(400).json({ error: 'A valid checkout reference is required.' });
+    }
+    if (!/^[A-Za-z0-9][A-Za-z0-9_-]{4,159}$/.test(paymentReference)) {
+      return res.status(400).json({ error: 'Enter the Fygaro payment or transaction reference.' });
+    }
+
+    const order = await reconcileCheckoutSessionPayment(orderRef, paymentReference, 'admin');
+    const { data: customer } = await supabaseAdmin
+      .from('customers')
+      .select('full_name,email')
+      .eq('id', order.customer_id)
+      .maybeSingle();
+
+    if (customer?.email) {
+      await queueEmail({
+        orderId: order.id,
+        recipient: customer.email,
+        emailType: 'payment_confirmed',
+        subject: `Payment confirmed - For You Skin Bar order ${order.order_number}`,
+        html: `<p>Hi ${escapeHtml(customer.full_name)},</p><p>Your Fygaro payment for <strong>${escapeHtml(order.order_number)}</strong> has been confirmed.</p><p>We are now preparing your order and will send a fulfilment update when it is ready.</p>`,
+        metadata: { order_number: order.order_number, payment_reference: paymentReference, source: 'admin_reconciliation' }
+      });
+    }
+
+    await queueEmail({
+      orderId: order.id,
+      recipient: OWNER_EMAIL,
+      emailType: 'owner_payment_confirmed',
+      subject: `Payment reconciled - ${order.order_number}`,
+      html: `<p>Fygaro payment <strong>${escapeHtml(paymentReference)}</strong> was matched to <strong>${escapeHtml(order.order_number)}</strong>.</p><p>Amount: J$${Number(order.grand_total_jmd).toLocaleString()}</p>`,
+      metadata: { order_number: order.order_number, payment_reference: paymentReference, source: 'admin_reconciliation' }
+    });
+
+    return res.status(200).json({ success: true, order });
+  } catch (error) {
+    console.error('[Payment Reconciliation]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to reconcile this payment.' });
+  }
+});
+
 app.post('/api/fygaro-webhook', async (req, res) => {
   try {
     const signature = req.headers['fygaro-signature'] || req.headers['x-fygaro-signature'] || '';
@@ -1420,6 +1559,39 @@ app.post('/api/orders/cancel', async (req, res) => {
 
 // ── Static Files serving ──
 // Serve all files from current directory
+// Fygaro redirects successful payments here. This must be registered before
+// the static-site fallback or the customer will be sent to the home page.
+app.get('/api/fygaro-return', (req, res) => {
+  const suppliedOrderRef = String(
+    req.query.customReference ||
+    req.query.custom_reference ||
+    req.query.client_reference ||
+    req.query.ref ||
+    ''
+  ).trim();
+  const orderRef = /^FSB-\d{8}-\d{4}$/.test(suppliedOrderRef) ? suppliedOrderRef : '';
+  const paymentReference = String(req.query.reference || req.query.transactionId || '').trim().slice(0, 160);
+  const destination = new URLSearchParams();
+
+  if (orderRef) {
+    destination.set('ref', orderRef);
+    destination.set('token', orderAccessToken(orderRef));
+  }
+  if (paymentReference) destination.set('reference', paymentReference);
+
+  const query = destination.toString();
+  return res.redirect(303, `/payment-success.html${query ? `?${query}` : ''}`);
+});
+
+app.get('/api/fygaro-integration-info', (req, res) => {
+  const origin = requestOrigin(req);
+  return res.status(200).json({
+    configured: Boolean(FYGARO_API_KEY && FYGARO_API_SECRET && FYGARO_BUTTON_URL),
+    return_url: `${origin}/api/fygaro-return`,
+    webhook_url: `${origin}/api/fygaro-webhook`
+  });
+});
+
 app.use(express.static(path.join(__dirname), { extensions: ['html'] }));
 
 // Fallback to index.html for SPA-like behavior (optional, if using client side routing)

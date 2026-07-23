@@ -164,17 +164,24 @@
         <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-5">
           <i class="fas fa-clock text-amber-800 text-2xl"></i>
         </div>
-        <h1 class="text-2xl font-bold mb-3">Payment Processing…</h1>
-        <p class="text-stone-500 mb-2">Your payment is being confirmed by Fygaro.</p>
-        <p class="text-stone-400 text-sm mb-6">This usually takes a few seconds. You will receive a confirmation email shortly.</p>
+        <p class="text-xs font-bold uppercase tracking-[0.16em] text-amber-800 mb-2">Payment submitted</p>
+        <h1 class="text-2xl font-bold mb-3">Thank you for your purchase</h1>
+        <p class="text-stone-600 mb-2">Fygaro has returned you to For You Skin Bar and we are matching the payment to your order.</p>
+        <p class="text-stone-500 text-sm mb-5">You do not need to pay again. Keep the order reference below in case you contact us.</p>
         <p class="text-stone-700 text-sm font-medium mb-6">Order Reference: <strong id="pendingOrderRef">—</strong></p>
+        <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left text-sm text-stone-700">
+          <p class="font-semibold text-amber-950 mb-2">What happens next?</p>
+          <p class="mb-1"><i class="fas fa-check mr-2 text-amber-700"></i>We verify the payment and add the order to our preparation queue.</p>
+          <p class="mb-1"><i class="fas fa-box mr-2 text-amber-700"></i>Your products are prepared for the delivery method you selected.</p>
+          <p><i class="fas fa-envelope mr-2 text-amber-700"></i>A confirmation email is sent when email delivery is enabled.</p>
+        </div>
         <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <button type="button" onclick="window.location.reload()" class="flex items-center justify-center gap-2 bg-amber-800 text-white px-6 py-3 rounded-full font-bold hover:bg-amber-900 transition text-sm">
+            <i class="fas fa-rotate"></i> Check payment status
+          </button>
           <a id="whatsappPendingBtn" href="#" target="_blank"
              class="flex items-center justify-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-full font-bold hover:bg-[#128C7E] transition text-sm">
-            <i class="fab fa-whatsapp"></i> Confirm via WhatsApp
-          </a>
-          <a href="shop.html" class="flex items-center justify-center gap-2 text-stone-600 px-6 py-3 rounded-full border border-stone-200 font-medium text-sm hover:bg-stone-50 transition">
-            Continue Shopping
+            <i class="fab fa-whatsapp"></i> Contact us
           </a>
         </div>
       </div>
@@ -296,9 +303,13 @@
         return;
       }
 
-      // Poll up to 5 times (10 seconds total) waiting for webhook to update payment_status
+      // Returning from the payment provider means this cart was submitted.
+      // Remove it now so a delayed webhook cannot lead to a duplicate payment.
+      localStorage.removeItem('foryou_cart');
+
+      // Allow the signed webhook time to reach the server and create the order.
       let attempts = 0;
-      const maxAttempts = 5;
+      const maxAttempts = 15;
 
       async function checkOrder() {
         attempts++;
@@ -311,7 +322,7 @@
               setTimeout(checkOrder, 2000);
               return;
             }
-            show('errorState');
+            renderPending(ref);
             return;
           }
 
@@ -332,7 +343,7 @@
           if (attempts < maxAttempts) {
             setTimeout(checkOrder, 2000);
           } else {
-            show('errorState');
+            renderPending(ref);
           }
         }
       }
