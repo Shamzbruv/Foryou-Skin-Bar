@@ -13,60 +13,6 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
-  <link rel="preload" as="image" href="assets/brand/welcome-founder-bg.jpg">
-  <link rel="preload" as="image" href="assets/brand/logo-welcome-black.png">
-  <script>
-    (function () {
-      var storageKey = 'foryou_welcome_last_seen';
-      var showAgainAfterMs = 6 * 60 * 60 * 1000;
-
-      function navigationType() {
-        var entries = performance.getEntriesByType && performance.getEntriesByType('navigation');
-        if (entries && entries[0] && entries[0].type) return entries[0].type;
-        return performance.navigation && performance.navigation.type === 1 ? 'reload' : 'navigate';
-      }
-
-      function shouldShowWelcome() {
-        try {
-          var lastSeen = Number(localStorage.getItem(storageKey) || 0);
-          var stale = !lastSeen || Date.now() - lastSeen > showAgainAfterMs;
-          return navigationType() === 'reload' || stale;
-        } catch (error) {
-          return true;
-        }
-      }
-
-      window.__foryouWelcomeShouldShow = shouldShowWelcome();
-      document.documentElement.classList.add(window.__foryouWelcomeShouldShow ? 'welcome-screen-pending' : 'welcome-screen-skip');
-    })();
-  </script>
-  <style id="welcome-prepaint-guard">
-    html.welcome-screen-pending,
-    html.welcome-screen-pending body {
-      min-height: 100%;
-      margin: 0;
-      overflow: hidden;
-      background: #fbf7ef;
-    }
-
-    html.welcome-screen-pending body > :not(#welcomeScreen) {
-      visibility: hidden;
-    }
-
-    html.welcome-screen-pending #welcomeScreen {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      background:
-        linear-gradient(90deg, rgba(251, 247, 239, 0.98) 0%, rgba(251, 247, 239, 0.9) 36%, rgba(251, 247, 239, 0.12) 61%, rgba(251, 247, 239, 0) 100%),
-        url("assets/brand/welcome-founder-bg.jpg") right center / cover no-repeat;
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-  </style>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="css/styles.css?v=hero-edge-fade-1">
@@ -205,31 +151,6 @@
   </style>
 </head>
 <body class="antialiased">
-
-  <div id="welcomeScreen" class="welcome-screen" aria-label="Welcome to Foryou Skin Bar" aria-hidden="true">
-    <div class="welcome-screen__panel">
-      <div class="welcome-screen__copy">
-        <div class="welcome-screen__brandmark" aria-label="Foryou Skin Bar">
-          <img src="assets/brand/logo-welcome-black.png" alt="Foryou Skin Bar">
-        </div>
-        <p class="welcome-screen__eyebrow">Welcome to</p>
-        <h1>Foryou<br>Skin Bar</h1>
-        <div class="welcome-screen__rule" aria-hidden="true"><span></span><i class="fas fa-leaf"></i><span></span></div>
-        <p class="welcome-screen__subhead">Handcrafted skin and body care<br class="welcome-mobile-break"> made just for you.</p>
-
-        <div class="welcome-screen__proof" aria-label="Brand promises">
-          <div><i class="fas fa-leaf"></i><span>Natural<br>Ingredients</span></div>
-          <div><i class="far fa-heart"></i><span>Handcrafted<br>With Care</span></div>
-          <div><i class="fas fa-droplet"></i><span>Nourishing<br>& Effective</span></div>
-          <div><i class="fas fa-seedling"></i><span>Made For<br>Sensitive Skin</span></div>
-        </div>
-      </div>
-
-      <div class="welcome-screen__lifestyle" aria-hidden="true"></div>
-    </div>
-    <div class="welcome-screen__tagline">Pure Ingredients. Thoughtfully Made.<br class="welcome-mobile-break"> Beautifully You.</div>
-  </div>
-  <script src="js/welcome-screen.js?v=2"></script>
 
   <!-- Announcement bar -->
   <div class="announcement-bar bg-amber-900/90 text-white text-center py-2.5 text-sm font-medium tracking-wide">
