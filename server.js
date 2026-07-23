@@ -1133,6 +1133,94 @@ app.post('/api/admin/payment-checkouts/:reference/confirm', async (req, res) => 
   }
 });
 
+app.delete('/api/admin/payment-checkouts/:reference', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const checkoutReference = String(req.params.reference || '').trim();
+    if (!/^FSB-\d{8}-\d{4}$/.test(checkoutReference)) {
+      return res.status(400).json({ error: 'A valid checkout reference is required.' });
+    }
+
+    const { data: checkout, error: checkoutError } = await supabaseAdmin
+      .from('payment_checkout_sessions')
+      .select('id,status,order_id,fygaro_transaction_id')
+      .eq('checkout_reference', checkoutReference)
+      .maybeSingle();
+    if (checkoutError) throw checkoutError;
+    if (!checkout) return res.status(404).json({ error: 'Checkout not found.' });
+    if (checkout.order_id || checkout.status === 'paid' || checkout.fygaro_transaction_id) {
+      return res.status(409).json({ error: 'Paid or order-linked checkouts cannot be deleted.' });
+    }
+
+    const { error: deleteError } = await supabaseAdmin
+      .from('payment_checkout_sessions')
+      .delete()
+      .eq('id', checkout.id);
+    if (deleteError) throw deleteError;
+
+    console.log(`[Admin Cleanup] Deleted unmatched checkout ${checkoutReference}.`);
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('[Admin Checkout Delete]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to delete this checkout.' });
+  }
+});
+
+app.delete('/api/admin/orders/:id', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const orderId = String(req.params.id || '').trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId)) {
+      return res.status(400).json({ error: 'A valid order ID is required.' });
+    }
+
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from('orders')
+      .select('id,order_number,status,payment_status')
+      .eq('id', orderId)
+      .maybeSingle();
+    if (orderError) throw orderError;
+    if (!order) return res.status(404).json({ error: 'Order not found.' });
+    if (order.payment_status !== 'unpaid' || order.status !== 'cancelled') {
+      return res.status(409).json({
+        error: 'Only cancelled, unpaid orders can be deleted. Paid orders must remain in the sales record.'
+      });
+    }
+
+    const { data: linkedCheckouts, error: linkedError } = await supabaseAdmin
+      .from('payment_checkout_sessions')
+      .select('id,status,fygaro_transaction_id')
+      .eq('order_id', order.id);
+    if (linkedError) throw linkedError;
+    if ((linkedCheckouts || []).some(checkout => checkout.status === 'paid' || checkout.fygaro_transaction_id)) {
+      return res.status(409).json({ error: 'This order is linked to a recorded Fygaro payment and cannot be deleted.' });
+    }
+
+    if (linkedCheckouts?.length) {
+      const { error: checkoutDeleteError } = await supabaseAdmin
+        .from('payment_checkout_sessions')
+        .delete()
+        .in('id', linkedCheckouts.map(checkout => checkout.id));
+      if (checkoutDeleteError) throw checkoutDeleteError;
+    }
+
+    const { error: redemptionDeleteError } = await supabaseAdmin
+      .from('discount_redemptions')
+      .delete()
+      .eq('order_id', order.id);
+    if (redemptionDeleteError && redemptionDeleteError.code !== '42P01') throw redemptionDeleteError;
+
+    const { error: deleteError } = await supabaseAdmin.from('orders').delete().eq('id', order.id);
+    if (deleteError) throw deleteError;
+
+    console.log(`[Admin Cleanup] Deleted cancelled unpaid order ${order.order_number}.`);
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('[Admin Order Delete]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to delete this order.' });
+  }
+});
+
 app.post('/api/fygaro-webhook', async (req, res) => {
   try {
     const signature = req.headers['fygaro-signature'] || req.headers['x-fygaro-signature'] || '';
