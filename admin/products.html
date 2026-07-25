@@ -640,12 +640,7 @@
                     stock_quantity: intOrZero($('stockQuantity').value),
                     low_stock_threshold: intOrZero($('lowStockThreshold').value || 5),
                     allow_backorder: $('allowBackorder').checked,
-                    type: 'physical',
-                    is_sulphate_free: $('attrSulphateFree').checked,
-                    is_paraben_free: $('attrParabenFree').checked,
-                    is_mineral_oil_free: $('attrMineralOilFree').checked,
-                    is_cruelty_free: $('attrCrueltyFree').checked,
-                    is_handmade_in_jamaica: $('attrHandmade').checked
+                    type: 'physical'
                 };
 
                 if (!id) productData.slug = slugify(name) || `product-${Date.now()}`;

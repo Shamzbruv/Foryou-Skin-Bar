@@ -109,11 +109,6 @@ window.loadProductsData = async function() {
                 allowBackorder: p.allow_backorder,
                 reviewCount,
                 reviewAverage,
-                is_sulphate_free: !!p.is_sulphate_free,
-                is_paraben_free: !!p.is_paraben_free,
-                is_mineral_oil_free: !!p.is_mineral_oil_free,
-                is_cruelty_free: !!p.is_cruelty_free,
-                is_handmade_in_jamaica: !!p.is_handmade_in_jamaica,
                 relatedProducts: [],
                 variants
             };
