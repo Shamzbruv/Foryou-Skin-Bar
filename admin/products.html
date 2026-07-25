@@ -645,7 +645,8 @@
                     is_paraben_free: $('attrParabenFree').checked,
                     is_mineral_oil_free: $('attrMineralOilFree').checked,
                     is_cruelty_free: $('attrCrueltyFree').checked,
-                    is_handmade_in_jamaica: $('attrHandmade').checked
+                    is_handmade_in_jamaica: $('attrHandmade').checked,
+                    has_results_disclaimer: $('attrDisclaimer').checked
                 };
 
                 if (!id) productData.slug = slugify(name) || `product-${Date.now()}`;
