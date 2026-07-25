@@ -114,7 +114,6 @@ window.loadProductsData = async function() {
                 is_mineral_oil_free: !!p.is_mineral_oil_free,
                 is_cruelty_free: !!p.is_cruelty_free,
                 is_handmade_in_jamaica: !!p.is_handmade_in_jamaica,
-                has_results_disclaimer: p.has_results_disclaimer !== false,
                 relatedProducts: [],
                 variants
             };
