@@ -264,20 +264,45 @@
         const text = String(value || '').replace(/\r\n?/g, '\n').trim();
         if (!text) return '';
 
-        return text.split(/\n{2,}/)
-          .map(block => block.trim())
-          .filter(Boolean)
-          .map(block => {
-            const lines = block.split('\n').map(line => line.trim()).filter(Boolean);
-            const isList = lines.length > 1 && lines.every(line => /^([-*•]|\d+[.)])\s+/.test(line));
+        const lines = text.split('\n');
+        const output = [];
+        let bulletBuffer = [];
 
-            if (isList) {
-              return `<ul>${lines.map(line => `<li>${escapeHTML(line.replace(/^([-*•]|\d+[.)])\s+/, ''))}</li>`).join('')}</ul>`;
-            }
+        function flushBullets() {
+          if (!bulletBuffer.length) return;
+          output.push(`<ul>${bulletBuffer.map(line => `<li>${escapeHTML(line.replace(/^([-*•]|\d+[.])\s+/, '').trim())}</li>`).join('')}</ul>`);
+          bulletBuffer = [];
+        }
 
-            return `<p>${lines.map(line => escapeHTML(line)).join('<br>')}</p>`;
-          })
-          .join('');
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+
+          // Empty line — flush any pending bullet list
+          if (!line) {
+            flushBullets();
+            continue;
+          }
+
+          // Bullet / numbered list line
+          if (/^([-*•]|\d+[.])\s+/.test(line)) {
+            bulletBuffer.push(line);
+            continue;
+          }
+
+          // Non-bullet line — flush bullets first
+          flushBullets();
+
+          // Heading-like line: short and does NOT end in sentence punctuation
+          const isHeading = line.length <= 60 && !/[.!?,;]$/.test(line);
+          if (isHeading) {
+            output.push(`<p><strong>${escapeHTML(line)}</strong></p>`);
+          } else {
+            output.push(`<p>${escapeHTML(line)}</p>`);
+          }
+        }
+
+        flushBullets();
+        return output.join('');
       }
 
       function richTextHTML(value = '') {
