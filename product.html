@@ -261,8 +261,27 @@
       }
 
       function plainTextToHTML(value = '') {
-        const text = String(value || '').replace(/\r\n?/g, '\n').trim();
-        if (!text) return '';
+        const raw = String(value || '').replace(/\r\n?/g, '\n').trim();
+        if (!raw) return '';
+
+        // Known section headings that appear inline in legacy product descriptions
+        const HEADINGS = [
+          'Key Benefits', 'Hero Ingredients', 'How to Use', 'How To Use',
+          'Ingredients', 'Expected Results', 'Suitable For', 'Available Sizes',
+          'Wake Up', 'Results', 'Key Ingredients', 'About', 'What It Does',
+          'Why You\'ll Love It', 'Directions', 'Warning', 'Note'
+        ];
+
+        // If content has NO real newlines, it's stored as one big inline string.
+        // Split it at known heading keywords so each section gets its own block.
+        let text = raw;
+        if (!raw.includes('\n')) {
+          const headingPattern = new RegExp(
+            `(?<=[.!?]\\s{0,3}|\\bskin\.\\s*)\\b(${HEADINGS.map(h => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`,
+            'g'
+          );
+          text = raw.replace(headingPattern, '\n\n$2');
+        }
 
         const lines = text.split('\n');
         const output = [];
@@ -270,20 +289,36 @@
 
         function flushBullets() {
           if (!bulletBuffer.length) return;
-          output.push(`<ul>${bulletBuffer.map(line => `<li>${escapeHTML(line.replace(/^([-*•]|\d+[.])\s+/, '').trim())}</li>`).join('')}</ul>`);
+          output.push(`<ul>${bulletBuffer.map(b => `<li>${escapeHTML(b.replace(/^[•\-*]\s*/, '').trim())}</li>`).join('')}</ul>`);
           bulletBuffer = [];
         }
 
         for (const rawLine of lines) {
           const line = rawLine.trim();
+          if (!line) { flushBullets(); continue; }
 
-          // Empty line — flush any pending bullet list
-          if (!line) {
-            flushBullets();
-            continue;
+          // Lines that contain inline bullets (e.g. "• item1 • item2 • item3")
+          if (line.includes('•') && !/^([-*•]|\d+[.])\s+/.test(line)) {
+            // Split on bullet character, first chunk may be a heading/paragraph
+            const parts = line.split(/\s*•\s*/).map(s => s.trim()).filter(Boolean);
+            if (parts.length > 1) {
+              // First part: heading or paragraph
+              const first = parts[0];
+              flushBullets();
+              const isHeading = first.length <= 80 && !/[.!?]$/.test(first);
+              if (isHeading) {
+                output.push(`<p><strong>${escapeHTML(first)}</strong></p>`);
+              } else {
+                output.push(`<p>${escapeHTML(first)}</p>`);
+              }
+              // Remaining parts: bullet list items
+              parts.slice(1).forEach(item => bulletBuffer.push('• ' + item));
+              flushBullets();
+              continue;
+            }
           }
 
-          // Bullet / numbered list line
+          // Standard leading-bullet line
           if (/^([-*•]|\d+[.])\s+/.test(line)) {
             bulletBuffer.push(line);
             continue;
@@ -293,7 +328,7 @@
           flushBullets();
 
           // Heading-like line: short and does NOT end in sentence punctuation
-          const isHeading = line.length <= 60 && !/[.!?,;]$/.test(line);
+          const isHeading = line.length <= 80 && !/[.!?,;]$/.test(line);
           if (isHeading) {
             output.push(`<p><strong>${escapeHTML(line)}</strong></p>`);
           } else {
