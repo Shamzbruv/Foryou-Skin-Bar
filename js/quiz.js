@@ -283,6 +283,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (productArea(product) === context.area) score += 12;
     if (toArray(context.preferredSteps).includes(step)) score += 18;
+
+    // Ingredient rules refine ranking, but never assign a product to a routine
+    // step. Product roles remain controlled by the product recommendation profile.
+    toArray(product.quizIngredientRules).forEach((rule) => {
+      const strength = Math.max(1, Math.min(10, Number(rule.strength_score) || 1));
+      const ruleConcerns = toArray(rule.helps_concerns).map(normalize);
+      const goodFor = toArray(rule.good_for_skin_types).map(normalize);
+      const ruleAvoidFor = toArray(rule.avoid_for_skin_types).map(normalize);
+      if (ruleConcerns.includes(context.concern)) score += strength * 2;
+      if (targetType && targetType !== 'not sure' && goodFor.includes(targetType)) score += strength;
+      if (targetType && targetType !== 'not sure' && ruleAvoidFor.includes(targetType)) score -= strength * 4;
+      if (normalize(context.sensitivity).includes('sensitive') && rule.sensitivity_warning) score -= strength * 3;
+    });
     return score;
   }
 

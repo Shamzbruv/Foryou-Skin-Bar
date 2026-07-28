@@ -1,6 +1,15 @@
 // Products data will be populated from Supabase
 window.productsData = [];
 
+function firstRelatedRecord(value) {
+    if (Array.isArray(value)) return value[0] || null;
+    return value && typeof value === 'object' ? value : null;
+}
+
+function normalizeRuleKey(value) {
+    return String(value || '').toLowerCase().trim().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+}
+
 window.loadProductsData = async function() {
     if (window.productsData.length > 0) return window.productsData;
 
@@ -11,12 +20,20 @@ window.loadProductsData = async function() {
 
 
     try {
-        const { data, error } = await window.supabase
+        const [{ data, error }, { data: ingredientRules, error: ingredientRulesError }] = await Promise.all([
+          window.supabase
             .from('products')
-            .select('*, categories(name), product_images(image_url, sort_order, is_primary), product_tags(name, type), product_variants(*), product_info_sections(*), product_concerns(concern_slug), product_ingredients(ingredient_name), product_recommendation_profiles(*), product_reviews(rating, approved)')
-            .eq('status', 'active');
+            .select('*, categories(name), product_images(image_url, sort_order, is_primary), product_tags(name, type), product_variants(*), product_info_sections(*), product_concerns(concern_slug), product_ingredients(ingredient_name, normalized_name), product_recommendation_profiles(*), product_reviews(rating, approved)')
+            .eq('status', 'active'),
+          window.supabase
+            .from('ingredient_rules')
+            .select('normalized_name,helps_concerns,good_for_skin_types,avoid_for_skin_types,strength_score,sensitivity_warning')
+        ]);
 
         if (error) throw error;
+        if (ingredientRulesError) console.warn('Ingredient quiz rules could not be loaded:', ingredientRulesError.message);
+
+        const ingredientRulesByName = new Map((ingredientRules || []).map(rule => [normalizeRuleKey(rule.normalized_name), rule]));
 
         window.productsData = (data || []).map(p => {
             const tags = p.product_tags || [];
@@ -52,12 +69,14 @@ window.loadProductsData = async function() {
                     body: section.body || ''
                 }));
 
-            const hasRecommendationProfile = Boolean(p.product_recommendation_profiles && p.product_recommendation_profiles.length > 0);
-            const recommendationProfile = hasRecommendationProfile
-                ? p.product_recommendation_profiles[0]
-                : {};
-            const routineStepValue = hasRecommendationProfile ? (recommendationProfile.routine_step || '') : '';
+            const recommendationProfile = firstRelatedRecord(p.product_recommendation_profiles);
+            const hasRecommendationProfile = Boolean(recommendationProfile);
+            const recommendation = recommendationProfile || {};
+            const routineStepValue = hasRecommendationProfile ? (recommendation.routine_step || '') : '';
             const routineSteps = String(routineStepValue || '').split(/[,\|]/).map(step => step.trim()).filter(Boolean);
+            const productIngredientRules = (p.product_ingredients || [])
+                .map(ingredient => ingredientRulesByName.get(normalizeRuleKey(ingredient.normalized_name || ingredient.ingredient_name)))
+                .filter(Boolean);
 
             const reviews = (p.product_reviews || []).filter(r => r.approved);
             const reviewCount = reviews.length;
@@ -89,15 +108,16 @@ window.loadProductsData = async function() {
                 returnPolicyHtml: p.return_policy_html || '',
                 infoSections,
                 skinConcern: (p.product_concerns || []).map(c => c.concern_slug).concat(tags.filter(t => t.type === 'skin_concern').map(t => t.name)),
-                skinType: Array.isArray(recommendationProfile.skin_types) && recommendationProfile.skin_types.length > 0 
-                    ? recommendationProfile.skin_types 
+                skinType: Array.isArray(recommendation.skin_types) && recommendation.skin_types.length > 0
+                    ? recommendation.skin_types
                     : tags.filter(t => t.type === 'skin_type').map(t => t.name),
-                avoidFor: recommendationProfile.avoid_for || [],
+                avoidFor: recommendation.avoid_for || [],
                 hasRecommendationProfile,
                 routineStep: routineStepValue,
                 routineSteps,
-                productUse: recommendationProfile.product_use || 'both',
-                isSensitiveFriendly: !!recommendationProfile.is_sensitive_friendly,
+                productUse: recommendation.product_use || 'both',
+                isSensitiveFriendly: !!recommendation.is_sensitive_friendly,
+                quizIngredientRules: productIngredientRules,
                 ingredients: (p.product_ingredients || []).map(i => i.ingredient_name).concat(tags.filter(t => t.type === 'ingredient').map(t => t.name)),
                 type: p.type,
                 howToUse: p.how_to_use || '',
@@ -109,6 +129,12 @@ window.loadProductsData = async function() {
                 allowBackorder: p.allow_backorder,
                 reviewCount,
                 reviewAverage,
+                is_sulphate_free: !!p.is_sulphate_free,
+                is_paraben_free: !!p.is_paraben_free,
+                is_mineral_oil_free: !!p.is_mineral_oil_free,
+                is_cruelty_free: !!p.is_cruelty_free,
+                is_handmade_in_jamaica: !!p.is_handmade_in_jamaica,
+                has_results_disclaimer: p.has_results_disclaimer !== false,
                 relatedProducts: [],
                 variants
             };

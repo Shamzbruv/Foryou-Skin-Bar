@@ -377,6 +377,9 @@
         const numberOrNull = (value) => value === '' || value === null || value === undefined ? null : Number(value);
         const intOrZero = (value) => Number.isFinite(parseInt(value, 10)) ? parseInt(value, 10) : 0;
         const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+        const firstRelatedRecord = (value) => Array.isArray(value)
+            ? (value[0] || null)
+            : (value && typeof value === 'object' ? value : null);
         const parseRoutineSteps = (value) => String(value || '').split(/[,\|]/).map(step => step.trim()).filter(Boolean);
         const selectedRoutineSteps = () => Array.from(document.querySelectorAll('input[name="rec_routine_steps"]:checked')).map(cb => cb.value);
         const setRoutineSteps = (value) => {
@@ -565,8 +568,8 @@
                     $('recIsSensitiveFriendly').checked = false;
                     $('recIngredientTags').value = (p.product_ingredients || []).map(i => i.ingredient_name).join(', ');
 
-                    if (p.product_recommendation_profiles && p.product_recommendation_profiles.length > 0) {
-                        const rec = p.product_recommendation_profiles[0];
+                    const rec = firstRelatedRecord(p.product_recommendation_profiles);
+                    if (rec) {
                         (rec.skin_types || []).forEach(st => {
                             const cb = document.querySelector(`input[name="recommendation_skin_types"][value="${st}"]`);
                             if (cb) cb.checked = true;
@@ -640,7 +643,13 @@
                     stock_quantity: intOrZero($('stockQuantity').value),
                     low_stock_threshold: intOrZero($('lowStockThreshold').value || 5),
                     allow_backorder: $('allowBackorder').checked,
-                    type: 'physical'
+                    type: 'physical',
+                    is_sulphate_free: $('attrSulphateFree').checked,
+                    is_paraben_free: $('attrParabenFree').checked,
+                    is_mineral_oil_free: $('attrMineralOilFree').checked,
+                    is_cruelty_free: $('attrCrueltyFree').checked,
+                    is_handmade_in_jamaica: $('attrHandmade').checked,
+                    has_results_disclaimer: $('attrDisclaimer').checked
                 };
 
                 if (!id) productData.slug = slugify(name) || `product-${Date.now()}`;
@@ -695,18 +704,29 @@
                     if (concernError) throw new Error('Failed to save concerns: ' + concernError.message);
                 }
 
+                const selectedSkinTypes = Array.from(document.querySelectorAll('input[name="recommendation_skin_types"]:checked')).map(cb => cb.value);
+                const selectedAvoidFor = Array.from(document.querySelectorAll('input[name="recommendation_avoid_for"]:checked')).map(cb => cb.value);
                 const recProfile = {
                     product_id: savedProductId,
-                    skin_types: Array.from(document.querySelectorAll('input[name="recommendation_skin_types"]:checked')).map(cb => cb.value),
-                    avoid_for: Array.from(document.querySelectorAll('input[name="recommendation_avoid_for"]:checked')).map(cb => cb.value),
+                    skin_types: selectedSkinTypes,
+                    avoid_for: selectedAvoidFor,
                     routine_step: selectedRoutineSteps().join(',') || null,
                     product_use: $('recProductUse').value || 'both',
                     is_sensitive_friendly: $('recIsSensitiveFriendly').checked,
                     updated_at: new Date().toISOString()
                 };
                 
-                const { error: recError } = await supabase.from('product_recommendation_profiles').upsert(recProfile);
+                const { data: savedProfile, error: recError } = await supabase
+                    .from('product_recommendation_profiles')
+                    .upsert(recProfile, { onConflict: 'product_id' })
+                    .select('product_id,skin_types,avoid_for,routine_step,product_use,is_sensitive_friendly')
+                    .single();
                 if (recError) throw new Error('Failed to save recommendation profile: ' + recError.message);
+                if (!savedProfile
+                    || JSON.stringify(savedProfile.skin_types || []) !== JSON.stringify(selectedSkinTypes)
+                    || JSON.stringify(savedProfile.avoid_for || []) !== JSON.stringify(selectedAvoidFor)) {
+                    throw new Error('Recommendation settings were not confirmed by Supabase. Please try saving again.');
+                }
 
                 await supabase.from('product_ingredients').delete().eq('product_id', savedProductId);
                 const rawIngredients = $('recIngredientTags').value.split(',').map(s => s.trim()).filter(Boolean);
