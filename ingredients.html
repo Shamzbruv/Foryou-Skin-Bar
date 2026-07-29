@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>The Glow Lab — Ingredients | Foryou Skin Bar</title>
+  <title>Natural Skincare Ingredients | Foryou Skin Bar Jamaica</title>
+  <link rel="canonical" href="https://foryouskinbar.com/ingredients.html">
+  <script src="js/seo.js?v=1" defer></script>
   <meta name="description" content="Discover the powerful natural ingredients behind For You Skin Bar's handmade Jamaican skincare. Learn about turmeric, kojic acid, niacinamide, and more.">
   <meta property="og:title" content="The Glow Lab — Ingredients | Foryou Skin Bar">
   <meta property="og:description" content="Discover the powerful natural ingredients behind For You Skin Bar's handmade Jamaican skincare. Learn about turmeric, kojic acid, niacinamide, and more.">
@@ -602,6 +604,7 @@
   <script src="js/supabase-public-client.js?v=5"></script>
   <script src="js/analytics.js"></script>
   <script src="js/products.js?v=8"></script>
+  <script src="js/currency.js?v=1"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=3"></script>
   <script>
@@ -628,7 +631,9 @@
       
       const productsList = document.getElementById('modalProducts');
       if (window.loadProductsData) await window.loadProductsData();
+      await (window.storefrontConfigReady || Promise.resolve());
       const products = window.productsData || [];
+      const money = (value) => window.currencyManager?.formatJmd(value) || `J$${Number(value || 0).toLocaleString()}`;
       
       // Find products containing the ingredient
       const matches = products.filter(p => {
@@ -642,7 +647,7 @@
             <img src="${p.image}" class="w-16 h-16 rounded-lg object-cover" alt="${p.name}">
             <div>
               <h4 class="font-bold text-sm leading-tight text-stone-800">${p.name}</h4>
-              <p class="text-amber-800 text-xs font-bold mt-1">J$${p.price.toLocaleString()}</p>
+              <p class="text-amber-800 text-xs font-bold mt-1">${money(p.price)}</p>
             </div>
           </a>
         `).join('');

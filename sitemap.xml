@@ -2,406 +2,313 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://foryouskinbar.com/</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://foryouskinbar.com/shop.html</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/about.html</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://foryouskinbar.com/quiz.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://foryouskinbar.com/ingredients.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/quiz.html</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://foryouskinbar.com/blog.html</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/contact.html</loc>
+    <loc>https://foryouskinbar.com/about.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://foryouskinbar.com/reviews.html</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://foryouskinbar.com/faq.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://foryouskinbar.com/shipping-returns.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/policies.html</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/cancel-order.html</loc>
+    <loc>https://foryouskinbar.com/loyalty.html</loc>
+    <lastmod>2026-07-29</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=1</loc>
+    <loc>https://foryouskinbar.com/contact.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://foryouskinbar.com/product.html?id=9a3de4af-e661-438e-bfff-ddfe151f0edf</loc>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=2</loc>
+    <loc>https://foryouskinbar.com/product.html?id=3c786736-5c0b-43b9-b673-b512c272b8ed</loc>
+    <lastmod>2026-07-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=3</loc>
+    <loc>https://foryouskinbar.com/product.html?id=97b8c46a-1263-4eea-9dba-38f81cef97fb</loc>
+    <lastmod>2026-07-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=4</loc>
+    <loc>https://foryouskinbar.com/product.html?id=7b6e0ab7-07c8-41c6-a177-75622286b859</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=5</loc>
+    <loc>https://foryouskinbar.com/product.html?id=88d5d6c7-7d7f-4246-ae8e-843ba4663012</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=6</loc>
+    <loc>https://foryouskinbar.com/product.html?id=42996137-84c9-4276-8ae8-21f6c111355e</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=7</loc>
+    <loc>https://foryouskinbar.com/product.html?id=755792fc-7d05-4a2c-a387-99ec77ca9f48</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=8</loc>
+    <loc>https://foryouskinbar.com/product.html?id=9332a432-3f9c-4fe6-92ea-d6650d4bf567</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=9</loc>
+    <loc>https://foryouskinbar.com/product.html?id=422ab00c-3654-4e7c-9d1c-da863028461e</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=10</loc>
+    <loc>https://foryouskinbar.com/product.html?id=b2a3e3d0-b34d-4a6f-939e-6c4b70f6a965</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=11</loc>
+    <loc>https://foryouskinbar.com/product.html?id=38f6cd18-9119-4a98-b061-e6777208790b</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=12</loc>
+    <loc>https://foryouskinbar.com/product.html?id=2db0e86e-44f4-443a-8358-b32fb2902e23</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=13</loc>
+    <loc>https://foryouskinbar.com/product.html?id=e8f77a1f-080b-437a-b8e1-6a7a71ca6b76</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=14</loc>
+    <loc>https://foryouskinbar.com/product.html?id=909854ff-269d-4533-a5a1-d55fa5f7849c</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=15</loc>
+    <loc>https://foryouskinbar.com/product.html?id=fe3c1b68-5e0d-4e89-aa41-cebc11e23978</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=16</loc>
+    <loc>https://foryouskinbar.com/product.html?id=f2f29e07-b096-4a30-a6e8-bf1d1773e966</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=17</loc>
+    <loc>https://foryouskinbar.com/product.html?id=a6272265-104c-4a7f-a31d-470b81c9bbf8</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=18</loc>
+    <loc>https://foryouskinbar.com/product.html?id=43db0056-5433-4de7-8a80-2c7e4bdc4c28</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=19</loc>
+    <loc>https://foryouskinbar.com/product.html?id=904dd532-77fe-446a-b973-531dd2330158</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=20</loc>
+    <loc>https://foryouskinbar.com/product.html?id=c918bb55-277c-4935-9017-9d8aed24259e</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=21</loc>
+    <loc>https://foryouskinbar.com/product.html?id=57ed7a02-2993-4612-8b80-5ae9c1af744d</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=22</loc>
+    <loc>https://foryouskinbar.com/product.html?id=bfacd23f-afd0-479f-af16-f18fba546b9b</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=23</loc>
+    <loc>https://foryouskinbar.com/product.html?id=2d3d7fde-7224-4f72-b7fc-113875ef7b67</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=24</loc>
+    <loc>https://foryouskinbar.com/product.html?id=156e229b-6d2a-4d3e-9ba9-e6c11dd51ac0</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=25</loc>
+    <loc>https://foryouskinbar.com/product.html?id=cae0ee3c-c16d-49ef-a286-404fc18351ce</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=26</loc>
+    <loc>https://foryouskinbar.com/product.html?id=fab9c721-3df6-40e6-932b-f866d105bfbf</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=27</loc>
+    <loc>https://foryouskinbar.com/product.html?id=9637472b-f733-4971-8025-53fcd6f26925</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=28</loc>
+    <loc>https://foryouskinbar.com/product.html?id=97c47bff-5c52-4829-9c8a-04ceb92bdcd7</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=29</loc>
+    <loc>https://foryouskinbar.com/product.html?id=30e9dd3e-baaf-4afd-85db-10ce78d00955</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=30</loc>
+    <loc>https://foryouskinbar.com/product.html?id=20dba37b-69b4-419c-9a9c-df0558111919</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=31</loc>
+    <loc>https://foryouskinbar.com/product.html?id=c36646d9-037a-4706-b2bf-8bb40c3a9d97</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=32</loc>
+    <loc>https://foryouskinbar.com/product.html?id=335bf16c-7120-4fbc-9fda-ce953838fbfe</loc>
+    <lastmod>2026-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/product.html?id=33</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=34</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=35</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=36</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=37</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=38</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=39</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=40</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=41</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=42</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=43</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=44</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=45</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=46</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=47</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=48</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=49</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/product.html?id=50</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=unlock-glowing-skin-with-natural-jamaican-skincare</loc>
+    <loc>https://foryouskinbar.com/blog-post.html?slug=benefits-of-handcrafted-skincare</loc>
+    <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=why-handmade-skincare-is-essential-for-healthy-skin</loc>
+    <loc>https://foryouskinbar.com/blog-post.html?slug=personal-journeys-shape-beauty-industry</loc>
+    <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=top-ingredients-for-radiant-skin-our-best-sellers</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=effective-natural-remedies-for-acne-and-hyperpigmentation-your-guide-to-clearer-skin-1</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=the-science-behind-natural-remedies-for-skin</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=effective-natural-remedies-for-acne-and-hyperpigmentation-your-guide-to-clearer-skin</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=discover-the-natural-skincare-benefits-why-i-switched-and-you-should-too</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=unlocking-the-power-of-handmade-skincare-benefits</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=natural-acne-remedies-for-clearer-skin-and-even-tone</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=how-natural-skincare-addresses-acne-and-hyperpigmentation-skincare-solutions</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=why-choose-handcrafted-skincare-for-clearer-skin</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=explore-the-benefits-of-handcrafted-skincare</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=discover-the-benefits-of-natural-skincare-products</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=celebrating-diversity-in-beauty-across-all-cultures</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=the-real-meaning-of-clean-beauty-in-a-jamaican-context</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=creating-personalized-skincare-solutions-for-every-skin-type</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=antioxidants-that-boost-skin-health-naturally</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=how-personal-journeys-shape-the-beauty-industry</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://foryouskinbar.com/blog-post.html?slug=natural-ingredients-that-brighten-and-even-skin-tone</loc>
+    <loc>https://foryouskinbar.com/blog-post.html?slug=natural-ingredients-brighten-even-skin-tone</loc>
+    <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://foryouskinbar.com/blog-post.html?slug=understanding-the-basics-of-skincare-for-healthy-skin</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://foryouskinbar.com/blog-post.html?slug=how-to-keep-acne-dark-spots-away</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://foryouskinbar.com/blog-post.html?slug=clean-beauty-hyperpigmentation-jamaican-women</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://foryouskinbar.com/blog-post.html?slug=from-breakouts-to-glow-a-step-by-step-guide-to-cleat-skin</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://foryouskinbar.com/blog-post.html?slug=jamaican-skincare-secrets-local-ingredients-that-work-wonders</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://foryouskinbar.com/blog-post.html?slug=hyperpigmentation-mistakes-how-to-fix-them</loc>
+    <lastmod>2026-07-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

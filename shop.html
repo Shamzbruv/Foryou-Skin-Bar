@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Shop All Products | Foryou Skin Bar</title>
+  <title>Shop Jamaican Skincare for Dark Spots & Acne | Foryou Skin Bar</title>
+  <link rel="canonical" href="https://foryouskinbar.com/shop.html">
+  <script src="js/seo.js?v=1" defer></script>
   <meta name="description" content="Browse our full collection of Jamaican handcrafted skincare — body butters, scrubs, serums, soaps, and everything your skin craves.">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -262,11 +264,14 @@
   <script src="js/supabase-public-client.js?v=5"></script>
   <script src="js/analytics.js"></script>
   <script src="js/products.js?v=8"></script>
+  <script src="js/currency.js?v=1"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=3"></script>
   <script>
     (async function() {
       await window.loadProductsData();
+      await (window.storefrontConfigReady || Promise.resolve());
+      const money = (value) => window.currencyManager?.formatJmd(value) || `J$${Number(value || 0).toLocaleString()}`;
 
       // Read URL params
       const urlParams = new URLSearchParams(window.location.search);
@@ -274,7 +279,7 @@
       let activeCategory = "All";
       let activeConcern = urlParams.get('concern');
       let sortMode = 'default';
-      let searchQuery = '';
+      let searchQuery = String(urlParams.get('search') || '').toLowerCase().trim();
       if(urlParams.get('category')) activeCategory = urlParams.get('category');
       if(urlParams.get('concern')) { activeConcern = urlParams.get('concern'); activeCategory = "All"; } // Override category if concern is set
 
@@ -402,7 +407,7 @@
                 </div>
                 <div class="shop-product-variant">${variantHtml}</div>
                 <div class="shop-product-purchase">
-                  <p id="price-${p.id}" class="shop-product-price">J$${priceDisplay.toLocaleString()}</p>
+                  <p id="price-${p.id}" class="shop-product-price">${money(priceDisplay)}</p>
                   <button id="addBtn-${p.id}" onclick="if(!this.disabled) window.addToCartWithVariant('${p.id}')" ${isOutOfStock ? 'disabled' : ''} class="${btnClass}">${btnText}</button>
                 </div>
               </div>
@@ -439,6 +444,7 @@
       const searchResults = document.getElementById('searchResults');
 
       if (searchInput) {
+        searchInput.value = urlParams.get('search') || '';
         searchInput.addEventListener('input', (e) => {
           searchQuery = e.target.value.toLowerCase().trim();
           
@@ -464,7 +470,7 @@
                 <img src="${p.image}" class="w-12 h-12 rounded-lg object-cover">
                 <div>
                   <div class="font-bold text-sm text-stone-800">${p.name}</div>
-                  <div class="text-xs text-stone-500">J$${p.price.toLocaleString()}</div>
+                  <div class="text-xs text-stone-500">${money(p.price)}</div>
                 </div>
               </a>
             `).join('');
@@ -487,7 +493,7 @@
         
         const priceEl = document.getElementById('price-' + productId);
         if (priceEl && price !== 'null' && price !== '') {
-          priceEl.innerText = 'J$' + Number(price).toLocaleString();
+          priceEl.innerText = money(price);
         }
         
         const btn = document.getElementById('addBtn-' + productId);

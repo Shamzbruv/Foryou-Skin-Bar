@@ -116,6 +116,55 @@
                     </div>
                 </div>
             </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden lg:col-span-2">
+                <div class="px-6 py-4 border-b border-stone-100 bg-stone-50 flex items-center justify-between gap-4">
+                    <div>
+                        <h2 class="font-bold text-stone-800"><i class="fas fa-truck-fast mr-2 text-stone-400"></i> Shipping & Currency</h2>
+                        <p class="text-xs text-stone-500 mt-1">These values control the storefront, checkout calculation, and Fygaro payment currency.</p>
+                    </div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-800">DHL ready</span>
+                </div>
+                <div class="p-6 grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">Jamaica free shipping (JMD)</label>
+                        <input type="number" min="0" step="100" id="shipping_domesticFreeThresholdJmd" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="10000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">International free shipping (JMD)</label>
+                        <input type="number" min="0" step="100" id="shipping_internationalFreeThresholdJmd" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="20000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">International shipping (USD)</label>
+                        <input type="number" min="0" step="0.01" id="shipping_internationalFlatRateUsd" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="37">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">JMD per USD</label>
+                        <input type="number" min="1" step="0.01" id="shipping_usdToJmdRate" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="160">
+                        <p class="text-xs text-stone-500 mt-1">Used to show product prices and charge international checkouts in USD.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">Zipmail (JMD)</label>
+                        <input type="number" min="0" step="50" id="shipping_zipmailJmd" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">Knutsford Express (JMD)</label>
+                        <input type="number" min="0" step="50" id="shipping_knutsfordJmd" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="700">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">Bearer delivery (JMD)</label>
+                        <input type="number" min="0" step="50" id="shipping_bearerJmd" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="750">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">International carrier</label>
+                        <input type="text" maxlength="60" id="shipping_internationalCarrier" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="DHL">
+                    </div>
+                    <label class="sm:col-span-2 xl:col-span-4 flex items-start gap-3 p-4 bg-stone-50 border border-stone-200 rounded-lg cursor-pointer">
+                        <input type="checkbox" id="shipping_autoDetectLocation" class="mt-1 accent-amber-800" checked>
+                        <span><strong class="block text-sm text-stone-800">Automatically detect customer country</strong><span class="text-xs text-stone-500">Uses the request country to select Jamaica/JMD or international/USD. Customers can still correct the country at checkout.</span></span>
+                    </label>
+                </div>
+            </div>
         </div>
 
         <!-- Toast Notification -->
@@ -129,6 +178,7 @@
         import { supabase, checkAuth } from '/admin/js/supabase-client.js';
         
         const KEYS = ['announcement_text', 'contact_email', 'contact_phone'];
+        const SHIPPING_KEYS = ['domesticFreeThresholdJmd', 'internationalFreeThresholdJmd', 'internationalFlatRateUsd', 'usdToJmdRate', 'zipmailJmd', 'knutsfordJmd', 'bearerJmd', 'internationalCarrier'];
 
         async function init() {
             await checkAuth();
@@ -161,8 +211,20 @@
             }
             
             data.forEach(setting => {
+                if (setting.key === 'shipping_rules') {
+                    let rules = setting.value || {};
+                    if (typeof rules === 'string') {
+                        try { rules = JSON.parse(rules); } catch (_) { rules = {}; }
+                    }
+                    SHIPPING_KEYS.forEach(key => {
+                        const input = document.getElementById('shipping_' + key);
+                        if (input && rules[key] !== undefined) input.value = rules[key];
+                    });
+                    document.getElementById('shipping_autoDetectLocation').checked = rules.autoDetectLocation !== false;
+                    return;
+                }
                 const input = document.getElementById('setting_' + setting.key);
-                if (input) input.value = setting.value || '';
+                if (input) input.value = typeof setting.value === 'string' ? setting.value : '';
             });
         }
 
@@ -178,6 +240,16 @@
                     const { error } = await supabase.from('store_settings').upsert({ key: key, value: val }, { onConflict: 'key' });
                     if (error) throw error;
                 }
+                const shippingRules = SHIPPING_KEYS.reduce((all, key) => {
+                    const input = document.getElementById('shipping_' + key);
+                    all[key] = key === 'internationalCarrier' ? input.value.trim() : Number(input.value);
+                    return all;
+                }, { autoDetectLocation: document.getElementById('shipping_autoDetectLocation').checked });
+                const { error: shippingError } = await supabase.from('store_settings').upsert({
+                    key: 'shipping_rules',
+                    value: shippingRules
+                }, { onConflict: 'key' });
+                if (shippingError) throw shippingError;
                 showToast('Settings saved successfully!');
             } catch (err) {
                 showToast(err.message, 'error');

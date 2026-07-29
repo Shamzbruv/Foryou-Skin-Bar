@@ -217,6 +217,14 @@
       return 'J$' + Number(amount || 0).toLocaleString();
     }
 
+    function formatOrderMoney(amountJmd, order) {
+      if (String(order?.payment_currency || 'JMD').toUpperCase() === 'USD') {
+        const rate = Math.max(1, Number(order.exchange_rate_jmd_per_usd) || 160);
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(amountJmd || 0) / rate).replace('$', 'US$');
+      }
+      return formatJmd(amountJmd);
+    }
+
     function escapeHtml(value = '') {
       return String(value).replace(/[&<>'"]/g, (character) => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -245,7 +253,7 @@
               <p class="font-semibold text-stone-800">${escapeHtml(item.product_name)}</p>
               <p class="text-stone-400 text-xs">Qty: ${escapeHtml(item.quantity)}</p>
             </div>
-            <p class="font-medium text-stone-700">${formatJmd(item.line_total_jmd)}</p>
+            <p class="font-medium text-stone-700">${formatOrderMoney(item.line_total_jmd, order)}</p>
           </div>
         `).join('');
       } else {
@@ -253,14 +261,16 @@
       }
 
       // Totals
-      document.getElementById('confirmedSubtotal').textContent = formatJmd(order.subtotal_jmd);
+      document.getElementById('confirmedSubtotal').textContent = formatOrderMoney(order.subtotal_jmd, order);
       document.getElementById('confirmedShipping').textContent = order.shipping_total_jmd > 0
-        ? formatJmd(order.shipping_total_jmd) : 'Free';
-      document.getElementById('confirmedTotal').textContent = formatJmd(order.grand_total_jmd);
+        ? formatOrderMoney(order.shipping_total_jmd, order) : 'Free';
+      document.getElementById('confirmedTotal').textContent = order.payment_currency === 'USD'
+        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(order.payment_amount || 0)).replace('$', 'US$')
+        : formatJmd(order.grand_total_jmd);
 
       if (order.discount_total_jmd > 0) {
         document.getElementById('confirmedDiscountRow').style.display = 'flex';
-        document.getElementById('confirmedDiscount').textContent = `-${formatJmd(order.discount_total_jmd)}`;
+        document.getElementById('confirmedDiscount').textContent = `-${formatOrderMoney(order.discount_total_jmd, order)}`;
       }
 
       // Delivery

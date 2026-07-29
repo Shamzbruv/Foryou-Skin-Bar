@@ -9,6 +9,7 @@ class CartManager {
     this.WHATSAPP_NUMBER = '18763094374';
     this.items = JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || [];
     this.initUI();
+    window.addEventListener('storefront:config-ready', () => this.updateUI());
   }
 
   // ── Persistence ──
@@ -76,11 +77,23 @@ class CartManager {
   }
 
   getShippingCost() {
-    return this.getTotal() >= this.FREE_SHIPPING_THRESHOLD ? 0 : 500;
+    const config = window.currencyManager?.config;
+    const rules = config?.shipping || {};
+    const threshold = config?.isInternational
+      ? Number(rules.internationalFreeThresholdJmd || 20000)
+      : Number(rules.domesticFreeThresholdJmd || 10000);
+    const rate = config?.isInternational
+      ? Number(rules.internationalFlatRateUsd || 37) * Number(rules.usdToJmdRate || 160)
+      : Number(rules.zipmailJmd || 500);
+    return this.getTotal() >= threshold ? 0 : rate;
   }
 
   getGrandTotal() {
     return this.getTotal() + this.getShippingCost();
+  }
+
+  formatMoney(value) {
+    return window.currencyManager?.formatJmd(value) || `J$${Number(value || 0).toLocaleString()}`;
   }
 
   // ── UI Initialization ──
@@ -154,7 +167,7 @@ class CartManager {
             <img src="${item.image || 'https://placehold.co/100x100/F5EDE1/8B5A2B?text=Product'}" alt="${item.name}" class="w-16 h-16 rounded-xl object-cover flex-shrink-0">
             <div class="flex-1 min-w-0">
               <h4 class="text-sm font-bold text-stone-800 leading-tight truncate">${item.name}</h4>
-              <p class="text-amber-800 text-sm font-semibold mt-0.5">J$${item.price.toLocaleString()}</p>
+              <p class="text-amber-800 text-sm font-semibold mt-0.5">${this.formatMoney(item.price)}</p>
               <div class="flex items-center gap-1 mt-2">
                 <button onclick="window.cartManager.updateQty('${item.id}', ${item.qty - 1})" class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center text-xs transition">−</button>
                 <span class="text-sm font-bold w-8 text-center">${item.qty}</span>
@@ -163,7 +176,7 @@ class CartManager {
             </div>
             <div class="flex flex-col items-end justify-between">
               <button onclick="window.cartManager.removeItem('${item.id}')" class="text-stone-300 hover:text-red-500 transition p-1"><i class="fas fa-trash-can text-xs"></i></button>
-              <span class="text-sm font-bold text-stone-700">J$${(item.price * item.qty).toLocaleString()}</span>
+              <span class="text-sm font-bold text-stone-700">${this.formatMoney(item.price * item.qty)}</span>
             </div>
           </div>
         `).join('');
@@ -172,14 +185,18 @@ class CartManager {
 
     // Update total
     if (this.cartTotal) {
-      this.cartTotal.innerText = 'J$' + this.getTotal().toLocaleString();
+      this.cartTotal.innerText = this.formatMoney(this.getTotal());
     }
 
     // Shipping progress bar
     if (this.shippingProgress) {
       const total = this.getTotal();
-      const remaining = this.FREE_SHIPPING_THRESHOLD - total;
-      const progress = Math.min((total / this.FREE_SHIPPING_THRESHOLD) * 100, 100);
+      const config = window.currencyManager?.config;
+      const threshold = config?.isInternational
+        ? Number(config.shipping?.internationalFreeThresholdJmd || 20000)
+        : Number(config?.shipping?.domesticFreeThresholdJmd || this.FREE_SHIPPING_THRESHOLD);
+      const remaining = threshold - total;
+      const progress = Math.min((total / threshold) * 100, 100);
 
       if (this.items.length === 0) {
         this.shippingProgress.innerHTML = '';
@@ -191,7 +208,7 @@ class CartManager {
       } else {
         this.shippingProgress.innerHTML = `
           <div class="text-center text-xs text-stone-500 mb-1.5">
-            Add <strong class="text-amber-800">J$${remaining.toLocaleString()}</strong> more for free shipping
+            Add <strong class="text-amber-800">${this.formatMoney(remaining)}</strong> more for free shipping
           </div>
           <div class="w-full bg-stone-100 rounded-full h-1.5">
             <div class="bg-amber-700 h-1.5 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
@@ -219,14 +236,14 @@ class CartManager {
 
     message += `\n*Order:*\n`;
     this.items.forEach((item, i) => {
-      message += `${i + 1}. ${item.name} × ${item.qty} — J$${(item.price * item.qty).toLocaleString()}\n`;
+      message += `${i + 1}. ${item.name} x ${item.qty} - ${this.formatMoney(item.price * item.qty)}\n`;
     });
 
     const subtotal = this.getTotal();
     const shipping = this.getShippingCost();
-    message += `\n*Subtotal:* J$${subtotal.toLocaleString()}`;
-    message += `\n*Shipping:* ${shipping === 0 ? 'Free' : 'J$' + shipping.toLocaleString()}`;
-    message += `\n*Total:* J$${this.getGrandTotal().toLocaleString()}`;
+    message += `\n*Subtotal:* ${this.formatMoney(subtotal)}`;
+    message += `\n*Shipping:* ${shipping === 0 ? 'Free' : this.formatMoney(shipping)}`;
+    message += `\n*Total:* ${this.formatMoney(this.getGrandTotal())}`;
 
     if (notes) message += `\n\n*Notes:* ${notes}`;
 

@@ -33,8 +33,21 @@ const FYGARO_API_SECRET = process.env.FYGARO_API_SECRET || '';
 const FYGARO_BUTTON_URL = process.env.FYGARO_BUTTON_URL || 'https://www.fygaro.com/en/pb/00c0f5ec-24aa-4069-97ce-9495f7798ab4/';
 const SERVER_BASE_URL   = (process.env.SERVER_BASE_URL || `http://localhost:${PORT}`).replace(/\/+$/, '');
 const RESEND_API_KEY    = process.env.RESEND_API_KEY || '';
-const OWNER_EMAIL       = process.env.OWNER_EMAIL || 'clientemail@example.com';
-const FROM_EMAIL        = process.env.FROM_EMAIL || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
+const OWNER_EMAIL       = process.env.OWNER_EMAIL || 'hello@foryouskinbar.com';
+const FROM_EMAIL        = process.env.FROM_EMAIL || 'For You Skin Bar <hello@foryouskinbar.com>';
+const REPLY_TO_EMAIL    = process.env.REPLY_TO_EMAIL || 'hello@foryouskinbar.com';
+
+const DEFAULT_SHIPPING_RULES = Object.freeze({
+  domesticFreeThresholdJmd: 10000,
+  internationalFreeThresholdJmd: 20000,
+  internationalFlatRateUsd: 37,
+  usdToJmdRate: 160,
+  zipmailJmd: 500,
+  knutsfordJmd: 700,
+  bearerJmd: 750,
+  internationalCarrier: 'DHL',
+  autoDetectLocation: true
+});
 
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>'"]/g, (char) => ({
@@ -90,8 +103,9 @@ function paymentCallbackUrls(origin, orderNumber) {
   };
 }
 
-function buildFygaroPaymentUrl(orderNumber, amountJmd) {
-  const amount = Number(amountJmd);
+function buildFygaroPaymentUrl(orderNumber, paymentAmount, currency = 'JMD') {
+  const amount = Number(paymentAmount);
+  const paymentCurrency = String(currency || 'JMD').toUpperCase() === 'USD' ? 'USD' : 'JMD';
   if (!FYGARO_BUTTON_URL || !orderNumber || !Number.isFinite(amount) || amount <= 0) return null;
   if (!FYGARO_API_SECRET) {
     console.error('[Fygaro] Checkout blocked because FYGARO_API_SECRET is not configured.');
@@ -104,7 +118,7 @@ function buildFygaroPaymentUrl(orderNumber, amountJmd) {
       const nowSec = Math.floor(Date.now() / 1000);
       const token = jwt.sign({
         amount: amount.toFixed(2),
-        currency: 'JMD',
+        currency: paymentCurrency,
         custom_reference: orderNumber,
         exp: nowSec + 3600,
         nbf: nowSec
@@ -117,6 +131,7 @@ function buildFygaroPaymentUrl(orderNumber, amountJmd) {
     }
 
     paymentUrl.searchParams.set('amount', amount.toFixed(2));
+    paymentUrl.searchParams.set('currency', paymentCurrency);
     paymentUrl.searchParams.set('client_reference', orderNumber);
     paymentUrl.searchParams.set('client_note', `For You Skin Bar order ${orderNumber}`);
     return { url: paymentUrl.toString(), mode: 'payment_link' };
@@ -193,8 +208,158 @@ const supabaseAdmin = createClient(
   { realtime: { transport: WebSocket } }
 );
 
+function numberSetting(value, fallback, min = 0, max = 10000000) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+}
+
+function normalizeShippingRules(value) {
+  let source = value;
+  if (typeof source === 'string') {
+    try { source = JSON.parse(source); } catch (_) { source = {}; }
+  }
+  if (!source || typeof source !== 'object' || Array.isArray(source)) source = {};
+  return {
+    domesticFreeThresholdJmd: numberSetting(source.domesticFreeThresholdJmd, DEFAULT_SHIPPING_RULES.domesticFreeThresholdJmd),
+    internationalFreeThresholdJmd: numberSetting(source.internationalFreeThresholdJmd, DEFAULT_SHIPPING_RULES.internationalFreeThresholdJmd),
+    internationalFlatRateUsd: numberSetting(source.internationalFlatRateUsd, DEFAULT_SHIPPING_RULES.internationalFlatRateUsd, 0, 10000),
+    usdToJmdRate: numberSetting(source.usdToJmdRate, DEFAULT_SHIPPING_RULES.usdToJmdRate, 1, 10000),
+    zipmailJmd: numberSetting(source.zipmailJmd, DEFAULT_SHIPPING_RULES.zipmailJmd),
+    knutsfordJmd: numberSetting(source.knutsfordJmd, DEFAULT_SHIPPING_RULES.knutsfordJmd),
+    bearerJmd: numberSetting(source.bearerJmd, DEFAULT_SHIPPING_RULES.bearerJmd),
+    internationalCarrier: String(source.internationalCarrier || DEFAULT_SHIPPING_RULES.internationalCarrier).trim().slice(0, 60) || 'DHL',
+    autoDetectLocation: source.autoDetectLocation !== false
+  };
+}
+
+async function getShippingRules() {
+  const { data, error } = await supabaseAdmin
+    .from('store_settings')
+    .select('value')
+    .eq('key', 'shipping_rules')
+    .maybeSingle();
+  if (error) {
+    console.warn('[Shipping] Could not load admin rules:', error.message);
+    return { ...DEFAULT_SHIPPING_RULES };
+  }
+  return normalizeShippingRules(data?.value);
+}
+
+function isJamaicaCountry(value) {
+  return ['jm', 'jamaica'].includes(String(value || '').trim().toLowerCase());
+}
+
+function requestIp(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return (forwarded || req.ip || '').replace(/^::ffff:/, '');
+}
+
+function publicIp(value) {
+  const ip = String(value || '').trim();
+  if (!ip || ip === '::1' || ip === '127.0.0.1') return '';
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip)) return '';
+  return ip;
+}
+
+async function detectCountryCode(req, allowLookup = true) {
+  const headerCountry = String(
+    req.headers['cf-ipcountry'] ||
+    req.headers['x-vercel-ip-country'] ||
+    req.headers['cloudfront-viewer-country'] ||
+    req.headers['x-country-code'] || ''
+  ).trim().toUpperCase();
+  if (/^[A-Z]{2}$/.test(headerCountry) && headerCountry !== 'XX') return headerCountry;
+
+  const timezone = String(req.headers['x-client-timezone'] || '').trim();
+  if (!publicIp(requestIp(req))) return timezone === 'America/Jamaica' ? 'JM' : 'JM';
+  if (!allowLookup) return 'JM';
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1600);
+  try {
+    const response = await fetch(`https://api.country.is/${encodeURIComponent(publicIp(requestIp(req)))}`, {
+      headers: { Accept: 'application/json' },
+      signal: controller.signal
+    });
+    if (!response.ok) return 'JM';
+    const data = await response.json();
+    return /^[A-Z]{2}$/.test(String(data.country || '').toUpperCase()) ? String(data.country).toUpperCase() : 'JM';
+  } catch (_) {
+    return 'JM';
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function countryName(countryCode) {
+  try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode) || countryCode; }
+  catch (_) { return countryCode === 'JM' ? 'Jamaica' : countryCode; }
+}
+
+function formatPaymentAmount(amount, currency = 'JMD') {
+  const paymentCurrency = String(currency || 'JMD').toUpperCase();
+  if (paymentCurrency !== 'USD') return `J$${Math.round(Number(amount) || 0).toLocaleString('en-US')}`;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2
+  }).format(Number(amount) || 0).replace('$', 'US$');
+}
+
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+}
+
+function emailPlainText(html = '') {
+  return String(html)
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>|<\/div>|<\/li>|<\/h[1-6]>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function brandedEmailHtml(subject, bodyHtml, emailType = '') {
+  const isNewsletter = ['newsletter_welcome', 'newsletter_broadcast', 'blog_published'].includes(emailType);
+  const preheader = isNewsletter
+    ? 'Glow Letters from For You Skin Bar'
+    : 'An update from For You Skin Bar';
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:#f4efe7;color:#2c211b;font-family:Arial,Helvetica,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(preheader)}</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4efe7;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fffdf9;border:1px solid #e6d5b4;">
+        <tr><td style="padding:24px 30px 18px;border-bottom:3px solid #c89b3c;text-align:center;">
+          <a href="${escapeHtml(SERVER_BASE_URL)}" style="text-decoration:none;color:#2c211b;">
+            <img src="${escapeHtml(SERVER_BASE_URL)}/assets/brand/logo.png" width="178" alt="For You Skin Bar" style="display:block;width:178px;max-width:70%;height:auto;margin:0 auto;">
+          </a>
+        </td></tr>
+        <tr><td style="padding:34px 34px 18px;">
+          <p style="margin:0 0 10px;color:#a97618;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Made for your skin</p>
+          <h1 style="margin:0 0 22px;color:#201915;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1.18;font-weight:600;">${escapeHtml(subject)}</h1>
+          <div style="color:#4f433a;font-size:16px;line-height:1.7;">${bodyHtml}</div>
+        </td></tr>
+        <tr><td style="padding:22px 34px 32px;">
+          <table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="background:#344633;">
+            <a href="${escapeHtml(SERVER_BASE_URL)}/shop.html" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Visit For You Skin Bar</a>
+          </td></tr></table>
+        </td></tr>
+        <tr><td style="padding:24px 34px;background:#201d1a;color:#e8ddcb;text-align:center;font-size:12px;line-height:1.7;">
+          <strong style="color:#e1bd67;">Pure ingredients. Thoughtfully made. Beautifully you.</strong><br>
+          Handmade in Jamaica &nbsp;|&nbsp; <a href="${escapeHtml(SERVER_BASE_URL)}/contact.html" style="color:#ffffff;">Contact us</a>
+          ${isNewsletter ? '<br>You received this because you subscribed to Glow Letters. Reply with "unsubscribe" to opt out.' : ''}
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
 }
 
 async function deliverEmailLog(logId, message) {
@@ -203,13 +368,16 @@ async function deliverEmailLog(logId, message) {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Idempotency-Key': `foryou-email-${logId}`
       },
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: message.recipient,
+        reply_to: REPLY_TO_EMAIL,
         subject: message.subject,
-        html: message.html
+        html: message.html,
+        text: emailPlainText(message.html)
       })
     });
     const responseBody = await response.json().catch(async () => ({ message: await response.text().catch(() => '') }));
@@ -237,12 +405,13 @@ async function queueEmail({ orderId = null, recipient, emailType, subject, html,
   const scheduledDate = scheduledFor ? new Date(scheduledFor) : null;
   const isScheduled = scheduledDate && Number.isFinite(scheduledDate.getTime()) && scheduledDate.getTime() > Date.now();
   const initialStatus = isScheduled ? 'scheduled' : (RESEND_API_KEY ? 'queued' : 'pending_resend_setup');
+  const decoratedHtml = brandedEmailHtml(subject, html, emailType);
   const { data: log, error: logError } = await supabaseAdmin.from('email_logs').insert({
     order_id: orderId,
     recipient: normalizedRecipient,
     email_type: emailType,
     subject,
-    html_body: html,
+    html_body: decoratedHtml,
     metadata,
     scheduled_for: isScheduled ? scheduledDate.toISOString() : null,
     status: initialStatus,
@@ -256,7 +425,7 @@ async function queueEmail({ orderId = null, recipient, emailType, subject, html,
   if (isScheduled) return { queued: true, sent: false, scheduled: true };
   if (!RESEND_API_KEY) return { queued: true, sent: false, pendingSetup: true };
 
-  const result = await deliverEmailLog(log.id, { recipient: normalizedRecipient, subject, html });
+  const result = await deliverEmailLog(log.id, { recipient: normalizedRecipient, subject, html: decoratedHtml });
   return { queued: true, ...result };
 }
 
@@ -265,7 +434,7 @@ async function processPendingEmails(limit = 50) {
   const { data: pending, error } = await supabaseAdmin
     .from('email_logs')
     .select('id,recipient,subject,html_body')
-    .in('status', ['pending_resend_setup', 'scheduled'])
+    .in('status', ['queued', 'scheduled'])
     .not('subject', 'is', null)
     .not('html_body', 'is', null)
     .or(`scheduled_for.is.null,scheduled_for.lte.${new Date().toISOString()}`)
@@ -309,12 +478,16 @@ async function materializePaidCheckoutSession(session) {
     discount_total_jmd: session.discount_total_jmd,
     shipping_total_jmd: session.shipping_total_jmd,
     grand_total_jmd: session.grand_total_jmd,
+    payment_currency: session.payment_currency || 'JMD',
+    payment_amount: session.payment_amount || session.grand_total_jmd,
+    exchange_rate_jmd_per_usd: session.exchange_rate_jmd_per_usd || null,
+    customer_region: session.customer_region || (isJamaicaCountry(shipping.country) ? 'domestic' : 'international'),
     points_earned: session.points_earned,
     payment_method: 'Fygaro',
     status: 'pending',
     payment_status: 'awaiting_confirmation',
     fulfillment_status: 'unfulfilled'
-  }).select('id,order_number,status,payment_status,grand_total_jmd,customer_id,delivery_service,admin_notes').single();
+  }).select('id,order_number,status,payment_status,grand_total_jmd,payment_currency,payment_amount,customer_id,delivery_service,admin_notes').single();
   if (orderError) throw orderError;
 
   const orderItems = cart.map((item) => ({
@@ -377,7 +550,7 @@ async function reconcileCheckoutSessionPayment(orderRef, paymentReference, sourc
 
   const { data: existingOrder, error: orderFetchError } = await supabaseAdmin
     .from('orders')
-    .select('id,order_number,status,payment_status,grand_total_jmd,customer_id,delivery_service,admin_notes')
+    .select('id,order_number,status,payment_status,grand_total_jmd,payment_currency,payment_amount,customer_id,delivery_service,admin_notes')
     .eq('order_number', orderRef)
     .maybeSingle();
   if (orderFetchError) throw orderFetchError;
@@ -401,7 +574,7 @@ async function reconcileCheckoutSessionPayment(orderRef, paymentReference, sourc
         updated_at: new Date().toISOString()
       })
       .eq('id', order.id)
-      .select('id,order_number,status,payment_status,grand_total_jmd,customer_id,delivery_service,admin_notes')
+      .select('id,order_number,status,payment_status,grand_total_jmd,payment_currency,payment_amount,customer_id,delivery_service,admin_notes')
       .single();
     if (updateError) throw updateError;
     order = updatedOrder;
@@ -454,6 +627,30 @@ async function requireAdmin(req) {
 
 // ── API Routes ──
 
+app.get('/api/storefront-config', async (req, res) => {
+  try {
+    const shipping = await getShippingRules();
+    const countryCode = await detectCountryCode(req, shipping.autoDetectLocation);
+    const isInternational = countryCode !== 'JM';
+    res.set('Cache-Control', 'private, max-age=300');
+    return res.status(200).json({
+      detectedCountryCode: countryCode,
+      detectedCountry: countryName(countryCode),
+      isInternational,
+      displayCurrency: isInternational ? 'USD' : 'JMD',
+      shipping
+    });
+  } catch (_) {
+    return res.status(200).json({
+      detectedCountryCode: 'JM',
+      detectedCountry: 'Jamaica',
+      isInternational: false,
+      displayCurrency: 'JMD',
+      shipping: { ...DEFAULT_SHIPPING_RULES }
+    });
+  }
+});
+
 app.post('/api/validate-discount', async (req, res) => {
   try {
     const { code, subtotal } = req.body;
@@ -493,7 +690,7 @@ app.post('/api/validate-discount', async (req, res) => {
     }
 
     let discountAmount = 0;
-    if (discountData.discount_type === 'percent') {
+    if (['percent', 'percentage'].includes(discountData.discount_type)) {
       discountAmount = (subtotal || 0) * (Number(discountData.discount_value) / 100);
     } else {
       discountAmount = Number(discountData.discount_value);
@@ -750,6 +947,7 @@ app.post('/api/create-order', async (req, res) => {
 
     let discountAmount = 0;
     let appliedDiscountCode = null;
+    let freeShippingDiscount = false;
 
     if (discountCode) {
       const { data: discountData } = await supabaseAdmin
@@ -771,7 +969,9 @@ app.post('/api/create-order', async (req, res) => {
         if (discountData.minimum_subtotal && subtotal < discountData.minimum_subtotal) isValid = false;
 
         if (isValid) {
-          if (discountData.discount_type === 'percent') {
+          if (discountData.discount_type === 'free_shipping') {
+            freeShippingDiscount = true;
+          } else if (['percent', 'percentage'].includes(discountData.discount_type)) {
             discountAmount = subtotal * (Number(discountData.discount_value) / 100);
           } else {
             discountAmount = Number(discountData.discount_value);
@@ -784,32 +984,46 @@ app.post('/api/create-order', async (req, res) => {
 
     const subtotalAfterDiscount = subtotal - discountAmount;
 
+    const shippingRules = await getShippingRules();
+    const isInternational = !isJamaicaCountry(shipping.country);
     let shippingCost = 0;
     let shippingStatus = 'confirmed';
     let deliveryMethod = 'delivery';
-    let deliveryService = shipping.deliveryMethod;
+    let deliveryService = isInternational ? 'Overseas' : shipping.deliveryMethod;
 
-    if (deliveryService === 'Zipmail') shippingCost = 500;
-    else if (deliveryService === 'Knutsford') shippingCost = 700;
-    else if (deliveryService === 'Bearer') shippingCost = 750;
-    else if (deliveryService === 'Overseas') {
-      shippingStatus = 'pending_quote';
-    } else if (deliveryService === 'Pickup') {
+    if (isInternational) {
+      shippingCost = subtotalAfterDiscount >= shippingRules.internationalFreeThresholdJmd
+        ? 0
+        : Number((shippingRules.internationalFlatRateUsd * shippingRules.usdToJmdRate).toFixed(2));
+    } else if (deliveryService === 'Zipmail') shippingCost = shippingRules.zipmailJmd;
+    else if (deliveryService === 'Knutsford') shippingCost = shippingRules.knutsfordJmd;
+    else if (deliveryService === 'Bearer') shippingCost = shippingRules.bearerJmd;
+    else if (deliveryService === 'Pickup') {
       deliveryMethod = 'pickup';
       shippingCost = 0;
+    } else {
+      const error = new Error('Select a valid delivery method.');
+      error.status = 400;
+      throw error;
     }
 
-    if (subtotalAfterDiscount >= 10000 || deliveryService === 'Overseas') {
+    if (!isInternational && subtotalAfterDiscount >= shippingRules.domesticFreeThresholdJmd) {
       shippingCost = 0;
     }
+    if (freeShippingDiscount) shippingCost = 0;
 
     const total = subtotalAfterDiscount + shippingCost;
+    const paymentCurrency = isInternational ? 'USD' : 'JMD';
+    const paymentAmount = isInternational
+      ? Number((total / shippingRules.usdToJmdRate).toFixed(2))
+      : Number(total.toFixed(2));
+    const customerRegion = isInternational ? 'international' : 'domestic';
 
     const dateStr = jamaicaDateStamp();
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const orderNumber = `FSB-${dateStr}-${randomNum}`;
     const checkoutOrigin = requestOrigin(req);
-    const fygaroPayment = buildFygaroPaymentUrl(orderNumber, total);
+    const fygaroPayment = buildFygaroPaymentUrl(orderNumber, paymentAmount, paymentCurrency);
     if (!fygaroPayment) {
       const error = new Error('Secure payment is temporarily unavailable. No order was created. Please try again shortly.');
       error.status = 503;
@@ -905,6 +1119,10 @@ app.post('/api/create-order', async (req, res) => {
         discount_total_jmd: discountAmount,
         shipping_total_jmd: shippingCost,
         grand_total_jmd: total,
+        payment_currency: paymentCurrency,
+        payment_amount: paymentAmount,
+        exchange_rate_jmd_per_usd: isInternational ? shippingRules.usdToJmdRate : null,
+        customer_region: customerRegion,
         points_earned: pointsEarned,
         status: 'pending'
       });
@@ -944,7 +1162,9 @@ app.post('/api/create-order', async (req, res) => {
     const OWNER_EMAIL = process.env.OWNER_EMAIL || 'clientemail@example.com';
     const FROM_EMAIL = process.env.FROM_EMAIL || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
 
-    if (RESEND_API_KEY) {
+    // All active delivery goes through queueEmail so every message is logged,
+    // branded, and protected by a Resend idempotency key.
+    if (false && RESEND_API_KEY) {
       const itemsListText = validatedCart.map((item, idx) => `${idx + 1}. ${item.name} × ${item.quantity} — J$${(item.price * item.quantity).toLocaleString()}`).join('\n');
 
       const customerHtml = `
@@ -1048,24 +1268,29 @@ app.post('/api/create-order', async (req, res) => {
         error_message: ownerErrorMsg
       });
     } else {
+      const customerMoney = (valueJmd) => paymentCurrency === 'USD'
+        ? formatPaymentAmount(Number(valueJmd) / shippingRules.usdToJmdRate, 'USD')
+        : formatPaymentAmount(valueJmd, 'JMD');
+      const paymentDisplay = formatPaymentAmount(paymentAmount, paymentCurrency);
       const pendingItemsHtml = validatedCart.map((item, index) =>
-        `${index + 1}. ${escapeHtml(item.name)} x ${escapeHtml(item.quantity)} - J$${(item.price * item.quantity).toLocaleString()}`
-      ).join('<br>');
+        `<div style="padding:8px 0;border-bottom:1px solid #eee5d6;"><strong>${index + 1}. ${escapeHtml(item.name)}</strong><br>Qty ${escapeHtml(item.quantity)} &middot; ${customerMoney(item.price * item.quantity)}</div>`
+      ).join('');
+      const paymentButton = `<p style="margin:24px 0;"><a href="${escapeHtml(fygaroPayment.url)}" style="display:inline-block;background:#344633;color:#fff;text-decoration:none;padding:13px 20px;font-weight:700;">Complete secure payment</a></p>`;
       await queueEmail({
         orderId,
         recipient: customer.email,
         emailType: 'payment_pending',
         subject: `Complete payment for For You Skin Bar order ${orderNumber}`,
-        html: `<p>Hi ${escapeHtml(customer.fullName)},</p><p>Your checkout details have been saved for <strong>${escapeHtml(orderNumber)}</strong>.</p><p><strong>Your order is not confirmed until payment is completed through Fygaro.</strong></p><p>${pendingItemsHtml}</p><p>Total due: J$${total.toLocaleString()}</p>`,
-        metadata: { order_number: orderNumber }
+        html: `<p>Hi ${escapeHtml(customer.fullName)},</p><p>Your checkout is saved, but <strong>your order is not confirmed until Fygaro payment is complete.</strong></p>${paymentButton}<p><strong>Reference:</strong> ${escapeHtml(orderNumber)}<br><strong>Delivery:</strong> ${escapeHtml(isInternational ? `${shippingRules.internationalCarrier} international delivery` : deliveryService)}<br><strong>Amount due:</strong> ${paymentDisplay}</p><div style="margin:20px 0;">${pendingItemsHtml}</div><p><strong>Ship to:</strong><br>${escapeHtml(formattedAddress)}</p><p>This is a payment reminder, not a paid-order receipt.</p>`,
+        metadata: { order_number: orderNumber, payment_currency: paymentCurrency, payment_amount: paymentAmount }
       });
       await queueEmail({
         orderId,
         recipient: OWNER_EMAIL,
         emailType: 'owner_payment_pending',
         subject: `Payment pending - ${orderNumber}`,
-        html: `<p>A customer started Fygaro checkout for <strong>${escapeHtml(orderNumber)}</strong>.</p><p>Amount awaiting payment: J$${total.toLocaleString()}</p><p>Do not fulfil this order until its payment status changes to Paid.</p>`,
-        metadata: { order_number: orderNumber }
+        html: `<p>A customer reached Fygaro checkout. <strong>Do not fulfil this checkout until payment is marked Paid.</strong></p><p><strong>Customer:</strong> ${escapeHtml(customer.fullName)}<br>${escapeHtml(customer.email)}<br>${escapeHtml(customer.phone)}</p><p><strong>Amount awaiting payment:</strong> ${paymentDisplay}<br><strong>JMD accounting total:</strong> ${formatPaymentAmount(total, 'JMD')}<br><strong>Delivery:</strong> ${escapeHtml(isInternational ? `${shippingRules.internationalCarrier} international delivery` : deliveryService)}</p><div style="margin:20px 0;">${pendingItemsHtml}</div><p><strong>Address:</strong><br>${escapeHtml(formattedAddress)}</p><p><strong>Notes:</strong> ${escapeHtml(shipping.notes || 'None')}</p>`,
+        metadata: { order_number: orderNumber, payment_currency: paymentCurrency, payment_amount: paymentAmount }
       });
     }
 
@@ -1074,6 +1299,9 @@ app.post('/api/create-order', async (req, res) => {
       success: true, 
       order_number: orderNumber,
       grand_total: total,
+      payment_amount: paymentAmount,
+      payment_currency: paymentCurrency,
+      display_total: formatPaymentAmount(paymentAmount, paymentCurrency),
       shipping_status: shippingStatus,
       email_status: RESEND_API_KEY ? 'processed' : 'queued',
       fygaro_url: fygaroPayment.url,
@@ -1122,7 +1350,7 @@ app.post('/api/admin/payment-checkouts/:reference/confirm', async (req, res) => 
       recipient: OWNER_EMAIL,
       emailType: 'owner_payment_confirmed',
       subject: `Payment reconciled - ${order.order_number}`,
-      html: `<p>Fygaro payment <strong>${escapeHtml(paymentReference)}</strong> was matched to <strong>${escapeHtml(order.order_number)}</strong>.</p><p>Amount: J$${Number(order.grand_total_jmd).toLocaleString()}</p>`,
+        html: `<p>Fygaro payment <strong>${escapeHtml(paymentReference)}</strong> was matched to <strong>${escapeHtml(order.order_number)}</strong>.</p><p>Amount: ${formatPaymentAmount(order.payment_amount ?? order.grand_total_jmd, order.payment_currency || 'JMD')}</p>`,
       metadata: { order_number: order.order_number, payment_reference: paymentReference, source: 'admin_reconciliation' }
     });
 
@@ -1263,7 +1491,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
     // signed webhook passes reference, currency, and amount validation.
     const { data: existingOrder, error: fetchErr } = await supabaseAdmin
       .from('orders')
-      .select('id, order_number, status, payment_status, grand_total_jmd, customer_id, delivery_service, admin_notes')
+      .select('id, order_number, status, payment_status, grand_total_jmd, payment_currency, payment_amount, customer_id, delivery_service, admin_notes')
       .eq('order_number', orderRef)
       .maybeSingle();
     if (fetchErr) throw fetchErr;
@@ -1290,17 +1518,19 @@ app.post('/api/fygaro-webhook', async (req, res) => {
       return res.status(200).json({ received: true, action: 'already_paid' });
     }
 
-    if (currency !== 'JMD') {
-      console.error('[Fygaro Webhook] Currency mismatch:', currency, orderRef);
+    const expectedCurrency = String(order?.payment_currency || checkoutSession?.payment_currency || 'JMD').toUpperCase();
+    if (currency !== expectedCurrency) {
+      console.error('[Fygaro Webhook] Currency mismatch:', { currency, expectedCurrency, orderRef });
       return res.status(400).json({ error: 'Currency mismatch' });
     }
 
-    const expectedTotal = Number(order?.grand_total_jmd ?? checkoutSession?.grand_total_jmd ?? 0);
+    const expectedTotal = Number(order?.payment_amount ?? checkoutSession?.payment_amount ?? order?.grand_total_jmd ?? checkoutSession?.grand_total_jmd ?? 0);
     if (amountPaid === null) {
       console.error('[Fygaro Webhook] Payment amount missing:', orderRef);
       return res.status(400).json({ error: 'Payment amount is required' });
     }
-    if (amountPaid + 1 < expectedTotal) {
+    const paymentTolerance = expectedCurrency === 'USD' ? 0.01 : 1;
+    if (amountPaid + paymentTolerance < expectedTotal) {
       console.error('[Fygaro Webhook] Amount mismatch:', { orderRef, expectedTotal, amountPaid });
       return res.status(400).json({ error: 'Payment amount does not match order total' });
     }
@@ -1312,7 +1542,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
     const paymentNote = [
       '[Fygaro Payment Confirmed]',
       `Transaction: ${paymentRef || 'N/A'}`,
-      `Amount: ${amountPaid === null ? 'N/A' : `J$${amountPaid.toLocaleString()}`}`,
+      `Amount: ${amountPaid === null ? 'N/A' : formatPaymentAmount(amountPaid, expectedCurrency)}`,
       `Received: ${new Date().toISOString()}`
     ].join(' ');
 
@@ -1357,7 +1587,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
     const OWNER_EMAIL    = process.env.OWNER_EMAIL || 'clientemail@example.com';
     const FROM_EMAIL     = process.env.FROM_EMAIL  || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
 
-    if (RESEND_API_KEY && customer?.email) {
+    if (false && RESEND_API_KEY && customer?.email) {
       const itemsHtml = (items || []).map((item, i) =>
         `${i + 1}. ${escapeHtml(item.product_name)} x ${escapeHtml(item.quantity)} - J$${Number(item.line_total_jmd).toLocaleString()}`
       ).join('<br>');
@@ -1414,15 +1644,18 @@ app.post('/api/fygaro-webhook', async (req, res) => {
         });
       } catch (e) { console.error('[Fygaro Webhook] Owner email error:', e); }
     } else if (customer?.email) {
+      const confirmedCurrency = String(order.payment_currency || 'JMD').toUpperCase();
+      const confirmedAmount = Number(order.payment_amount ?? order.grand_total_jmd);
+      const confirmedDisplay = formatPaymentAmount(confirmedAmount, confirmedCurrency);
       const pendingItemsHtml = (items || []).map((item, index) =>
-        `${index + 1}. ${escapeHtml(item.product_name)} x ${escapeHtml(item.quantity)} - J$${Number(item.line_total_jmd).toLocaleString()}`
-      ).join('<br>');
+        `<div style="padding:8px 0;border-bottom:1px solid #eee5d6;"><strong>${index + 1}. ${escapeHtml(item.product_name)}</strong><br>Qty ${escapeHtml(item.quantity)}</div>`
+      ).join('');
       await queueEmail({
         orderId: order.id,
         recipient: customer.email,
         emailType: 'payment_confirmed',
         subject: `Payment confirmed - For You Skin Bar order ${order.order_number}`,
-        html: `<p>Hi ${escapeHtml(customer.full_name)},</p><p>Your Fygaro payment for <strong>${escapeHtml(order.order_number)}</strong> has been confirmed.</p><p>${pendingItemsHtml}</p><p>Amount paid: J$${Number(order.grand_total_jmd).toLocaleString()}</p><p>We are now preparing your order.</p>`,
+        html: `<p>Hi ${escapeHtml(customer.full_name)},</p><p>Your Fygaro payment for <strong>${escapeHtml(order.order_number)}</strong> is confirmed.</p><div style="margin:20px 0;">${pendingItemsHtml}</div><p><strong>Amount paid:</strong> ${confirmedDisplay}</p><p>We are preparing your order now. You will receive another update when it is ready for pickup or dispatch.</p>`,
         metadata: { order_number: order.order_number }
       });
       await queueEmail({
@@ -1430,7 +1663,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
         recipient: OWNER_EMAIL,
         emailType: 'owner_payment_confirmed',
         subject: `Payment received - ${order.order_number}`,
-        html: `<p>Payment was confirmed for <strong>${escapeHtml(order.order_number)}</strong>.</p><p>Amount: J$${Number(order.grand_total_jmd).toLocaleString()}</p><p>Please prepare this order for fulfilment.</p>`,
+        html: `<p>Payment was confirmed for <strong>${escapeHtml(order.order_number)}</strong>.</p><p><strong>Amount:</strong> ${confirmedDisplay}<br><strong>JMD accounting total:</strong> ${formatPaymentAmount(order.grand_total_jmd, 'JMD')}</p><p>Please prepare this order for fulfilment.</p>`,
         metadata: { order_number: order.order_number }
       });
     }
@@ -1451,7 +1684,7 @@ app.get('/api/orders/payment-status', async (req, res) => {
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
-      .select('id, order_number, status, payment_status, delivery_service, shipping_address, subtotal_jmd, discount_total_jmd, shipping_total_jmd, grand_total_jmd')
+      .select('id, order_number, status, payment_status, delivery_service, shipping_address, subtotal_jmd, discount_total_jmd, shipping_total_jmd, grand_total_jmd, payment_currency, payment_amount, exchange_rate_jmd_per_usd, customer_region')
       .eq('order_number', ref)
       .maybeSingle();
 
@@ -1459,7 +1692,7 @@ app.get('/api/orders/payment-status', async (req, res) => {
     if (!order) {
       const { data: checkoutSession, error: sessionError } = await supabaseAdmin
         .from('payment_checkout_sessions')
-        .select('checkout_reference,status,shipping_data,cart_data,subtotal_jmd,discount_total_jmd,shipping_total_jmd,grand_total_jmd')
+        .select('checkout_reference,status,shipping_data,cart_data,subtotal_jmd,discount_total_jmd,shipping_total_jmd,grand_total_jmd,payment_currency,payment_amount,exchange_rate_jmd_per_usd,customer_region')
         .eq('checkout_reference', ref)
         .maybeSingle();
       if (sessionError) throw sessionError;
@@ -1481,7 +1714,11 @@ app.get('/api/orders/payment-status', async (req, res) => {
           subtotal_jmd: checkoutSession.subtotal_jmd,
           discount_total_jmd: checkoutSession.discount_total_jmd,
           shipping_total_jmd: checkoutSession.shipping_total_jmd,
-          grand_total_jmd: checkoutSession.grand_total_jmd
+          grand_total_jmd: checkoutSession.grand_total_jmd,
+          payment_currency: checkoutSession.payment_currency || 'JMD',
+          payment_amount: checkoutSession.payment_amount || checkoutSession.grand_total_jmd,
+          exchange_rate_jmd_per_usd: checkoutSession.exchange_rate_jmd_per_usd,
+          customer_region: checkoutSession.customer_region
         },
         items
       });
@@ -1571,7 +1808,7 @@ app.post('/api/orders/cancel', async (req, res) => {
     const OWNER_EMAIL    = process.env.OWNER_EMAIL || 'clientemail@example.com';
     const FROM_EMAIL     = process.env.FROM_EMAIL  || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
 
-    if (RESEND_API_KEY && customerEmail) {
+    if (false && RESEND_API_KEY && customerEmail) {
       const customerHtml = `
         <p>Hi ${escapeHtml(order.customers?.full_name || 'Valued Customer')},</p>
         <p>Your request to cancel For You Skin Bar order <strong>${escapeHtml(order.order_number)}</strong> has been received and the order has been marked cancelled.</p>
@@ -1623,7 +1860,7 @@ app.post('/api/orders/cancel', async (req, res) => {
         recipient: customerEmail,
         emailType: 'order_cancelled',
         subject: `Order cancellation received - ${order.order_number}`,
-        html: `<p>Hi ${escapeHtml(order.customers?.full_name || 'Valued Customer')},</p><p>Your request to cancel <strong>${escapeHtml(order.order_number)}</strong> has been received.</p>${order.payment_status === 'paid' ? '<p>Our team will review the payment and process the refund manually.</p>' : ''}`,
+        html: `<p>Hi ${escapeHtml(order.customers?.full_name || 'Valued Customer')},</p><p>Your request to cancel <strong>${escapeHtml(order.order_number)}</strong> has been received and the order is now marked cancelled.</p>${order.payment_status === 'paid' ? '<p>Because payment was already collected, our team will review the transaction and process the refund manually. Bank posting times may vary.</p>' : '<p>No payment refund is required for this order.</p>'}<p>Contact us immediately if you did not request this cancellation.</p>`,
         metadata: { order_number: order.order_number }
       });
       await queueEmail({
@@ -1631,7 +1868,7 @@ app.post('/api/orders/cancel', async (req, res) => {
         recipient: OWNER_EMAIL,
         emailType: 'owner_order_cancelled',
         subject: `Order cancelled by customer - ${order.order_number}`,
-        html: `<p>Order <strong>${escapeHtml(order.order_number)}</strong> was cancelled by the customer.</p><p>Reason: ${escapeHtml(reason || 'No reason provided')}</p><p>Payment status: ${escapeHtml(order.payment_status)}</p>`,
+        html: `<p>Order <strong>${escapeHtml(order.order_number)}</strong> was cancelled by the customer.</p><p><strong>Customer:</strong> ${escapeHtml(order.customers?.full_name || 'N/A')} (${escapeHtml(customerEmail)})<br><strong>Reason:</strong> ${escapeHtml(reason || 'No reason provided')}<br><strong>Payment status:</strong> ${escapeHtml(order.payment_status)}</p>${order.payment_status === 'paid' ? '<p><strong>Action required:</strong> review and process the refund in Fygaro.</p>' : '<p>No refund action is currently required.</p>'}`,
         metadata: { order_number: order.order_number }
       });
     }

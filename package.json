@@ -2,7 +2,8 @@
   "name": "foryou-skin-bar",
   "version": "1.0.0",
   "scripts": {
-    "start": "node boot.js"
+    "start": "node boot.js",
+    "sitemap": "node scripts/generate-sitemap.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

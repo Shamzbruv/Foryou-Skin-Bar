@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Article | Foryou Skin Bar</title>
+  <script src="js/seo.js?v=1" defer></script>
   <meta name="description" content="Read the latest skincare education, routine tips, and ingredient deep-dives from For You Skin Bar.">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -195,6 +196,7 @@
   <script src="js/supabase-public-client.js?v=5"></script>
   <script src="js/analytics.js"></script>
   <script src="js/products.js?v=8"></script>
+  <script src="js/currency.js?v=1"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=3"></script>
   <script src="js/blog.js?v=2"></script>
@@ -233,6 +235,18 @@
         }
         
         document.title = `${post.title} | Glow Journal`;
+        const seoDescription = String(post.excerpt || post.content || '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 160) || 'Skincare education and routine guidance from Foryou Skin Bar Jamaica.';
+        window.updateSeo?.({
+          title: `${post.title} | Foryou Skin Bar Glow Journal`,
+          description: seoDescription,
+          image: post.image,
+          type: 'article',
+          canonicalPath: `/blog-post.html?slug=${encodeURIComponent(post.slug)}`
+        });
         const dateStr = formatPublishedAt(post.publishedAt || post.date);
 
         container.innerHTML = `
@@ -305,13 +319,20 @@
           "@context": "https://schema.org",
           "@type": "Article",
           "headline": post.title,
-          "image": [ window.location.origin + "/" + post.image ],
+          "image": [ new URL(post.image, 'https://foryouskinbar.com').href ],
           "datePublished": post.publishedAt || post.date,
+          "dateModified": post.updatedAt || post.publishedAt || post.date,
+          "mainEntityOfPage": `https://foryouskinbar.com/blog-post.html?slug=${encodeURIComponent(post.slug)}`,
           "author": [{
             "@type": "Organization",
             "name": "For You Skin Bar",
             "url": "https://foryouskinbar.com"
-          }]
+          }],
+          "publisher": {
+            "@type": "Organization",
+            "name": "Foryou Skin Bar",
+            "logo": { "@type": "ImageObject", "url": "https://foryouskinbar.com/assets/brand/logo.png" }
+          }
         });
         document.head.appendChild(script);
       }

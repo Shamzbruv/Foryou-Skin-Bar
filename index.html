@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Foryou Skin Bar | Jamaican Handmade Skincare for Acne, Dark Spots & Glow Routines</title>
+  <link rel="canonical" href="https://foryouskinbar.com/">
+  <script src="js/seo.js?v=1" defer></script>
   <meta name="description" content="Discover handcrafted Jamaican skincare for acne, dark spots, hyperpigmentation, body care, and natural glow routines. Shop plant-powered products made with love in Jamaica.">
   <meta property="og:title" content="Foryou Skin Bar | Jamaican Handmade Skincare">
   <meta property="og:description" content="Handcrafted skincare made in Jamaica with plant-powered ingredients for acne, dark spots, hyperpigmentation, and everyday glow.">
@@ -63,20 +65,50 @@
     }
   </script>
 
-  <!-- Organization Schema -->
+  <!-- Brand, store, and site identity schema -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "For You Skin Bar",
-    "description": "Jamaican handmade skincare for acne, dark spots, hyperpigmentation, body care, and natural glow routines.",
-    "url": "https://foryouskinbar.com",
-    "logo": "assets/brand/logo.png",
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "contactType": "customer service",
-      "availableLanguage": "English"
-    }
+    "@graph": [
+      {
+        "@type": ["Organization", "OnlineStore"],
+        "@id": "https://foryouskinbar.com/#store",
+        "name": "Foryou Skin Bar",
+        "alternateName": "For You Skin Bar",
+        "description": "Jamaican handmade skincare for acne, dark spots, hyperpigmentation, body care, and natural glow routines.",
+        "url": "https://foryouskinbar.com/",
+        "logo": "https://foryouskinbar.com/assets/brand/logo.png",
+        "image": "https://foryouskinbar.com/assets/hero/natural_glow_skincare_hero_banner.png",
+        "email": "hello@foryouskinbar.com",
+        "telephone": "+1-876-309-4374",
+        "areaServed": ["JM", "US", "CA", "GB"],
+        "sameAs": [
+          "https://instagram.com/foryouskinbar",
+          "https://facebook.com/foryouskinbar",
+          "https://tiktok.com/@foryouskinbar"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer service",
+          "telephone": "+1-876-309-4374",
+          "email": "hello@foryouskinbar.com",
+          "availableLanguage": "English"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://foryouskinbar.com/#website",
+        "url": "https://foryouskinbar.com/",
+        "name": "Foryou Skin Bar",
+        "publisher": { "@id": "https://foryouskinbar.com/#store" },
+        "inLanguage": "en-JM",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://foryouskinbar.com/shop.html?search={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    ]
   }
   </script>
   <link rel="stylesheet" href="css/brand-theme.css?v=hero-edge-fade-1">
@@ -538,6 +570,7 @@
   <script src="js/analytics.js"></script>
   <script src="js/products.js?v=8"></script>
   <script src="js/blog.js"></script>
+  <script src="js/currency.js?v=1"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=homepage-trust-4"></script>
   
@@ -622,6 +655,8 @@
     (async function() {
       await window.loadProductsData();
       await window.loadBlogPosts();
+      await (window.storefrontConfigReady || Promise.resolve());
+      const money = (value) => window.currencyManager?.formatJmd(value) || `J$${Number(value || 0).toLocaleString()}`;
 
       // ── Homepage-specific logic ──
       const products = window.productsData || [];
@@ -701,7 +736,7 @@
             <div class="mt-3">
               <span class="text-xs bg-amber-100 px-2 py-1 rounded-full">${p.category}</span>
               <h3 class="font-bold mt-2 text-base leading-tight">${p.name}</h3>
-              <p class="text-amber-800 font-bold mt-1">J$${p.price.toLocaleString()}</p>
+              <p class="text-amber-800 font-bold mt-1">${money(p.price)}</p>
               <p class="text-xs text-stone-500 mt-1 line-clamp-3 leading-relaxed h-[54px] overflow-hidden">
                 ${(p.shortDescription || p.bestFor || '').replace(/<[^>]*>?/gm, '').substring(0, 120)}${(p.shortDescription || p.bestFor || '').length > 120 ? '...' : ''}
               </p>
@@ -720,7 +755,7 @@
           <div>
             <img src="${p.image || 'https://placehold.co/600x400/F5EDE1/8B5A2B?text=Product'}" class="rounded-xl mb-3 w-full max-h-80 object-cover" alt="${p.name}">
             <h2 class="text-2xl font-bold">${p.name}</h2>
-            <p class="text-amber-800 font-bold text-xl">J$${p.price.toLocaleString()}</p>
+            <p class="text-amber-800 font-bold text-xl">${money(p.price)}</p>
             <p class="mt-2 text-stone-600">${p.description || p.shortDescription || ''}</p>
             <p class="mt-2"><strong>Best for:</strong> ${p.bestFor}</p>
             <p><strong>Category:</strong> ${p.category}</p>

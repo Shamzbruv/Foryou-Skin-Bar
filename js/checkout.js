@@ -1,9 +1,19 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Read cart data
   const STORAGE_KEY = 'foryou_cart';
   let cart = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
   
-  const FREE_SHIPPING_THRESHOLD = 10000;
+  const storefrontConfig = await (window.storefrontConfigReady || Promise.resolve(window.storefrontConfig || {}));
+  const shippingRules = storefrontConfig.shipping || {
+    domesticFreeThresholdJmd: 10000,
+    internationalFreeThresholdJmd: 20000,
+    internationalFlatRateUsd: 37,
+    usdToJmdRate: 160,
+    zipmailJmd: 500,
+    knutsfordJmd: 700,
+    bearerJmd: 750,
+    internationalCarrier: 'DHL'
+  };
 
   // ── Handle return states from Fygaro ──
   const urlParams = new URLSearchParams(window.location.search);
@@ -54,6 +64,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const overseasDelivery = document.querySelector('.delivery-overseas');
   const overseasRadio = document.querySelector('input[name="deliveryMethod"][value="Overseas"]');
 
+  const isInternationalSelection = () => countrySelect?.value !== 'Jamaica';
+  const formatJmd = (value) => {
+    if (isInternationalSelection()) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+        .format((Number(value) || 0) / Math.max(1, Number(shippingRules.usdToJmdRate) || 160)).replace('$', 'US$');
+    }
+    return `J$${Math.round(Number(value) || 0).toLocaleString()}`;
+  };
+  const formatUsd = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0).replace('$', 'US$');
+
+  const detectedCountry = String(storefrontConfig.detectedCountry || 'Jamaica');
+  if (countrySelect && shippingRules.autoDetectLocation !== false && storefrontConfig.isInternational) {
+    let option = Array.from(countrySelect.options).find((entry) => entry.value === detectedCountry);
+    if (!option) {
+      option = new Option(detectedCountry, detectedCountry);
+      countrySelect.add(option, countrySelect.options[countrySelect.options.length - 1]);
+    }
+    countrySelect.value = detectedCountry;
+  }
+
+  const labelValues = {
+    zipmailLabel: `Zipmail (Post to Post) - J$${Number(shippingRules.zipmailJmd).toLocaleString()}`,
+    knutsfordLabel: `Knutsford Express - J$${Number(shippingRules.knutsfordJmd).toLocaleString()}`,
+    bearerLabel: `Bearer Delivery - J$${Number(shippingRules.bearerJmd).toLocaleString()}`,
+    overseasLabel: `${shippingRules.internationalCarrier || 'DHL'} International Delivery - ${formatUsd(shippingRules.internationalFlatRateUsd)}`,
+    overseasHelp: `Free international shipping on product totals of J$${Number(shippingRules.internationalFreeThresholdJmd).toLocaleString()} or more.`
+  };
+  Object.entries(labelValues).forEach(([id, text]) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = text;
+  });
+
   const errorMessage = document.getElementById('errorMessage');
   const checkoutSummaryPanel = document.getElementById('checkoutSummaryPanel');
   const mobileSummaryMount = document.getElementById('mobileSummaryMount');
@@ -96,7 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
       safelySet('input[name="email"]', profile.email);
       safelySet('input[name="phone"]', profile.phone);
       
-      if (profile.country && countrySelect && !countrySelect.value) {
+      if (profile.country && countrySelect) {
+        if (!Array.from(countrySelect.options).some(option => option.value === profile.country)) {
+          countrySelect.add(new Option(profile.country, profile.country), countrySelect.options[countrySelect.options.length - 1]);
+        }
         countrySelect.value = profile.country;
         countrySelect.dispatchEvent(new Event('change'));
       }
@@ -119,17 +164,32 @@ document.addEventListener('DOMContentLoaded', () => {
     return cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
   }
 
+  function getDiscountAmount() {
+    const subtotal = getSubtotal();
+    if (!window.appliedDiscount || window.appliedDiscount.type === 'free_shipping') return 0;
+    const amount = ['percent', 'percentage'].includes(window.appliedDiscount.type)
+      ? subtotal * (window.appliedDiscount.value / 100)
+      : Number(window.appliedDiscount.value) || 0;
+    return Math.min(subtotal, Math.max(0, amount));
+  }
+
   function getShipping() {
     const method = document.querySelector('input[name="deliveryMethod"]:checked')?.value;
     if (!method || method === 'Pickup') return 0;
-    if (method === 'Overseas') return 0; // TBD
-    
+    if (window.appliedDiscount?.type === 'free_shipping') return 0;
+
+    const subtotalAfterDiscount = getSubtotal() - getDiscountAmount();
+    if (method === 'Overseas') {
+      if (subtotalAfterDiscount >= Number(shippingRules.internationalFreeThresholdJmd)) return 0;
+      return Number(shippingRules.internationalFlatRateUsd) * Number(shippingRules.usdToJmdRate);
+    }
+
     let cost = 0;
-    if (method === 'Zipmail') cost = 500;
-    else if (method === 'Knutsford') cost = 700;
-    else if (method === 'Bearer') cost = 750;
-    
-    return getSubtotal() >= FREE_SHIPPING_THRESHOLD ? 0 : cost;
+    if (method === 'Zipmail') cost = Number(shippingRules.zipmailJmd);
+    else if (method === 'Knutsford') cost = Number(shippingRules.knutsfordJmd);
+    else if (method === 'Bearer') cost = Number(shippingRules.bearerJmd);
+
+    return subtotalAfterDiscount >= Number(shippingRules.domesticFreeThresholdJmd) ? 0 : cost;
   }
 
   function renderOrderSummary() {
@@ -150,10 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="flex-1 min-w-0">
           <h4 class="text-sm font-bold text-stone-800 leading-tight">${item.name}</h4>
-          <p class="text-stone-500 text-sm mt-1">J$${item.price.toLocaleString()}</p>
+          <p class="text-stone-500 text-sm mt-1">${formatJmd(item.price)}</p>
         </div>
         <div class="font-bold text-stone-800 text-sm shrink-0">
-          J$${(item.price * item.qty).toLocaleString()}
+          ${formatJmd(item.price * item.qty)}
         </div>
       </div>
     `).join('');
@@ -162,15 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const method = document.querySelector('input[name="deliveryMethod"]:checked')?.value;
     
     // Apply discount
-    let discountAmount = 0;
-    if (window.appliedDiscount) {
-      if (window.appliedDiscount.type === 'percent') {
-        discountAmount = subtotal * (window.appliedDiscount.value / 100);
-      } else {
-        discountAmount = window.appliedDiscount.value;
-      }
-      if (discountAmount > subtotal) discountAmount = subtotal;
-    }
+    const discountAmount = getDiscountAmount();
 
     const subtotalAfterDiscount = subtotal - discountAmount;
     
@@ -178,22 +230,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const total = subtotalAfterDiscount + shipping;
 
     // Update Subtotal HTML to show discount if applied
-    if (window.appliedDiscount) {
+    if (discountAmount > 0) {
       subtotalEl.innerHTML = `
-        <span class="line-through text-stone-400 mr-2">J$${subtotal.toLocaleString()}</span>
-        J$${subtotalAfterDiscount.toLocaleString()}
+        <span class="line-through text-stone-400 mr-2">${formatJmd(subtotal)}</span>
+        ${formatJmd(subtotalAfterDiscount)}
       `;
     } else {
-      subtotalEl.innerText = 'J$' + subtotal.toLocaleString();
+      subtotalEl.innerText = formatJmd(subtotal);
     }
-    
-    if (method === 'Overseas') {
-        shippingEl.innerText = 'To be confirmed';
-        totalEl.innerText = 'Pending confirmation';
-    } else {
-        shippingEl.innerText = shipping === 0 ? (method === 'Pickup' ? 'J$0' : 'Free') : 'J$' + shipping.toLocaleString();
-        totalEl.innerText = 'J$' + total.toLocaleString();
-    }
+
+    shippingEl.innerText = shipping === 0 ? (method === 'Pickup' ? formatJmd(0) : 'Free') : formatJmd(shipping);
+    totalEl.innerText = formatJmd(total);
   }
 
   function toggleCountryFields() {

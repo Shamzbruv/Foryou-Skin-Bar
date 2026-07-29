@@ -517,14 +517,15 @@ footer .text-amber-700 {
 @media (max-width: 767px) {
   body.about-page,
   .about-page main {
-    width: 100vw !important;
-    max-width: 100vw !important;
+    width: 100% !important;
+    max-width: 100% !important;
     overflow-x: hidden !important;
   }
 
   .about-page main section {
-    width: 100vw !important;
-    max-width: 100vw !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
     padding-left: 1rem !important;
@@ -536,14 +537,19 @@ footer .text-amber-700 {
   .about-page main .grid,
   .about-page main .grid > * {
     min-width: 0 !important;
+    width: 100% !important;
     max-width: 100% !important;
+  }
+
+  .about-page main .grid {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
   .about-page main section > .max-w-7xl,
   .about-page main section > .max-w-4xl,
   .about-page main section > .max-w-lg {
-    width: calc(100vw - 2rem) !important;
-    max-width: calc(100vw - 2rem) !important;
+    width: 100% !important;
+    max-width: 100% !important;
     margin-left: auto !important;
     margin-right: auto !important;
   }
@@ -663,6 +669,30 @@ footer .text-amber-700 {
     mask-repeat: no-repeat !important;
     -webkit-mask-size: 100% 100% !important;
     mask-size: 100% 100% !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body.checkout-page,
+  .checkout-page main,
+  .checkout-page #checkoutFormWrapper,
+  .checkout-page #checkoutForm,
+  .checkout-page #checkoutSummaryPanel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .checkout-page main {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    overflow-x: hidden !important;
+  }
+
+  .checkout-page #checkoutFormWrapper {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 1.5rem !important;
   }
 }
 

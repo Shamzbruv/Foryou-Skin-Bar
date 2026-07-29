@@ -22,6 +22,7 @@ window.loadBlogPosts = async function() {
                     image: post.featured_image_url || 'https://placehold.co/600x400/F5EDE1/8B5A2B?text=No+Image',
                     date: post.published_at || post.created_at,
                     publishedAt: post.published_at || post.created_at,
+                    updatedAt: post.updated_at || post.published_at || post.created_at,
                     category: 'Skincare'
                 }));
                 loadedFromDb = true;

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Product Details | Foryou Skin Bar</title>
+  <script src="js/seo.js?v=1" defer></script>
   <meta name="description" content="Discover our natural, handmade Jamaican skincare products.">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -216,14 +217,16 @@
   <script src="js/supabase-public-client.js?v=5"></script>
   <script src="js/analytics.js"></script>
   <script src="js/products.js?v=8"></script>
+  <script src="js/currency.js?v=1"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=3"></script>
   <script>
     (async function() {
       await window.loadProductsData();
+      await (window.storefrontConfigReady || Promise.resolve());
 
       const escapeHTML = (value = '') => String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
-      const money = (value) => 'J$' + Number(value || 0).toLocaleString();
+      const money = (value) => window.currencyManager?.formatJmd(value) || `J$${Number(value || 0).toLocaleString()}`;
       const absoluteImageUrl = (image) => !image ? '' : (image.startsWith('http') ? image : `${window.location.origin}/${image.replace(/^\//, '')}`);
 
       function stripToText(value = '') {
@@ -491,6 +494,14 @@
 
       if (product) {
         document.title = `${product.name} | Foryou Skin Bar`;
+        const seoDescription = compactText(product.shortDescription || product.description || `Shop ${product.name}, handmade in Jamaica by Foryou Skin Bar.`, 28);
+        window.updateSeo?.({
+          title: `${product.name} | Jamaican Skincare | Foryou Skin Bar`,
+          description: seoDescription,
+          image: product.image,
+          type: 'product',
+          canonicalPath: `/product.html?id=${encodeURIComponent(product.id)}`
+        });
         document.getElementById('breadcrumbName').innerText = product.name;
 
         const variants = product.variants || [];
@@ -716,13 +727,31 @@
           "image": images.map(absoluteImageUrl),
           "description": stripToText(product.description || product.shortDescription),
           "sku": product.sku || product.id.toString(),
-          "brand": product.brand ? { "@type": "Brand", "name": product.brand } : undefined,
+          "brand": { "@type": "Brand", "name": product.brand || "Foryou Skin Bar" },
           "offers": {
             "@type": "Offer",
             "priceCurrency": "JMD",
             "price": displayPrice,
             "availability": displayStock === 0 && !product.allowBackorder ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-            "url": window.location.href
+            "url": `https://foryouskinbar.com/product.html?id=${encodeURIComponent(product.id)}`,
+            "seller": { "@type": "Organization", "name": "Foryou Skin Bar" },
+            "shippingDetails": [
+              {
+                "@type": "OfferShippingDetails",
+                "shippingDestination": { "@type": "DefinedRegion", "addressCountry": "JM" },
+                "shippingRate": { "@type": "MonetaryAmount", "value": "500", "currency": "JMD" },
+                "deliveryTime": {
+                  "@type": "ShippingDeliveryTime",
+                  "handlingTime": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 3, "unitCode": "DAY" },
+                  "transitTime": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 3, "unitCode": "DAY" }
+                }
+              },
+              {
+                "@type": "OfferShippingDetails",
+                "shippingDestination": { "@type": "DefinedRegion", "addressCountry": "US" },
+                "shippingRate": { "@type": "MonetaryAmount", "value": "37", "currency": "USD" }
+              }
+            ]
           }
         });
         document.head.appendChild(script);

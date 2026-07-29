@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="shop.html" class="inline-block bg-amber-800 text-white px-6 py-3 rounded-full font-bold hover:bg-amber-900 transition">Shop Products</a>
       </div>`;
     const total = document.getElementById('routineTotal');
-    if (total) total.textContent = 'Total Routine Value: J$0';
+    if (total) total.textContent = `Total Routine Value: ${window.currencyManager?.formatJmd(0) || 'J$0'}`;
   }
 
   function renderRoutine(routine, context) {
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="w-full md:w-2/3">
             <h3 class="font-bold text-xl mb-2 text-stone-900">${escapeHTML(product.name)}</h3>
-            <p class="text-amber-800 font-bold mb-3">J$${Number(product.price || 0).toLocaleString()}</p>
+            <p class="text-amber-800 font-bold mb-3">${window.currencyManager?.formatJmd(product.price || 0) || `J$${Number(product.price || 0).toLocaleString()}`}</p>
             <p class="text-stone-700 text-sm mb-4">${escapeHTML(plainText(product.shortDescription || product.description || 'Recommended based on your quiz answers.'))}</p>
             <div class="bg-amber-50 rounded-xl p-4 text-stone-800">
               <p class="text-sm font-bold mb-1">Why we chose this for you:</p>
@@ -404,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     const total = document.getElementById('routineTotal');
-    if (total) total.textContent = `Total Routine Value: J$${totalValue.toLocaleString()}`;
+    if (total) total.textContent = `Total Routine Value: ${window.currencyManager?.formatJmd(totalValue) || `J$${totalValue.toLocaleString()}`}`;
   }
 
   async function generateResults() {
