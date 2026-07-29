@@ -45,6 +45,7 @@ const DEFAULT_SHIPPING_RULES = Object.freeze({
   zipmailJmd: 500,
   knutsfordJmd: 700,
   bearerJmd: 750,
+  bearerPortmoreJmd: 950,
   internationalCarrier: 'DHL',
   autoDetectLocation: true
 });
@@ -227,6 +228,7 @@ function normalizeShippingRules(value) {
     zipmailJmd: numberSetting(source.zipmailJmd, DEFAULT_SHIPPING_RULES.zipmailJmd),
     knutsfordJmd: numberSetting(source.knutsfordJmd, DEFAULT_SHIPPING_RULES.knutsfordJmd),
     bearerJmd: numberSetting(source.bearerJmd, DEFAULT_SHIPPING_RULES.bearerJmd),
+    bearerPortmoreJmd: numberSetting(source.bearerPortmoreJmd, DEFAULT_SHIPPING_RULES.bearerPortmoreJmd),
     internationalCarrier: String(source.internationalCarrier || DEFAULT_SHIPPING_RULES.internationalCarrier).trim().slice(0, 60) || 'DHL',
     autoDetectLocation: source.autoDetectLocation !== false
   };
@@ -247,6 +249,16 @@ async function getShippingRules() {
 
 function isJamaicaCountry(value) {
   return ['jm', 'jamaica'].includes(String(value || '').trim().toLowerCase());
+}
+
+function isPortmoreCity(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .includes('portmore');
 }
 
 function requestIp(req) {
@@ -997,7 +1009,11 @@ app.post('/api/create-order', async (req, res) => {
         : Number((shippingRules.internationalFlatRateUsd * shippingRules.usdToJmdRate).toFixed(2));
     } else if (deliveryService === 'Zipmail') shippingCost = shippingRules.zipmailJmd;
     else if (deliveryService === 'Knutsford') shippingCost = shippingRules.knutsfordJmd;
-    else if (deliveryService === 'Bearer') shippingCost = shippingRules.bearerJmd;
+    else if (deliveryService === 'Bearer') {
+      shippingCost = isPortmoreCity(shipping.city)
+        ? shippingRules.bearerPortmoreJmd
+        : shippingRules.bearerJmd;
+    }
     else if (deliveryService === 'Pickup') {
       deliveryMethod = 'pickup';
       shippingCost = 0;

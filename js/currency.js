@@ -12,6 +12,7 @@
       zipmailJmd: 500,
       knutsfordJmd: 700,
       bearerJmd: 750,
+      bearerPortmoreJmd: 950,
       internationalCarrier: 'DHL',
       autoDetectLocation: true
     }

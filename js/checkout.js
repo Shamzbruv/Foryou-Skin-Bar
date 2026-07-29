@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     zipmailJmd: 500,
     knutsfordJmd: 700,
     bearerJmd: 750,
+    bearerPortmoreJmd: 950,
     internationalCarrier: 'DHL'
   };
 
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const parishWrapper = document.getElementById('parishWrapper');
   const stateWrapper = document.getElementById('stateWrapper');
   const cityLabel = document.getElementById('cityLabel');
+  const cityInput = document.getElementById('city');
   const postalCodeOptional = document.getElementById('postalCodeOptional');
   
   const localDeliveries = document.querySelectorAll('.delivery-local');
@@ -87,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const labelValues = {
     zipmailLabel: `Zipmail (Post to Post) - J$${Number(shippingRules.zipmailJmd).toLocaleString()}`,
     knutsfordLabel: `Knutsford Express - J$${Number(shippingRules.knutsfordJmd).toLocaleString()}`,
-    bearerLabel: `Bearer Delivery - J$${Number(shippingRules.bearerJmd).toLocaleString()}`,
+    bearerLabel: `Bearer Delivery - Kingston J$${Number(shippingRules.bearerJmd).toLocaleString()} / Portmore J$${Number(shippingRules.bearerPortmoreJmd).toLocaleString()}`,
     overseasLabel: `${shippingRules.internationalCarrier || 'DHL'} International Delivery - ${formatUsd(shippingRules.internationalFlatRateUsd)}`,
     overseasHelp: `Free international shipping on product totals of J$${Number(shippingRules.internationalFreeThresholdJmd).toLocaleString()} or more.`
   };
@@ -95,6 +97,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const element = document.getElementById(id);
     if (element) element.textContent = text;
   });
+
+  const isPortmoreCity = (value) => String(value || '')
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .includes('portmore');
+
+  function updateBearerLabel() {
+    const bearerLabel = document.getElementById('bearerLabel');
+    if (!bearerLabel) return;
+    if (isPortmoreCity(cityInput?.value)) {
+      bearerLabel.textContent = `Bearer Delivery (Portmore) - J$${Number(shippingRules.bearerPortmoreJmd).toLocaleString()}`;
+      return;
+    }
+    bearerLabel.textContent = cityInput?.value.trim()
+      ? `Bearer Delivery (Kingston) - J$${Number(shippingRules.bearerJmd).toLocaleString()}`
+      : `Bearer Delivery - Kingston J$${Number(shippingRules.bearerJmd).toLocaleString()} / Portmore J$${Number(shippingRules.bearerPortmoreJmd).toLocaleString()}`;
+  }
 
   const errorMessage = document.getElementById('errorMessage');
   const checkoutSummaryPanel = document.getElementById('checkoutSummaryPanel');
@@ -187,7 +209,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     let cost = 0;
     if (method === 'Zipmail') cost = Number(shippingRules.zipmailJmd);
     else if (method === 'Knutsford') cost = Number(shippingRules.knutsfordJmd);
-    else if (method === 'Bearer') cost = Number(shippingRules.bearerJmd);
+    else if (method === 'Bearer') {
+      cost = isPortmoreCity(cityInput?.value)
+        ? Number(shippingRules.bearerPortmoreJmd)
+        : Number(shippingRules.bearerJmd);
+    }
 
     return subtotalAfterDiscount >= Number(shippingRules.domesticFreeThresholdJmd) ? 0 : cost;
   }
@@ -282,6 +308,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Event Listeners
   if (countrySelect) {
       countrySelect.addEventListener('change', toggleCountryFields);
+  }
+  if (cityInput) {
+    cityInput.addEventListener('input', () => {
+      updateBearerLabel();
+      renderOrderSummary();
+    });
+    cityInput.addEventListener('change', () => {
+      updateBearerLabel();
+      renderOrderSummary();
+    });
   }
 
   const applyDiscountBtn = document.getElementById('applyDiscountBtn');

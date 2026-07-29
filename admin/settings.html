@@ -152,8 +152,12 @@
                         <input type="number" min="0" step="50" id="shipping_knutsfordJmd" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="700">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-stone-700 mb-1">Bearer delivery (JMD)</label>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">Bearer - Kingston (JMD)</label>
                         <input type="number" min="0" step="50" id="shipping_bearerJmd" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="750">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">Bearer - Portmore (JMD)</label>
+                        <input type="number" min="0" step="50" id="shipping_bearerPortmoreJmd" class="w-full border border-stone-300 rounded-lg p-3 text-sm" value="950">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-stone-700 mb-1">International carrier</label>
@@ -178,7 +182,7 @@
         import { supabase, checkAuth } from '/admin/js/supabase-client.js';
         
         const KEYS = ['announcement_text', 'contact_email', 'contact_phone'];
-        const SHIPPING_KEYS = ['domesticFreeThresholdJmd', 'internationalFreeThresholdJmd', 'internationalFlatRateUsd', 'usdToJmdRate', 'zipmailJmd', 'knutsfordJmd', 'bearerJmd', 'internationalCarrier'];
+        const SHIPPING_KEYS = ['domesticFreeThresholdJmd', 'internationalFreeThresholdJmd', 'internationalFlatRateUsd', 'usdToJmdRate', 'zipmailJmd', 'knutsfordJmd', 'bearerJmd', 'bearerPortmoreJmd', 'internationalCarrier'];
 
         async function init() {
             await checkAuth();
