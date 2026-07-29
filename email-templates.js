@@ -195,6 +195,7 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
         <strong>Delivery method:</strong> {{delivery_method}}<br>
         <strong>Delivery address:</strong> {{shipping_address}}
       </div>
+      {{{tracking_details}}}
       {{{items_html}}}
       <p>Please keep your phone available in case the delivery provider needs to contact you. We will update the order record once delivery is complete.</p>
     `,
@@ -203,10 +204,16 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
       { key: 'order_number', label: 'Order number', description: 'Order being delivered.' },
       { key: 'delivery_method', label: 'Delivery method', description: 'Courier or collection method.' },
       { key: 'shipping_address', label: 'Shipping address', description: 'Delivery destination.' },
+      { key: 'tracking_carrier', label: 'Tracking carrier', description: 'Courier responsible for the shipment.' },
+      { key: 'tracking_number', label: 'Tracking number', description: 'Shipment reference entered on the order.' },
+      { key: 'tracking_url', label: 'Tracking web address', description: 'Secure customer-facing tracking page.' },
+      { key: 'tracking_details', label: 'Tracking box', description: 'Formatted carrier, tracking number, and track-shipment button. Empty until tracking is added.', html: true },
       { key: 'items_html', label: 'Order items', description: 'Formatted list of shipped items.', html: true }
     ],
     sampleVariables: {
       customer_name: 'Danielle Brown', order_number: 'FSB-20260729-1042', delivery_method: 'Bearer - Kingston', shipping_address: '12 Hope Road, Kingston 6, Jamaica',
+      tracking_carrier: 'DHL', tracking_number: '1234567890', tracking_url: 'https://www.dhl.com/',
+      tracking_details: '<div style="margin:22px 0;padding:18px;border:1px solid #dfc98f;background:#fffaf0;"><strong style="font-size:17px;">Shipment tracking</strong><p style="margin:10px 0 16px;"><strong>Carrier:</strong> DHL<br><strong>Tracking number:</strong> 1234567890<br><strong>Tracking web address:</strong> https://www.dhl.com/</p><a href="https://www.dhl.com/" style="display:inline-block;padding:11px 18px;background:#344633;color:#ffffff;text-decoration:none;font-weight:700;">Track your shipment</a></div>',
       items_html: '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;"><tr><td style="padding:10px 0;border-bottom:1px solid #eee5d6;">Clear Skin Serum</td><td align="right" style="padding:10px 0;border-bottom:1px solid #eee5d6;">Qty 1</td></tr></table>'
     }
   },

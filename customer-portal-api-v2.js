@@ -185,7 +185,7 @@ async function dashboardFor(user) {
   let orders = [];
   if (customer) {
     const { data, error } = await db.from('orders')
-      .select('id, order_number, status, payment_status, fulfillment_status, delivery_method, delivery_service, shipping_address, parish, city, country, subtotal_jmd, discount_total_jmd, shipping_total_jmd, grand_total_jmd, created_at, points_earned')
+      .select('id, order_number, status, payment_status, fulfillment_status, delivery_method, delivery_service, shipping_address, parish, city, country, tracking_carrier, tracking_number, tracking_url, tracking_updated_at, subtotal_jmd, discount_total_jmd, shipping_total_jmd, grand_total_jmd, created_at, points_earned')
       .eq('customer_id', customer.id).order('created_at', { ascending: false }).limit(100);
     if (error) throw error;
     orders = data || [];
@@ -214,27 +214,35 @@ async function dashboardFor(user) {
     return all;
   }, {});
 
-  const responseOrders = orders.map((order) => ({
-    id: order.id,
-    orderNumber: order.order_number,
-    status: order.status,
-    paymentStatus: order.payment_status,
-    fulfillmentStatus: order.fulfillment_status,
-    statusLabel: labelFor(order),
-    deliveryMethod: order.delivery_method,
-    deliveryService: order.delivery_service || '',
-    deliveryAddress: order.shipping_address || '',
-    parish: order.parish || '',
-    city: order.city || '',
-    country: order.country || '',
-    subtotalJmd: number(order.subtotal_jmd),
-    discountTotalJmd: number(order.discount_total_jmd),
-    shippingTotalJmd: number(order.shipping_total_jmd),
-    grandTotalJmd: number(order.grand_total_jmd),
-    createdAt: order.created_at,
-    pointsEarned: loyalty.pointsByOrder.get(order.id) || 0,
-    items: itemsByOrder[order.id] || []
-  }));
+  const responseOrders = orders.map((order) => {
+    const trackingVisible = ['shipped', 'delivered'].includes(String(order.status || '').toLowerCase())
+      || ['shipped', 'delivered'].includes(String(order.fulfillment_status || '').toLowerCase());
+    return {
+      id: order.id,
+      orderNumber: order.order_number,
+      status: order.status,
+      paymentStatus: order.payment_status,
+      fulfillmentStatus: order.fulfillment_status,
+      statusLabel: labelFor(order),
+      deliveryMethod: order.delivery_method,
+      deliveryService: order.delivery_service || '',
+      deliveryAddress: order.shipping_address || '',
+      trackingCarrier: trackingVisible ? (order.tracking_carrier || '') : '',
+      trackingNumber: trackingVisible ? (order.tracking_number || '') : '',
+      trackingUrl: trackingVisible ? (order.tracking_url || '') : '',
+      trackingUpdatedAt: trackingVisible ? (order.tracking_updated_at || null) : null,
+      parish: order.parish || '',
+      city: order.city || '',
+      country: order.country || '',
+      subtotalJmd: number(order.subtotal_jmd),
+      discountTotalJmd: number(order.discount_total_jmd),
+      shippingTotalJmd: number(order.shipping_total_jmd),
+      grandTotalJmd: number(order.grand_total_jmd),
+      createdAt: order.created_at,
+      pointsEarned: loyalty.pointsByOrder.get(order.id) || 0,
+      items: itemsByOrder[order.id] || []
+    };
+  });
 
   return {
     profile: {

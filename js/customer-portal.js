@@ -18,6 +18,16 @@
     if (/^(https?:)?\/\//i.test(href) || href.toLowerCase().startsWith('javascript:')) return 'policies.html';
     return href || 'policies.html';
   };
+  const safeTrackingHref = (value = '') => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    try {
+      const parsed = new URL(raw, window.location.origin);
+      return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
+    } catch (_) {
+      return '';
+    }
+  };
 
   function showLoading() {
     if (!root) return;
@@ -72,6 +82,17 @@
     }
 
     const isEligibleForCancellation = !['shipped', 'delivered', 'cancelled', 'refunded'].includes(String(order.status || '').toLowerCase());
+    const trackingUrl = safeTrackingHref(order.trackingUrl);
+    const hasTracking = Boolean(order.trackingCarrier || order.trackingNumber || trackingUrl);
+    const trackingMarkup = hasTracking ? `
+      <section class="order-tracking" aria-label="Shipment tracking">
+        <div class="order-tracking-heading"><i class="fas fa-truck-fast" aria-hidden="true"></i><strong>Shipment tracking</strong></div>
+        <div class="order-tracking-details">
+          ${order.trackingCarrier ? `<span><small>Carrier</small>${escapeHtml(order.trackingCarrier)}</span>` : ''}
+          ${order.trackingNumber ? `<span><small>Tracking number</small><code>${escapeHtml(order.trackingNumber)}</code></span>` : ''}
+        </div>
+        ${trackingUrl ? `<a class="order-tracking-link" href="${escapeHtml(trackingUrl)}" target="_blank" rel="noopener noreferrer">Track shipment <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>` : ''}
+      </section>` : '';
 
     return `<article class="account-card order-card">
       <div class="order-card-top">
@@ -79,6 +100,7 @@
         <span class="status-chip ${statusClass(order)}">${escapeHtml(order.statusLabel)}</span>
       </div>
       <div class="order-card-items">${orderItemsMarkup(order.items)}</div>
+      ${trackingMarkup}
       <div class="order-card-bottom">
         <div>
           <strong class="order-total">Order total: ${formatCurrency(order.grandTotalJmd)}</strong>

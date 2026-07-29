@@ -563,6 +563,117 @@ async function queueEmail({ orderId = null, recipient, emailType, subject, html,
   return { queued: true, ...result };
 }
 
+function normalizeTrackingWebAddress(value = '') {
+  let webAddress = String(value || '').trim();
+  if (!webAddress) return '';
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(webAddress)) webAddress = `https://${webAddress}`;
+
+  let parsed;
+  try {
+    parsed = new URL(webAddress);
+  } catch (_) {
+    throw Object.assign(new Error('Enter a valid tracking web address.'), { status: 400 });
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) {
+    throw Object.assign(new Error('The tracking web address must be a safe HTTP or HTTPS link.'), { status: 400 });
+  }
+  return parsed.toString();
+}
+
+function shipmentTrackingDetailsHtml(order = {}) {
+  const carrier = String(order.tracking_carrier || '').trim();
+  const trackingNumber = String(order.tracking_number || '').trim();
+  const trackingUrl = normalizeTrackingWebAddress(order.tracking_url || '');
+  if (!carrier && !trackingNumber && !trackingUrl) return '';
+
+  const detailRows = [
+    carrier ? `<strong>Carrier:</strong> ${escapeHtml(carrier)}` : '',
+    trackingNumber ? `<strong>Tracking number:</strong> ${escapeHtml(trackingNumber)}` : '',
+    trackingUrl ? `<strong>Tracking web address:</strong> <a href="${escapeHtml(trackingUrl)}" style="color:#344633;word-break:break-all;">${escapeHtml(trackingUrl)}</a>` : ''
+  ].filter(Boolean).join('<br>');
+  const trackingButton = trackingUrl ? `
+    <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:16px;"><tr><td style="background:#344633;">
+      <a href="${escapeHtml(trackingUrl)}" style="display:inline-block;padding:11px 18px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Track your shipment</a>
+    </td></tr></table>` : '';
+
+  return `
+    <div style="margin:22px 0;padding:18px;border:1px solid #dfc98f;border-left:4px solid #c89b3c;background:#fffaf0;">
+      <strong style="font-size:17px;color:#2c211b;">Shipment tracking</strong>
+      <p style="margin:10px 0 0;color:#4f433a;line-height:1.7;">${detailRows}</p>
+      ${trackingButton}
+    </div>`;
+}
+
+async function sendShippingUpdateEmail(orderId, { allowResend = false } = {}) {
+  const { data: order, error: orderError } = await supabaseAdmin
+    .from('orders')
+    .select('id,order_number,status,delivery_service,shipping_address,tracking_carrier,tracking_number,tracking_url,customers(full_name,email),order_items(product_name,quantity)')
+    .eq('id', orderId)
+    .maybeSingle();
+  if (orderError) throw orderError;
+  if (!order) throw Object.assign(new Error('Order not found.'), { status: 404 });
+  if (!order.customers?.email) return { status: 'no_customer_email', order };
+
+  if (!allowResend) {
+    const { data: existingNotice, error: noticeError } = await supabaseAdmin
+      .from('email_logs')
+      .select('id')
+      .eq('order_id', orderId)
+      .eq('email_type', 'shipping_update')
+      .in('status', ['queued', 'scheduled', 'sent'])
+      .limit(1)
+      .maybeSingle();
+    if (noticeError) throw noticeError;
+    if (existingNotice) return { status: 'already_sent', order };
+  }
+
+  const itemRows = (order.order_items || []).map((item) =>
+    `<tr><td style="padding:10px 0;border-bottom:1px solid #eee5d6;">${escapeHtml(item.product_name)}</td><td align="right" style="padding:10px 0;border-bottom:1px solid #eee5d6;">Qty ${escapeHtml(item.quantity)}</td></tr>`
+  ).join('');
+  const itemsHtml = itemRows
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;">${itemRows}</table>`
+    : '';
+  const trackingDetails = shipmentTrackingDetailsHtml(order);
+  const result = await queueEmail({
+    orderId,
+    recipient: order.customers.email,
+    emailType: 'shipping_update',
+    subject: `Your For You Skin Bar order ${order.order_number} is on the way`,
+    html: `
+      <p>Hi ${escapeHtml(order.customers.full_name || 'there')},</p>
+      <p>Your order has been prepared and is now <strong>on the way</strong>.</p>
+      <div style="margin:22px 0;padding:18px;border-left:4px solid #c89b3c;background:#f8f3e9;">
+        <strong>Order:</strong> ${escapeHtml(order.order_number)}<br>
+        <strong>Delivery method:</strong> ${escapeHtml(order.delivery_service || 'Delivery')}<br>
+        <strong>Delivery address:</strong> ${escapeHtml(order.shipping_address || 'Address on order')}
+      </div>
+      ${trackingDetails}
+      ${itemsHtml}
+      <p>Please keep your phone available in case the delivery provider needs to contact you. We will update the order record once delivery is complete.</p>
+    `,
+    metadata: {
+      order_number: order.order_number,
+      status: 'shipped',
+      tracking_carrier: order.tracking_carrier || null,
+      tracking_number: order.tracking_number || null,
+      tracking_url: order.tracking_url || null,
+      tracking_update: allowResend
+    },
+    templateVariables: {
+      customer_name: order.customers.full_name || 'there',
+      order_number: order.order_number,
+      delivery_method: order.delivery_service || 'Delivery',
+      shipping_address: order.shipping_address || 'Address on order',
+      tracking_carrier: order.tracking_carrier || '',
+      tracking_number: order.tracking_number || '',
+      tracking_url: order.tracking_url || '',
+      tracking_details: trackingDetails,
+      items_html: itemsHtml
+    }
+  });
+  return { status: result.sent ? 'sent' : (result.queued ? 'queued' : 'failed'), order };
+}
+
 async function processPendingEmails(limit = 50) {
   if (!RESEND_API_KEY) return;
   const { data: pending, error } = await supabaseAdmin
@@ -1687,7 +1798,7 @@ app.patch('/api/admin/orders/:id/status', async (req, res) => {
     const value = String(req.body?.value || '').trim().toLowerCase();
     const allowedValues = {
       payment_status: ['unpaid', 'awaiting_confirmation', 'paid', 'partially_paid', 'refunded'],
-      status: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']
+      status: ['pending', 'confirmed', 'processing', 'ready_for_pickup', 'shipped', 'delivered', 'cancelled', 'refunded']
     };
     if (!allowedValues[field]?.includes(value)) {
       return res.status(400).json({ error: 'Select a valid order status.' });
@@ -1695,7 +1806,7 @@ app.patch('/api/admin/orders/:id/status', async (req, res) => {
 
     const { data: currentOrder, error: fetchError } = await supabaseAdmin
       .from('orders')
-      .select('id,order_number,status,payment_status,delivery_service,shipping_address,grand_total_jmd,payment_currency,payment_amount,customers(full_name,email),order_items(product_name,quantity)')
+      .select('id,status,payment_status')
       .eq('id', orderId)
       .maybeSingle();
     if (fetchError) throw fetchError;
@@ -1710,56 +1821,72 @@ app.patch('/api/admin/orders/:id/status', async (req, res) => {
     if (updateError) throw updateError;
 
     let emailStatus = 'not_required';
-    if (field === 'status' && value === 'shipped' && currentOrder.status !== 'shipped' && currentOrder.customers?.email) {
-      const { data: existingNotice, error: noticeError } = await supabaseAdmin
-        .from('email_logs')
-        .select('id')
-        .eq('order_id', orderId)
-        .eq('email_type', 'shipping_update')
-        .in('status', ['queued', 'scheduled', 'sent'])
-        .limit(1)
-        .maybeSingle();
-      if (noticeError) throw noticeError;
-
-      if (existingNotice) {
-        emailStatus = 'already_sent';
-      } else {
-        const itemRows = (currentOrder.order_items || []).map((item) =>
-          `<tr><td style="padding:10px 0;border-bottom:1px solid #eee5d6;">${escapeHtml(item.product_name)}</td><td align="right" style="padding:10px 0;border-bottom:1px solid #eee5d6;">Qty ${escapeHtml(item.quantity)}</td></tr>`
-        ).join('');
-        const result = await queueEmail({
-          orderId,
-          recipient: currentOrder.customers.email,
-          emailType: 'shipping_update',
-          subject: `Your For You Skin Bar order ${currentOrder.order_number} is on the way`,
-          html: `
-            <p>Hi ${escapeHtml(currentOrder.customers.full_name || 'there')},</p>
-            <p>Your order has been prepared and is now <strong>on the way</strong>.</p>
-            <div style="margin:22px 0;padding:18px;border-left:4px solid #c89b3c;background:#f8f3e9;">
-              <strong>Order:</strong> ${escapeHtml(currentOrder.order_number)}<br>
-              <strong>Delivery method:</strong> ${escapeHtml(currentOrder.delivery_service || 'Delivery')}<br>
-              <strong>Delivery address:</strong> ${escapeHtml(currentOrder.shipping_address || 'Address on order')}
-            </div>
-            ${itemRows ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;">${itemRows}</table>` : ''}
-            <p>Please keep your phone available in case the delivery provider needs to contact you. We will update the order record once delivery is complete.</p>
-          `,
-          metadata: { order_number: currentOrder.order_number, status: 'shipped' },
-          templateVariables: {
-            customer_name: currentOrder.customers.full_name || 'there',
-            order_number: currentOrder.order_number,
-            delivery_method: currentOrder.delivery_service || 'Delivery',
-            shipping_address: currentOrder.shipping_address || 'Address on order',
-            items_html: itemRows ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;">${itemRows}</table>` : ''
-          }
-        });
-        emailStatus = result.sent ? 'sent' : (result.queued ? 'queued' : 'failed');
-      }
+    if (field === 'status' && value === 'shipped' && currentOrder.status !== 'shipped') {
+      const emailResult = await sendShippingUpdateEmail(orderId);
+      emailStatus = emailResult.status;
     }
 
     return res.status(200).json({ success: true, order: updatedOrder, email_status: emailStatus });
   } catch (error) {
     console.error('[Admin Order Status]', error.message);
     return res.status(error.status || 500).json({ error: error.message || 'Unable to update this order.' });
+  }
+});
+
+app.patch('/api/admin/orders/:id/tracking', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const orderId = String(req.params.id || '').trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId)) {
+      return res.status(400).json({ error: 'A valid order ID is required.' });
+    }
+
+    const trackingCarrier = String(req.body?.tracking_carrier || '').trim();
+    const trackingNumber = String(req.body?.tracking_number || '').trim();
+    const trackingUrl = normalizeTrackingWebAddress(req.body?.tracking_url || '');
+    const notifyCustomer = req.body?.notify_customer === true;
+    if (trackingCarrier.length > 100) return res.status(400).json({ error: 'Carrier name must be 100 characters or fewer.' });
+    if (trackingNumber.length > 180) return res.status(400).json({ error: 'Tracking number must be 180 characters or fewer.' });
+    if (trackingUrl.length > 2000) return res.status(400).json({ error: 'Tracking web address is too long.' });
+
+    const { data: currentOrder, error: currentError } = await supabaseAdmin
+      .from('orders')
+      .select('id,status')
+      .eq('id', orderId)
+      .maybeSingle();
+    if (currentError) throw currentError;
+    if (!currentOrder) return res.status(404).json({ error: 'Order not found.' });
+    if (notifyCustomer && currentOrder.status !== 'shipped') {
+      return res.status(409).json({ error: 'Mark the order as shipped before emailing tracking details.' });
+    }
+    if (notifyCustomer && !trackingNumber && !trackingUrl) {
+      return res.status(400).json({ error: 'Add a tracking number or tracking web address before emailing the customer.' });
+    }
+
+    const { data: order, error: updateError } = await supabaseAdmin
+      .from('orders')
+      .update({
+        tracking_carrier: trackingCarrier || null,
+        tracking_number: trackingNumber || null,
+        tracking_url: trackingUrl || null,
+        tracking_updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId)
+      .select('id,order_number,status,tracking_carrier,tracking_number,tracking_url,tracking_updated_at')
+      .single();
+    if (updateError) throw updateError;
+
+    let emailStatus = 'not_requested';
+    if (notifyCustomer) {
+      const emailResult = await sendShippingUpdateEmail(orderId, { allowResend: true });
+      emailStatus = emailResult.status;
+    }
+
+    return res.status(200).json({ success: true, order, email_status: emailStatus });
+  } catch (error) {
+    console.error('[Admin Order Tracking]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to update shipment tracking.' });
   }
 });
 

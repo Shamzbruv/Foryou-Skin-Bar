@@ -115,6 +115,15 @@
 .order-card-items { display:grid; gap:.58rem; margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(200,155,60,.2); }
 .order-item { display:flex; justify-content:space-between; gap:1rem; color:#5a4c3a; font-size:.86rem; }
 .order-item small { color:#8a7d6e; }
+.order-tracking { margin-top:1rem; padding:1rem; border:1px solid rgba(200,155,60,.45); border-left:4px solid #c89b3c; border-radius:.55rem; background:#fffaf0; }
+.order-tracking-heading { display:flex; align-items:center; gap:.55rem; color:#3a2e27; font-size:.9rem; }
+.order-tracking-heading i { color:#a57822; }
+.order-tracking-details { display:flex; flex-wrap:wrap; gap:.75rem 2rem; margin-top:.8rem; color:#4f433a; font-size:.82rem; }
+.order-tracking-details span { display:grid; gap:.2rem; min-width:8rem; }
+.order-tracking-details small { color:#8a7d6e; font-size:.68rem; font-weight:800; text-transform:uppercase; }
+.order-tracking-details code { color:#3a2e27; font-family:inherit; font-weight:800; overflow-wrap:anywhere; }
+.order-tracking-link { display:inline-flex; align-items:center; gap:.45rem; margin-top:.9rem; padding:.65rem .85rem; border-radius:.35rem; background:#344633; color:#fff; font-size:.76rem; font-weight:850; text-decoration:none; }
+.order-tracking-link:hover { background:#263625; color:#fff; }
 .order-card-bottom { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.8rem; margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(200,155,60,.2); }
 .order-total { color:#3a2e27; font-size:.95rem; font-weight:850; }
 .order-credit { color:#a57822; font-size:.78rem; font-weight:800; }

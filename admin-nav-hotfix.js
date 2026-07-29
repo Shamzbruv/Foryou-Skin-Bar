@@ -4,7 +4,7 @@ const path = require('path');
 const express = require('express');
 
 const previousStatic = express.static.bind(express);
-const adminIntegration = '<script id="adminOperationalIntegration" type="module" src="/admin/js/admin-integration.js?v=1"></script>';
+const adminIntegration = '<script id="adminOperationalIntegration" type="module" src="/admin/js/admin-integration.js?v=2"></script>';
 const adminSidebarNormalizer = `
 <style id="adminSidebarNormalizerStyle">
   .admin-sidebar-normalized {
