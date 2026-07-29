@@ -1377,6 +1377,87 @@ app.post('/api/admin/payment-checkouts/:reference/confirm', async (req, res) => 
   }
 });
 
+app.patch('/api/admin/orders/:id/status', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const orderId = String(req.params.id || '').trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId)) {
+      return res.status(400).json({ error: 'A valid order ID is required.' });
+    }
+
+    const field = String(req.body?.field || '').trim();
+    const value = String(req.body?.value || '').trim().toLowerCase();
+    const allowedValues = {
+      payment_status: ['unpaid', 'awaiting_confirmation', 'paid', 'partially_paid', 'refunded'],
+      status: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']
+    };
+    if (!allowedValues[field]?.includes(value)) {
+      return res.status(400).json({ error: 'Select a valid order status.' });
+    }
+
+    const { data: currentOrder, error: fetchError } = await supabaseAdmin
+      .from('orders')
+      .select('id,order_number,status,payment_status,delivery_service,shipping_address,grand_total_jmd,payment_currency,payment_amount,customers(full_name,email),order_items(product_name,quantity)')
+      .eq('id', orderId)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+    if (!currentOrder) return res.status(404).json({ error: 'Order not found.' });
+
+    const { data: updatedOrder, error: updateError } = await supabaseAdmin
+      .from('orders')
+      .update({ [field]: value, updated_at: new Date().toISOString() })
+      .eq('id', orderId)
+      .select('id,order_number,status,payment_status')
+      .single();
+    if (updateError) throw updateError;
+
+    let emailStatus = 'not_required';
+    if (field === 'status' && value === 'shipped' && currentOrder.status !== 'shipped' && currentOrder.customers?.email) {
+      const { data: existingNotice, error: noticeError } = await supabaseAdmin
+        .from('email_logs')
+        .select('id')
+        .eq('order_id', orderId)
+        .eq('email_type', 'shipping_update')
+        .in('status', ['queued', 'scheduled', 'sent'])
+        .limit(1)
+        .maybeSingle();
+      if (noticeError) throw noticeError;
+
+      if (existingNotice) {
+        emailStatus = 'already_sent';
+      } else {
+        const itemRows = (currentOrder.order_items || []).map((item) =>
+          `<tr><td style="padding:10px 0;border-bottom:1px solid #eee5d6;">${escapeHtml(item.product_name)}</td><td align="right" style="padding:10px 0;border-bottom:1px solid #eee5d6;">Qty ${escapeHtml(item.quantity)}</td></tr>`
+        ).join('');
+        const result = await queueEmail({
+          orderId,
+          recipient: currentOrder.customers.email,
+          emailType: 'shipping_update',
+          subject: `Your For You Skin Bar order ${currentOrder.order_number} is on the way`,
+          html: `
+            <p>Hi ${escapeHtml(currentOrder.customers.full_name || 'there')},</p>
+            <p>Your order has been prepared and is now <strong>on the way</strong>.</p>
+            <div style="margin:22px 0;padding:18px;border-left:4px solid #c89b3c;background:#f8f3e9;">
+              <strong>Order:</strong> ${escapeHtml(currentOrder.order_number)}<br>
+              <strong>Delivery method:</strong> ${escapeHtml(currentOrder.delivery_service || 'Delivery')}<br>
+              <strong>Delivery address:</strong> ${escapeHtml(currentOrder.shipping_address || 'Address on order')}
+            </div>
+            ${itemRows ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;">${itemRows}</table>` : ''}
+            <p>Please keep your phone available in case the delivery provider needs to contact you. We will update the order record once delivery is complete.</p>
+          `,
+          metadata: { order_number: currentOrder.order_number, status: 'shipped' }
+        });
+        emailStatus = result.sent ? 'sent' : (result.queued ? 'queued' : 'failed');
+      }
+    }
+
+    return res.status(200).json({ success: true, order: updatedOrder, email_status: emailStatus });
+  } catch (error) {
+    console.error('[Admin Order Status]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to update this order.' });
+  }
+});
+
 app.delete('/api/admin/payment-checkouts/:reference', async (req, res) => {
   try {
     await requireAdmin(req);

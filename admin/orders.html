@@ -288,6 +288,7 @@
                             <label class="block text-xs font-bold text-stone-500 mb-1">Fulfillment Status</label>
                             <select id="fulfillmentStatusSelect" class="w-full border border-gray-300 rounded p-2 text-sm" onchange="window.updateOrderStatus('${order.id}', 'status', this.value)">
                                 <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
                                 <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
                                 <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                                 <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
@@ -312,18 +313,34 @@
         }
 
         window.updateOrderStatus = async function(orderId, field, value) {
-            const { error } = await supabase
-                .from('orders')
-                .update({ [field]: value })
-                .eq('id', orderId);
+            try {
+                const { data: sessionData } = await supabase.auth.getSession();
+                const accessToken = sessionData?.session?.access_token;
+                if (!accessToken) throw new Error('Your admin session has expired. Sign in again.');
 
-            if (error) {
-                alert(`Error updating ${field}: ` + error.message);
-            } else {
-                // If payment changed to paid, ideally we reduce inventory via edge function,
-                // but for now we just rely on admin managing it manually or edge func in future.
-                alert(`Successfully updated ${field} to ${value}`);
-                loadOrders(); // Refresh table behind
+                const response = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ field, value })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || `Unable to update ${field}.`);
+
+                const emailMessage = result.email_status === 'sent'
+                    ? ' The customer shipping email was sent.'
+                    : result.email_status === 'queued'
+                        ? ' The customer shipping email was queued.'
+                        : result.email_status === 'already_sent'
+                            ? ' The shipping email had already been sent.'
+                            : '';
+                alert(`Successfully updated ${field} to ${value}.${emailMessage}`);
+                loadOrders();
+            } catch (error) {
+                alert(`Error updating ${field}: ${error.message}`);
+                loadOrders();
             }
         }
 

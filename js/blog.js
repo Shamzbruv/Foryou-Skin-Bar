@@ -23,6 +23,7 @@ window.loadBlogPosts = async function() {
                     date: post.published_at || post.created_at,
                     publishedAt: post.published_at || post.created_at,
                     updatedAt: post.updated_at || post.published_at || post.created_at,
+                    viewCount: Number(post.view_count) || 0,
                     category: 'Skincare'
                 }));
                 loadedFromDb = true;

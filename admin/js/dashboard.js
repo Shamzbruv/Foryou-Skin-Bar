@@ -130,7 +130,7 @@ async function fetchDashboardData() {
             .limit(5000),
         supabase
             .from('blog_posts')
-            .select('id,title,slug,status,published_at,created_at')
+            .select('id,title,slug,status,published_at,created_at,view_count')
             .limit(1000),
         supabase.from('blog_likes').select('id,post_id,created_at').limit(5000),
         supabase.from('blog_comments').select('id,post_id,is_visible,created_at').limit(5000),
@@ -614,10 +614,11 @@ function renderTopBlogs() {
         .filter((post) => post.status === 'published')
         .map((post) => ({
             ...post,
+            views: asNumber(post.view_count),
             likes: likesByPost.get(post.id) || 0,
             comments: commentsByPost.get(post.id) || 0
         }))
-        .sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments))
+        .sort((a, b) => (b.views + b.likes + b.comments) - (a.views + a.likes + a.comments))
         .slice(0, 5);
     const container = byId('topBlogs');
     if (!rows.length) {
@@ -626,8 +627,8 @@ function renderTopBlogs() {
     }
     container.innerHTML = rows.map((post) => `
         <div class="ranked-item">
-            <div><a href="/admin/blog.html">${escapeHtml(post.title)}</a><small>${formatCount(post.likes)} likes &middot; ${formatCount(post.comments)} comments</small></div>
-            <span class="ranked-value">${formatCount(post.likes + post.comments)}</span>
+            <div><a href="/admin/blog.html">${escapeHtml(post.title)}</a><small>${formatCount(post.views)} views &middot; ${formatCount(post.likes)} likes &middot; ${formatCount(post.comments)} comments</small></div>
+            <span class="ranked-value">${formatCount(post.views + post.likes + post.comments)}</span>
         </div>`).join('');
 }
 

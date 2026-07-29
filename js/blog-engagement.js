@@ -83,6 +83,8 @@
     const status = document.getElementById('commentStatus');
     const commentList = document.getElementById('blogCommentList');
     const commentCount = document.getElementById('blogCommentCount');
+    const viewCount = document.getElementById('blogViewCount');
+    const viewNoun = document.getElementById('blogViewNoun');
 
     if (!window.supabase || !post?.id) {
       likeButton.disabled = true;
@@ -93,6 +95,17 @@
 
     const visitorKey = getVisitorKey();
     let liked = false;
+
+    async function registerView() {
+      const { data, error } = await window.supabase.rpc('register_blog_view', {
+        p_post_id: post.id,
+        p_visitor_key: visitorKey
+      });
+      if (error) throw error;
+      const total = Number(data) || 0;
+      if (viewCount) viewCount.textContent = String(total);
+      if (viewNoun) viewNoun.textContent = total === 1 ? 'view' : 'views';
+    }
 
     function updateLikeButton() {
       likeButton.setAttribute('aria-pressed', String(liked));
@@ -187,8 +200,8 @@
       }
     });
 
-    const results = await Promise.allSettled([loadLikes(), loadComments()]);
-    if (results.some(result => result.status === 'rejected')) {
+    const results = await Promise.allSettled([registerView(), loadLikes(), loadComments()]);
+    if (results.slice(1).some(result => result.status === 'rejected')) {
       status.textContent = 'Likes or comments could not be loaded. Please refresh and try again.';
     }
   };
