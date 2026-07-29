@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const WebSocket = require('ws');
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
@@ -36,6 +37,14 @@ const RESEND_API_KEY    = process.env.RESEND_API_KEY || '';
 const OWNER_EMAIL       = process.env.OWNER_EMAIL || 'hello@foryouskinbar.com';
 const FROM_EMAIL        = process.env.FROM_EMAIL || 'For You Skin Bar <hello@foryouskinbar.com>';
 const REPLY_TO_EMAIL    = process.env.REPLY_TO_EMAIL || 'hello@foryouskinbar.com';
+const EMAIL_LOGO_CONTENT_ID = 'foryou-skin-bar-logo';
+let emailLogoBase64 = '';
+
+try {
+  emailLogoBase64 = fs.readFileSync(path.join(__dirname, 'assets', 'brand', 'logo.png')).toString('base64');
+} catch (error) {
+  console.warn('[Email] Brand logo could not be loaded for inline delivery:', error.message);
+}
 
 const DEFAULT_SHIPPING_RULES = Object.freeze({
   domesticFreeThresholdJmd: 10000,
@@ -350,7 +359,7 @@ function brandedEmailHtml(subject, bodyHtml, emailType = '') {
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fffdf9;border:1px solid #e6d5b4;">
         <tr><td style="padding:24px 30px 18px;border-bottom:3px solid #c89b3c;text-align:center;">
           <a href="${escapeHtml(SERVER_BASE_URL)}" style="text-decoration:none;color:#2c211b;">
-            <img src="${escapeHtml(SERVER_BASE_URL)}/assets/brand/logo.png" width="178" alt="For You Skin Bar" style="display:block;width:178px;max-width:70%;height:auto;margin:0 auto;">
+            <img src="${emailLogoBase64 ? `cid:${EMAIL_LOGO_CONTENT_ID}` : `${escapeHtml(SERVER_BASE_URL)}/assets/brand/logo.png`}" width="178" alt="For You Skin Bar" style="display:block;width:178px;max-width:70%;height:auto;margin:0 auto;">
           </a>
         </td></tr>
         <tr><td style="padding:34px 34px 18px;">
@@ -389,7 +398,14 @@ async function deliverEmailLog(logId, message) {
         reply_to: REPLY_TO_EMAIL,
         subject: message.subject,
         html: message.html,
-        text: emailPlainText(message.html)
+        text: emailPlainText(message.html),
+        ...(emailLogoBase64 ? {
+          attachments: [{
+            content: emailLogoBase64,
+            filename: 'foryou-skin-bar-logo.png',
+            content_id: EMAIL_LOGO_CONTENT_ID
+          }]
+        } : {})
       })
     });
     const responseBody = await response.json().catch(async () => ({ message: await response.text().catch(() => '') }));
