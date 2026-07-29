@@ -22,6 +22,7 @@ function ensureAdminNavigation() {
     const links = Array.from(document.querySelectorAll('a'));
     const existingLoyalty = links.some(link => link.getAttribute('href') === '/admin/loyalty.html');
     const existingPolicies = links.some(link => link.getAttribute('href') === '/admin/policies.html');
+    const existingEmailTemplates = links.some(link => link.getAttribute('href') === '/admin/email-templates.html');
 
     const loyaltyAnchor = links.find(link => link.getAttribute('href') === '/admin/recommendation-rules.html')
         || links.find(link => link.getAttribute('href') === '/admin/discounts.html');
@@ -45,6 +46,18 @@ function ensureAdminNavigation() {
             policyAnchor.insertAdjacentElement('beforebegin', policiesLink);
         } else {
             policyAnchor.insertAdjacentElement('afterend', policiesLink);
+        }
+    }
+
+    if (!existingEmailTemplates && !window.location.pathname.endsWith('/admin/email-templates.html')) {
+        const emailAnchor = links.find(link => link.getAttribute('href') === '/admin/blog.html')
+            || links.find(link => link.getAttribute('href') === '/admin/content.html');
+        if (emailAnchor) {
+            const emailLink = document.createElement('a');
+            emailLink.href = '/admin/email-templates.html';
+            emailLink.className = 'block text-stone-300 hover:bg-stone-800 hover:text-white px-5 py-3 transition';
+            emailLink.textContent = 'Email Templates';
+            emailAnchor.insertAdjacentElement('afterend', emailLink);
         }
     }
 }

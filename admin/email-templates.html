@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Templates - For You Skin Bar Admin</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/admin-shell.css?v=2">
+    <link rel="stylesheet" href="/admin/email-templates.css?v=1">
+    <script src="/admin/js/admin-shell.js?v=2" defer></script>
+</head>
+<body>
+    <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
+    <div class="admin-shell">
+        <aside id="adminSidebar" class="admin-sidebar" aria-label="Admin navigation">
+            <div class="sidebar-brand"><div><p class="sidebar-eyebrow">For You Skin Bar</p><h2>Admin</h2></div></div>
+        </aside>
+
+        <main class="email-main admin-page-main">
+            <header class="email-header">
+                <div class="email-heading">
+                    <button id="openSidebarBtn" class="icon-button admin-mobile-menu" type="button" aria-label="Open navigation" title="Open navigation">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
+                    </button>
+                    <div>
+                        <p class="page-eyebrow">Customer communications</p>
+                        <h1>Email Templates</h1>
+                        <p>Manage the messages sent by orders, fulfilment, blogs, and Glow Letters.</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="previewBtn" class="button button-secondary" type="button" disabled><i class="fas fa-eye"></i><span>Preview</span></button>
+                    <button id="testBtn" class="button button-secondary" type="button" disabled><i class="fas fa-paper-plane"></i><span>Send test</span></button>
+                    <button id="saveBtn" class="button button-primary" type="button" disabled><i class="fas fa-floppy-disk"></i><span>Save</span></button>
+                </div>
+            </header>
+
+            <section class="email-workspace" aria-label="Email template editor">
+                <aside class="template-browser" aria-label="Email templates">
+                    <div class="browser-tools">
+                        <label class="search-field" for="templateSearch">
+                            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                            <input id="templateSearch" type="search" placeholder="Search templates" autocomplete="off">
+                        </label>
+                        <div id="categoryFilters" class="category-filters" aria-label="Filter templates"></div>
+                    </div>
+                    <div id="templateList" class="template-list" aria-live="polite">
+                        <div class="template-loading"><span></span><span></span><span></span></div>
+                    </div>
+                </aside>
+
+                <section class="template-editor" aria-live="polite">
+                    <div id="editorEmpty" class="editor-empty">
+                        <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
+                        <h2>Select an email</h2>
+                        <p>Choose a template from the list to edit it.</p>
+                    </div>
+
+                    <div id="editorContent" hidden>
+                        <div class="editor-title-row">
+                            <div>
+                                <div class="template-meta"><span id="templateCategory"></span><span id="templateAudience"></span></div>
+                                <h2 id="templateName"></h2>
+                                <p id="templateDescription"></p>
+                            </div>
+                            <button id="resetBtn" class="icon-text-button" type="button" title="Restore the original template">
+                                <i class="fas fa-arrow-rotate-left" aria-hidden="true"></i><span>Reset</span>
+                            </button>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="subjectInput">Subject line</label>
+                            <input id="subjectInput" type="text" maxlength="300" autocomplete="off">
+                        </div>
+
+                        <div class="body-heading">
+                            <label>Email body</label>
+                            <div class="mode-control" role="group" aria-label="Editor mode">
+                                <button id="visualModeBtn" class="active" type="button" aria-pressed="true">Visual</button>
+                                <button id="htmlModeBtn" type="button" aria-pressed="false">HTML</button>
+                            </div>
+                        </div>
+                        <div id="quillEditor" class="quill-editor"></div>
+                        <textarea id="htmlEditor" class="html-editor" spellcheck="false" hidden></textarea>
+
+                        <div class="variable-section">
+                            <div class="variable-heading">
+                                <div><h3>Personalization</h3><p>Insert live order, customer, or content details.</p></div>
+                                <select id="variableSelect" aria-label="Insert a variable"><option value="">Insert variable</option></select>
+                            </div>
+                            <div id="variableList" class="variable-list"></div>
+                        </div>
+
+                        <footer class="editor-footer">
+                            <p id="saveStatus"><i class="fas fa-circle-check" aria-hidden="true"></i><span>Saved</span></p>
+                            <p id="updatedAt"></p>
+                        </footer>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <dialog id="previewDialog" class="email-dialog preview-dialog">
+        <div class="dialog-header"><div><p class="page-eyebrow">Sample data</p><h2 id="previewTitle">Email preview</h2></div><button class="dialog-close" type="button" data-close-dialog="previewDialog" aria-label="Close preview" title="Close preview"><i class="fas fa-times"></i></button></div>
+        <iframe id="previewFrame" title="Rendered email preview"></iframe>
+    </dialog>
+
+    <dialog id="testDialog" class="email-dialog test-dialog">
+        <form id="testForm" method="dialog">
+            <div class="dialog-header"><div><p class="page-eyebrow">Delivery check</p><h2>Send a test email</h2></div><button class="dialog-close" type="button" data-close-dialog="testDialog" aria-label="Close" title="Close"><i class="fas fa-times"></i></button></div>
+            <div class="dialog-body">
+                <label for="testRecipient">Recipient email</label>
+                <input id="testRecipient" type="email" required autocomplete="email">
+                <p>The message uses sample values and is labelled TEST.</p>
+            </div>
+            <div class="dialog-actions"><button class="button button-secondary" type="button" data-close-dialog="testDialog">Cancel</button><button id="confirmTestBtn" class="button button-primary" type="submit"><i class="fas fa-paper-plane"></i><span>Send test</span></button></div>
+        </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"><i id="toastIcon" class="fas fa-circle-check"></i><span id="toastMessage"></span></div>
+
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script type="module" src="/admin/js/email-templates.js?v=1"></script>
+</body>
+</html>

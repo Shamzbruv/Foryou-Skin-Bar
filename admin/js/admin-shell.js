@@ -10,6 +10,7 @@
         ['/admin/recommendation-rules.html', 'fas fa-wand-magic-sparkles', 'Quiz Rules'],
         ['/admin/reviews.html', 'fas fa-star', 'Reviews'],
         ['/admin/blog.html', 'fas fa-newspaper', 'Blog & Content'],
+        ['/admin/email-templates.html', 'fas fa-envelope-open-text', 'Email Templates'],
         ['/admin/content.html', 'fas fa-pen-ruler', 'Site Content'],
         ['/admin/policies.html', 'fas fa-file-contract', 'Policies'],
         ['/admin/settings.html', 'fas fa-gear', 'Settings']

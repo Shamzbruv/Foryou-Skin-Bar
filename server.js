@@ -7,6 +7,12 @@ const WebSocket = require('ws');
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const {
+  EMAIL_TEMPLATE_DEFINITIONS,
+  renderEmailTemplate,
+  renderEmailSubject,
+  templateVariablesFor
+} = require('./email-templates');
 
 const app = express();
 const PORT = process.env.PORT || 5500;
@@ -345,6 +351,102 @@ function emailPlainText(html = '') {
     .trim();
 }
 
+const emailTemplateCache = new Map();
+const EMAIL_TEMPLATE_CACHE_MS = 60 * 1000;
+
+function baseTemplateVariables(recipient = '') {
+  return {
+    recipient_email: String(recipient || '').trim().toLowerCase(),
+    site_url: SERVER_BASE_URL,
+    shop_url: `${SERVER_BASE_URL}/shop.html`,
+    contact_url: `${SERVER_BASE_URL}/contact.html`,
+    current_year: String(new Date().getFullYear())
+  };
+}
+
+function assertSafeEmailTemplate(subjectTemplate, bodyHtml) {
+  const subject = String(subjectTemplate || '').replace(/[\r\n]+/g, ' ').trim();
+  const body = String(bodyHtml || '').trim();
+  if (!subject) throw new Error('Email subject is required.');
+  if (subject.length > 300) throw new Error('Email subject must be 300 characters or fewer.');
+  if (!body) throw new Error('Email body is required.');
+  if (body.length > 100000) throw new Error('Email body is too large.');
+  if (/<\/?(?:script|iframe|object|embed|form|input|button|textarea|select)\b/i.test(body)) {
+    throw new Error('Scripts, forms, and embedded frames are not allowed in email templates.');
+  }
+  if (/\son[a-z]+\s*=/i.test(body) || /javascript\s*:/i.test(body)) {
+    throw new Error('Unsafe event handlers or JavaScript links are not allowed.');
+  }
+  return { subject, body };
+}
+
+async function storedEmailTemplate(templateKey) {
+  const cached = emailTemplateCache.get(templateKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  const { data, error } = await supabaseAdmin
+    .from('email_templates')
+    .select('template_key,subject_template,body_html,updated_at')
+    .eq('template_key', templateKey)
+    .maybeSingle();
+  if (error) {
+    if (!['42P01', 'PGRST205'].includes(error.code)) {
+      console.warn(`[Email Templates] Could not load ${templateKey}:`, error.message);
+    }
+    return null;
+  }
+  emailTemplateCache.set(templateKey, { value: data || null, expiresAt: Date.now() + EMAIL_TEMPLATE_CACHE_MS });
+  return data || null;
+}
+
+async function resolveEmailContent(templateKey, fallbackSubject, fallbackBody, variables = {}) {
+  const definition = EMAIL_TEMPLATE_DEFINITIONS[templateKey];
+  if (!definition) return { subject: fallbackSubject, html: fallbackBody, customized: false };
+
+  const stored = await storedEmailTemplate(templateKey);
+  if (!stored) return { subject: fallbackSubject, html: fallbackBody, customized: false };
+  const values = {
+    ...variables,
+    default_subject: fallbackSubject,
+    default_body: fallbackBody
+  };
+  const subject = renderEmailSubject(stored.subject_template || fallbackSubject, values) || fallbackSubject;
+  const html = renderEmailTemplate(stored.body_html || fallbackBody, values) || fallbackBody;
+  return { subject, html, customized: true };
+}
+
+async function ensureEmailTemplateRows() {
+  const { data: existing, error: readError } = await supabaseAdmin
+    .from('email_templates')
+    .select('template_key,name,category,audience,description,subject_template,body_html,updated_at');
+  if (readError) throw readError;
+
+  const existingKeys = new Set((existing || []).map((row) => row.template_key));
+  const missingRows = Object.entries(EMAIL_TEMPLATE_DEFINITIONS)
+    .filter(([templateKey]) => !existingKeys.has(templateKey))
+    .map(([templateKey, definition]) => ({
+      template_key: templateKey,
+      name: definition.name,
+      category: definition.category,
+      audience: definition.audience,
+      description: definition.description,
+      subject_template: definition.defaultSubject,
+      body_html: definition.defaultBody
+    }));
+  if (missingRows.length) {
+    const { error: insertError } = await supabaseAdmin.from('email_templates').insert(missingRows);
+    if (insertError) throw insertError;
+    emailTemplateCache.clear();
+  }
+
+  if (!missingRows.length) return existing || [];
+  const { data: allRows, error: reloadError } = await supabaseAdmin
+    .from('email_templates')
+    .select('template_key,name,category,audience,description,subject_template,body_html,updated_at');
+  if (reloadError) throw reloadError;
+  return allRows || [];
+}
+
 function brandedEmailHtml(subject, bodyHtml, emailType = '') {
   const isNewsletter = ['newsletter_welcome', 'newsletter_broadcast', 'blog_published'].includes(emailType);
   const preheader = isNewsletter
@@ -426,21 +528,25 @@ async function deliverEmailLog(logId, message) {
   }
 }
 
-async function queueEmail({ orderId = null, recipient, emailType, subject, html, metadata = {}, scheduledFor = null }) {
+async function queueEmail({ orderId = null, recipient, emailType, subject, html, metadata = {}, templateVariables = {}, templateKey = emailType, scheduledFor = null }) {
   const normalizedRecipient = String(recipient || '').trim().toLowerCase();
   if (!isValidEmail(normalizedRecipient)) return { queued: false, sent: false, error: 'Invalid recipient' };
 
   const scheduledDate = scheduledFor ? new Date(scheduledFor) : null;
   const isScheduled = scheduledDate && Number.isFinite(scheduledDate.getTime()) && scheduledDate.getTime() > Date.now();
   const initialStatus = isScheduled ? 'scheduled' : (RESEND_API_KEY ? 'queued' : 'pending_resend_setup');
-  const decoratedHtml = brandedEmailHtml(subject, html, emailType);
+  const variables = { ...baseTemplateVariables(normalizedRecipient), ...templateVariables };
+  const resolved = templateKey
+    ? await resolveEmailContent(templateKey, subject, html, variables)
+    : { subject, html, customized: false };
+  const decoratedHtml = brandedEmailHtml(resolved.subject, resolved.html, templateKey || emailType);
   const { data: log, error: logError } = await supabaseAdmin.from('email_logs').insert({
     order_id: orderId,
     recipient: normalizedRecipient,
     email_type: emailType,
-    subject,
+    subject: resolved.subject,
     html_body: decoratedHtml,
-    metadata,
+    metadata: { ...metadata, template_key: templateKey || null, template_customized: resolved.customized },
     scheduled_for: isScheduled ? scheduledDate.toISOString() : null,
     status: initialStatus,
     error_message: RESEND_API_KEY ? null : 'RESEND_API_KEY missing'
@@ -453,7 +559,7 @@ async function queueEmail({ orderId = null, recipient, emailType, subject, html,
   if (isScheduled) return { queued: true, sent: false, scheduled: true };
   if (!RESEND_API_KEY) return { queued: true, sent: false, pendingSetup: true };
 
-  const result = await deliverEmailLog(log.id, { recipient: normalizedRecipient, subject, html: decoratedHtml });
+  const result = await deliverEmailLog(log.id, { recipient: normalizedRecipient, subject: resolved.subject, html: decoratedHtml });
   return { queued: true, ...result };
 }
 
@@ -655,6 +761,134 @@ async function requireAdmin(req) {
 
 // ── API Routes ──
 
+app.get('/api/admin/email-templates', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const rows = await ensureEmailTemplateRows();
+    const byKey = new Map(rows.map((row) => [row.template_key, row]));
+    const templates = Object.entries(EMAIL_TEMPLATE_DEFINITIONS).map(([templateKey, definition]) => {
+      const row = byKey.get(templateKey);
+      return {
+        template_key: templateKey,
+        name: definition.name,
+        category: definition.category,
+        audience: definition.audience,
+        description: definition.description,
+        subject_template: row?.subject_template || definition.defaultSubject,
+        body_html: row?.body_html || definition.defaultBody,
+        updated_at: row?.updated_at || null,
+        variables: templateVariablesFor(definition).map((variable) => ({
+          ...variable,
+          token: variable.html ? `{{{${variable.key}}}}` : `{{${variable.key}}}`
+        }))
+      };
+    });
+    return res.status(200).json({ templates });
+  } catch (error) {
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to load email templates.' });
+  }
+});
+
+app.put('/api/admin/email-templates/:templateKey', async (req, res) => {
+  try {
+    const user = await requireAdmin(req);
+    const templateKey = String(req.params.templateKey || '').trim();
+    const definition = EMAIL_TEMPLATE_DEFINITIONS[templateKey];
+    if (!definition) return res.status(404).json({ error: 'Email template not found.' });
+    const template = assertSafeEmailTemplate(req.body?.subject_template, req.body?.body_html);
+    const { data, error } = await supabaseAdmin.from('email_templates').upsert({
+      template_key: templateKey,
+      name: definition.name,
+      category: definition.category,
+      audience: definition.audience,
+      description: definition.description,
+      subject_template: template.subject,
+      body_html: template.body,
+      updated_by: user.id,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'template_key' }).select('template_key,subject_template,body_html,updated_at').single();
+    if (error) throw error;
+    emailTemplateCache.delete(templateKey);
+    return res.status(200).json({ success: true, template: data });
+  } catch (error) {
+    return res.status(error.status || 400).json({ error: error.message || 'Unable to save this email template.' });
+  }
+});
+
+app.post('/api/admin/email-templates/:templateKey/reset', async (req, res) => {
+  try {
+    const user = await requireAdmin(req);
+    const templateKey = String(req.params.templateKey || '').trim();
+    const definition = EMAIL_TEMPLATE_DEFINITIONS[templateKey];
+    if (!definition) return res.status(404).json({ error: 'Email template not found.' });
+    const { data, error } = await supabaseAdmin.from('email_templates').upsert({
+      template_key: templateKey,
+      name: definition.name,
+      category: definition.category,
+      audience: definition.audience,
+      description: definition.description,
+      subject_template: definition.defaultSubject,
+      body_html: definition.defaultBody,
+      updated_by: user.id,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'template_key' }).select('template_key,subject_template,body_html,updated_at').single();
+    if (error) throw error;
+    emailTemplateCache.delete(templateKey);
+    return res.status(200).json({ success: true, template: data });
+  } catch (error) {
+    return res.status(error.status || 400).json({ error: error.message || 'Unable to reset this email template.' });
+  }
+});
+
+app.post('/api/admin/email-templates/:templateKey/preview', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const templateKey = String(req.params.templateKey || '').trim();
+    const definition = EMAIL_TEMPLATE_DEFINITIONS[templateKey];
+    if (!definition) return res.status(404).json({ error: 'Email template not found.' });
+    const template = assertSafeEmailTemplate(req.body?.subject_template, req.body?.body_html);
+    const variables = { ...baseTemplateVariables('preview@example.com'), ...definition.sampleVariables };
+    const subject = renderEmailSubject(template.subject, variables);
+    const body = renderEmailTemplate(template.body, variables);
+    const html = brandedEmailHtml(subject, body, templateKey)
+      .replace(`cid:${EMAIL_LOGO_CONTENT_ID}`, '/assets/brand/logo.png');
+    return res.status(200).json({ subject, html });
+  } catch (error) {
+    return res.status(error.status || 400).json({ error: error.message || 'Unable to preview this email template.' });
+  }
+});
+
+app.post('/api/admin/email-templates/:templateKey/test', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const templateKey = String(req.params.templateKey || '').trim();
+    const definition = EMAIL_TEMPLATE_DEFINITIONS[templateKey];
+    if (!definition) return res.status(404).json({ error: 'Email template not found.' });
+    const recipient = String(req.body?.recipient || '').trim().toLowerCase();
+    if (!isValidEmail(recipient)) return res.status(400).json({ error: 'Enter a valid test email address.' });
+    const template = assertSafeEmailTemplate(req.body?.subject_template, req.body?.body_html);
+    const variables = { ...baseTemplateVariables(recipient), ...definition.sampleVariables };
+    const subject = renderEmailSubject(template.subject, variables);
+    const body = renderEmailTemplate(template.body, variables);
+    const result = await queueEmail({
+      recipient,
+      emailType: `template_test_${templateKey}`,
+      templateKey: null,
+      subject: `[TEST] ${subject}`,
+      html: body,
+      metadata: { template_test: true, source_template_key: templateKey }
+    });
+    if (!result.queued && !result.sent) throw new Error(String(result.error || 'The test email could not be queued.'));
+    return res.status(result.sent ? 200 : 202).json({
+      success: true,
+      email_status: result.sent ? 'sent' : 'queued',
+      recipient
+    });
+  } catch (error) {
+    return res.status(error.status || 400).json({ error: error.message || 'Unable to send the test email.' });
+  }
+});
+
 app.get('/api/storefront-config', async (req, res) => {
   try {
     const shipping = await getShippingRules();
@@ -772,7 +1006,8 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       emailType: 'newsletter_welcome',
       subject: 'Welcome to Glow Letters',
       html: welcomeHtml,
-      metadata: { source }
+      metadata: { source },
+      templateVariables: { signup_source: source }
     });
 
     return res.status(201).json({
@@ -816,7 +1051,13 @@ app.post('/api/newsletter/send', async (req, res) => {
     let queued = 0;
     const failures = [];
     for (const email of uniqueEmails) {
-      const result = await queueEmail({ recipient: email, emailType: 'newsletter_broadcast', subject, html });
+      const result = await queueEmail({
+        recipient: email,
+        emailType: 'newsletter_broadcast',
+        subject,
+        html,
+        templateVariables: { broadcast_subject: subject, message_html: htmlMessage }
+      });
       if (result.sent) sent += 1;
       else if (result.queued) queued += 1;
       else failures.push({ email, error: result.error });
@@ -877,6 +1118,11 @@ app.post('/api/blogs/:postId/notify-subscribers', async (req, res) => {
         subject: `New from For You Skin Bar: ${post.title}`,
         html,
         metadata: { post_id: post.id, slug: post.slug },
+        templateVariables: {
+          post_title: post.title,
+          post_excerpt: post.excerpt || '',
+          article_url: articleUrl
+        },
         scheduledFor
       });
       if (result.sent) sent += 1;
@@ -1184,7 +1430,8 @@ app.post('/api/create-order', async (req, res) => {
           recipient: normalizedEmail,
           emailType: 'newsletter_welcome',
           subject: 'Welcome to Glow Letters',
-          html: '<p>Welcome to Glow Letters.</p><p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from For You Skin Bar.</p><p>Thank you for joining us.</p>'
+          html: '<p>Welcome to Glow Letters.</p><p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from For You Skin Bar.</p><p>Thank you for joining us.</p>',
+          templateVariables: { signup_source: 'checkout' }
         });
       }
     }
@@ -1314,7 +1561,17 @@ app.post('/api/create-order', async (req, res) => {
         emailType: 'payment_pending',
         subject: `Complete payment for For You Skin Bar order ${orderNumber}`,
         html: `<p>Hi ${escapeHtml(customer.fullName)},</p><p>Your checkout is saved, but <strong>your order is not confirmed until Fygaro payment is complete.</strong></p>${paymentButton}<p><strong>Reference:</strong> ${escapeHtml(orderNumber)}<br><strong>Delivery:</strong> ${escapeHtml(isInternational ? `${shippingRules.internationalCarrier} international delivery` : deliveryService)}<br><strong>Amount due:</strong> ${paymentDisplay}</p><div style="margin:20px 0;">${pendingItemsHtml}</div><p><strong>Ship to:</strong><br>${escapeHtml(formattedAddress)}</p><p>This is a payment reminder, not a paid-order receipt.</p>`,
-        metadata: { order_number: orderNumber, payment_currency: paymentCurrency, payment_amount: paymentAmount }
+        metadata: { order_number: orderNumber, payment_currency: paymentCurrency, payment_amount: paymentAmount },
+        templateVariables: {
+          customer_name: customer.fullName,
+          order_number: orderNumber,
+          payment_url: fygaroPayment.url,
+          payment_button: paymentButton,
+          amount_due: paymentDisplay,
+          delivery_method: isInternational ? `${shippingRules.internationalCarrier} international delivery` : deliveryService,
+          shipping_address: formattedAddress,
+          items_html: `<div style="margin:20px 0;">${pendingItemsHtml}</div>`
+        }
       });
       await queueEmail({
         orderId,
@@ -1322,7 +1579,19 @@ app.post('/api/create-order', async (req, res) => {
         emailType: 'owner_payment_pending',
         subject: `Payment pending - ${orderNumber}`,
         html: `<p>A customer reached Fygaro checkout. <strong>Do not fulfil this checkout until payment is marked Paid.</strong></p><p><strong>Customer:</strong> ${escapeHtml(customer.fullName)}<br>${escapeHtml(customer.email)}<br>${escapeHtml(customer.phone)}</p><p><strong>Amount awaiting payment:</strong> ${paymentDisplay}<br><strong>JMD accounting total:</strong> ${formatPaymentAmount(total, 'JMD')}<br><strong>Delivery:</strong> ${escapeHtml(isInternational ? `${shippingRules.internationalCarrier} international delivery` : deliveryService)}</p><div style="margin:20px 0;">${pendingItemsHtml}</div><p><strong>Address:</strong><br>${escapeHtml(formattedAddress)}</p><p><strong>Notes:</strong> ${escapeHtml(shipping.notes || 'None')}</p>`,
-        metadata: { order_number: orderNumber, payment_currency: paymentCurrency, payment_amount: paymentAmount }
+        metadata: { order_number: orderNumber, payment_currency: paymentCurrency, payment_amount: paymentAmount },
+        templateVariables: {
+          customer_name: customer.fullName,
+          customer_email: customer.email,
+          customer_phone: customer.phone,
+          order_number: orderNumber,
+          amount_due: paymentDisplay,
+          accounting_total: formatPaymentAmount(total, 'JMD'),
+          delivery_method: isInternational ? `${shippingRules.internationalCarrier} international delivery` : deliveryService,
+          shipping_address: formattedAddress,
+          customer_notes: shipping.notes || 'None',
+          items_html: `<div style="margin:20px 0;">${pendingItemsHtml}</div>`
+        }
       });
     }
 
@@ -1373,7 +1642,14 @@ app.post('/api/admin/payment-checkouts/:reference/confirm', async (req, res) => 
         emailType: 'payment_confirmed',
         subject: `Payment confirmed - For You Skin Bar order ${order.order_number}`,
         html: `<p>Hi ${escapeHtml(customer.full_name)},</p><p>Your Fygaro payment for <strong>${escapeHtml(order.order_number)}</strong> has been confirmed.</p><p>We are now preparing your order and will send a fulfilment update when it is ready.</p>`,
-        metadata: { order_number: order.order_number, payment_reference: paymentReference, source: 'admin_reconciliation' }
+        metadata: { order_number: order.order_number, payment_reference: paymentReference, source: 'admin_reconciliation' },
+        templateVariables: {
+          customer_name: customer.full_name,
+          order_number: order.order_number,
+          payment_reference: paymentReference,
+          amount_paid: formatPaymentAmount(order.payment_amount ?? order.grand_total_jmd, order.payment_currency || 'JMD'),
+          items_html: ''
+        }
       });
     }
 
@@ -1382,8 +1658,14 @@ app.post('/api/admin/payment-checkouts/:reference/confirm', async (req, res) => 
       recipient: OWNER_EMAIL,
       emailType: 'owner_payment_confirmed',
       subject: `Payment reconciled - ${order.order_number}`,
-        html: `<p>Fygaro payment <strong>${escapeHtml(paymentReference)}</strong> was matched to <strong>${escapeHtml(order.order_number)}</strong>.</p><p>Amount: ${formatPaymentAmount(order.payment_amount ?? order.grand_total_jmd, order.payment_currency || 'JMD')}</p>`,
-      metadata: { order_number: order.order_number, payment_reference: paymentReference, source: 'admin_reconciliation' }
+      html: `<p>Fygaro payment <strong>${escapeHtml(paymentReference)}</strong> was matched to <strong>${escapeHtml(order.order_number)}</strong>.</p><p>Amount: ${formatPaymentAmount(order.payment_amount ?? order.grand_total_jmd, order.payment_currency || 'JMD')}</p>`,
+      metadata: { order_number: order.order_number, payment_reference: paymentReference, source: 'admin_reconciliation' },
+      templateVariables: {
+        order_number: order.order_number,
+        payment_reference: paymentReference,
+        amount_paid: formatPaymentAmount(order.payment_amount ?? order.grand_total_jmd, order.payment_currency || 'JMD'),
+        accounting_total: formatPaymentAmount(order.grand_total_jmd, 'JMD')
+      }
     });
 
     return res.status(200).json({ success: true, order });
@@ -1461,7 +1743,14 @@ app.patch('/api/admin/orders/:id/status', async (req, res) => {
             ${itemRows ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;">${itemRows}</table>` : ''}
             <p>Please keep your phone available in case the delivery provider needs to contact you. We will update the order record once delivery is complete.</p>
           `,
-          metadata: { order_number: currentOrder.order_number, status: 'shipped' }
+          metadata: { order_number: currentOrder.order_number, status: 'shipped' },
+          templateVariables: {
+            customer_name: currentOrder.customers.full_name || 'there',
+            order_number: currentOrder.order_number,
+            delivery_method: currentOrder.delivery_service || 'Delivery',
+            shipping_address: currentOrder.shipping_address || 'Address on order',
+            items_html: itemRows ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:20px 0;">${itemRows}</table>` : ''
+          }
         });
         emailStatus = result.sent ? 'sent' : (result.queued ? 'queued' : 'failed');
       }
@@ -1769,7 +2058,14 @@ app.post('/api/fygaro-webhook', async (req, res) => {
         emailType: 'payment_confirmed',
         subject: `Payment confirmed - For You Skin Bar order ${order.order_number}`,
         html: `<p>Hi ${escapeHtml(customer.full_name)},</p><p>Your Fygaro payment for <strong>${escapeHtml(order.order_number)}</strong> is confirmed.</p><div style="margin:20px 0;">${pendingItemsHtml}</div><p><strong>Amount paid:</strong> ${confirmedDisplay}</p><p>We are preparing your order now. You will receive another update when it is ready for pickup or dispatch.</p>`,
-        metadata: { order_number: order.order_number }
+        metadata: { order_number: order.order_number },
+        templateVariables: {
+          customer_name: customer.full_name,
+          order_number: order.order_number,
+          payment_reference: paymentRef,
+          amount_paid: confirmedDisplay,
+          items_html: `<div style="margin:20px 0;">${pendingItemsHtml}</div>`
+        }
       });
       await queueEmail({
         orderId: order.id,
@@ -1777,7 +2073,13 @@ app.post('/api/fygaro-webhook', async (req, res) => {
         emailType: 'owner_payment_confirmed',
         subject: `Payment received - ${order.order_number}`,
         html: `<p>Payment was confirmed for <strong>${escapeHtml(order.order_number)}</strong>.</p><p><strong>Amount:</strong> ${confirmedDisplay}<br><strong>JMD accounting total:</strong> ${formatPaymentAmount(order.grand_total_jmd, 'JMD')}</p><p>Please prepare this order for fulfilment.</p>`,
-        metadata: { order_number: order.order_number }
+        metadata: { order_number: order.order_number },
+        templateVariables: {
+          order_number: order.order_number,
+          payment_reference: paymentRef,
+          amount_paid: confirmedDisplay,
+          accounting_total: formatPaymentAmount(order.grand_total_jmd, 'JMD')
+        }
       });
     }
 
@@ -1974,7 +2276,15 @@ app.post('/api/orders/cancel', async (req, res) => {
         emailType: 'order_cancelled',
         subject: `Order cancellation received - ${order.order_number}`,
         html: `<p>Hi ${escapeHtml(order.customers?.full_name || 'Valued Customer')},</p><p>Your request to cancel <strong>${escapeHtml(order.order_number)}</strong> has been received and the order is now marked cancelled.</p>${order.payment_status === 'paid' ? '<p>Because payment was already collected, our team will review the transaction and process the refund manually. Bank posting times may vary.</p>' : '<p>No payment refund is required for this order.</p>'}<p>Contact us immediately if you did not request this cancellation.</p>`,
-        metadata: { order_number: order.order_number }
+        metadata: { order_number: order.order_number },
+        templateVariables: {
+          customer_name: order.customers?.full_name || 'Valued Customer',
+          order_number: order.order_number,
+          payment_status: order.payment_status,
+          refund_message: order.payment_status === 'paid'
+            ? '<p>Because payment was already collected, our team will review the transaction and process the refund manually. Bank posting times may vary.</p>'
+            : '<p>No payment refund is required for this order.</p>'
+        }
       });
       await queueEmail({
         orderId: order.id,
@@ -1982,7 +2292,17 @@ app.post('/api/orders/cancel', async (req, res) => {
         emailType: 'owner_order_cancelled',
         subject: `Order cancelled by customer - ${order.order_number}`,
         html: `<p>Order <strong>${escapeHtml(order.order_number)}</strong> was cancelled by the customer.</p><p><strong>Customer:</strong> ${escapeHtml(order.customers?.full_name || 'N/A')} (${escapeHtml(customerEmail)})<br><strong>Reason:</strong> ${escapeHtml(reason || 'No reason provided')}<br><strong>Payment status:</strong> ${escapeHtml(order.payment_status)}</p>${order.payment_status === 'paid' ? '<p><strong>Action required:</strong> review and process the refund in Fygaro.</p>' : '<p>No refund action is currently required.</p>'}`,
-        metadata: { order_number: order.order_number }
+        metadata: { order_number: order.order_number },
+        templateVariables: {
+          order_number: order.order_number,
+          customer_name: order.customers?.full_name || 'N/A',
+          customer_email: customerEmail,
+          cancellation_reason: reason || 'No reason provided',
+          payment_status: order.payment_status,
+          refund_action: order.payment_status === 'paid'
+            ? '<p><strong>Action required:</strong> review and process the refund in Fygaro.</p>'
+            : '<p>No refund action is currently required.</p>'
+        }
       });
     }
 
