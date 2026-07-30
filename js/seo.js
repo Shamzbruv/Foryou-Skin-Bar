@@ -1,6 +1,6 @@
 (function () {
   const SITE_ORIGIN = 'https://foryouskinbar.com';
-  const DEFAULT_IMAGE = `${SITE_ORIGIN}/assets/brand/welcome-lifestyle-clean-branded-v2.png`;
+  const DEFAULT_IMAGE = `${SITE_ORIGIN}/social-preview.jpg`;
 
   function absoluteUrl(value) {
     if (!value) return DEFAULT_IMAGE;

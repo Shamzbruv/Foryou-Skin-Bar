@@ -1,9 +1,13 @@
 const fs = require('fs/promises');
 const path = require('path');
+const sharp = require('sharp');
 
 const DEFAULT_SOCIAL_IMAGE_PATH = '/assets/brand/welcome-lifestyle-clean-branded-v2.png';
-const DEFAULT_SOCIAL_IMAGE_WIDTH = 1773;
-const DEFAULT_SOCIAL_IMAGE_HEIGHT = 887;
+const DEFAULT_SOCIAL_IMAGE_WIDTH = 1200;
+const DEFAULT_SOCIAL_IMAGE_HEIGHT = 630;
+const DEFAULT_SOCIAL_TITLE = 'Foryou Skin Bar | Jamaican Handmade Skincare';
+const DEFAULT_SOCIAL_DESCRIPTION = 'Handcrafted Jamaican skincare made for acne, dark spots, body care, and healthy glow routines.';
+const socialImageCache = new Map();
 
 const STATIC_PAGE_SEO = {
   '/': {
@@ -145,7 +149,6 @@ function injectSeoHead(html, options) {
   const canonicalUrl = options.canonicalUrl;
   const imageUrl = options.imageUrl;
   const type = options.type || 'website';
-  const imageIsDefault = imageUrl.endsWith(DEFAULT_SOCIAL_IMAGE_PATH);
   const robots = options.robots || 'index, follow, max-image-preview:large';
   const schema = options.schema
     ? `<script id="serverSeoSchema" type="application/ld+json">${JSON.stringify(options.schema).replace(/</g, '\\u003c')}</script>`
@@ -172,7 +175,9 @@ function injectSeoHead(html, options) {
   <meta property="og:locale" content="en_JM">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
   <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}">
-  ${imageIsDefault ? `<meta property="og:image:width" content="${DEFAULT_SOCIAL_IMAGE_WIDTH}">\n  <meta property="og:image:height" content="${DEFAULT_SOCIAL_IMAGE_HEIGHT}">` : ''}
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="${DEFAULT_SOCIAL_IMAGE_WIDTH}">
+  <meta property="og:image:height" content="${DEFAULT_SOCIAL_IMAGE_HEIGHT}">
   <meta property="og:image:alt" content="${escapeHtml(`${title} - For You Skin Bar`)}">
   ${productMeta}
   <meta name="twitter:card" content="summary_large_image">
@@ -203,7 +208,127 @@ function primaryProductImage(product) {
       || Number(left.sort_order || 0) - Number(right.sort_order || 0))[0]?.image_url || '';
 }
 
+async function socialSharingSettings(supabase) {
+  const defaults = {
+    title: DEFAULT_SOCIAL_TITLE,
+    description: DEFAULT_SOCIAL_DESCRIPTION,
+    imageUrl: DEFAULT_SOCIAL_IMAGE_PATH,
+    version: 1
+  };
+  const { data, error } = await supabase
+    .from('site_content')
+    .select('value,updated_at')
+    .eq('key', 'social_sharing')
+    .maybeSingle();
+  if (error) return defaults;
+  const value = data?.value && typeof data.value === 'object' ? data.value : {};
+  return {
+    title: compactText(value.title || DEFAULT_SOCIAL_TITLE, 90),
+    description: compactText(value.description || DEFAULT_SOCIAL_DESCRIPTION, 180),
+    imageUrl: String(value.image_url || DEFAULT_SOCIAL_IMAGE_PATH).trim() || DEFAULT_SOCIAL_IMAGE_PATH,
+    version: data?.updated_at ? new Date(data.updated_at).getTime() : 1
+  };
+}
+
+function socialPreviewUrl(siteOrigin, parameters = {}) {
+  const url = new URL('/social-preview.jpg', siteOrigin);
+  Object.entries(parameters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
+  });
+  return url.href;
+}
+
+function isBlockedRemoteHost(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  return host === 'localhost'
+    || host.endsWith('.local')
+    || /^127\./.test(host)
+    || /^10\./.test(host)
+    || /^192\.168\./.test(host)
+    || /^169\.254\./.test(host)
+    || /^172\.(?:1[6-9]|2\d|3[01])\./.test(host)
+    || host === '::1';
+}
+
+async function sourceImageBuffer(source, rootDirectory, siteOrigin) {
+  const sourceUrl = new URL(source || DEFAULT_SOCIAL_IMAGE_PATH, siteOrigin);
+  const siteUrl = new URL(siteOrigin);
+  if (sourceUrl.origin === siteUrl.origin) {
+    const root = path.resolve(rootDirectory);
+    const localPath = path.resolve(rootDirectory, `.${decodeURIComponent(sourceUrl.pathname)}`);
+    if (localPath !== root && !localPath.startsWith(`${root}${path.sep}`)) throw new Error('Invalid local sharing image path.');
+    return fs.readFile(localPath);
+  }
+  if (sourceUrl.protocol !== 'https:' || isBlockedRemoteHost(sourceUrl.hostname)) throw new Error('Sharing images must use a public HTTPS address.');
+  const response = await fetch(sourceUrl, { signal: AbortSignal.timeout(12000) });
+  if (!response.ok) throw new Error(`Sharing image returned HTTP ${response.status}.`);
+  const declaredSize = Number(response.headers.get('content-length') || 0);
+  if (declaredSize > 15 * 1024 * 1024) throw new Error('Sharing image is larger than 15 MB.');
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (buffer.length > 15 * 1024 * 1024) throw new Error('Sharing image is larger than 15 MB.');
+  return buffer;
+}
+
+async function sharingImageSource(req, supabase) {
+  const productId = String(req.query.product || '').trim();
+  if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(productId)) {
+    const { data: product } = await supabase
+      .from('products')
+      .select('id,updated_at,product_images(image_url,sort_order,is_primary)')
+      .eq('id', productId)
+      .eq('status', 'active')
+      .maybeSingle();
+    const imageUrl = product ? primaryProductImage(product) : '';
+    if (imageUrl) return { imageUrl, version: product.updated_at || product.id };
+  }
+
+  const blogSlug = String(req.query.blog || '').trim().slice(0, 200);
+  if (blogSlug) {
+    const { data: post } = await supabase
+      .from('blog_posts')
+      .select('featured_image_url,updated_at')
+      .eq('slug', blogSlug)
+      .eq('status', 'published')
+      .maybeSingle();
+    if (post?.featured_image_url) return { imageUrl: post.featured_image_url, version: post.updated_at || blogSlug };
+  }
+
+  return socialSharingSettings(supabase);
+}
+
+async function optimizedSharingImage(source, rootDirectory, siteOrigin) {
+  const cacheKey = `${source.imageUrl}|${source.version || ''}`;
+  if (socialImageCache.has(cacheKey)) return socialImageCache.get(cacheKey);
+  let input;
+  try {
+    input = await sourceImageBuffer(source.imageUrl, rootDirectory, siteOrigin);
+  } catch (_) {
+    input = await sourceImageBuffer(DEFAULT_SOCIAL_IMAGE_PATH, rootDirectory, siteOrigin);
+  }
+  const output = await sharp(input)
+    .rotate()
+    .resize(DEFAULT_SOCIAL_IMAGE_WIDTH, DEFAULT_SOCIAL_IMAGE_HEIGHT, { fit: 'cover', position: 'centre' })
+    .jpeg({ quality: 78, progressive: true, mozjpeg: true })
+    .toBuffer();
+  socialImageCache.set(cacheKey, output);
+  while (socialImageCache.size > 50) socialImageCache.delete(socialImageCache.keys().next().value);
+  return output;
+}
+
 function installSeoRoutes(app, { rootDirectory, supabase, siteOrigin }) {
+  app.get('/social-preview.jpg', async (req, res, next) => {
+    try {
+      const source = await sharingImageSource(req, supabase);
+      const image = await optimizedSharingImage(source, rootDirectory, siteOrigin);
+      res.type('image/jpeg');
+      res.set('Cache-Control', 'public, max-age=86400, s-maxage=604800, immutable');
+      res.set('Content-Length', String(image.length));
+      return res.status(200).send(image);
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   Object.entries(CANONICAL_ALIASES).forEach(([source, destination]) => {
     app.get(source, (req, res) => res.redirect(301, destination));
   });
@@ -231,12 +356,22 @@ function installSeoRoutes(app, { rootDirectory, supabase, siteOrigin }) {
   app.get('/post/:slug', (req, res) => res.redirect(301, `/blog-post.html?slug=${encodeURIComponent(req.params.slug)}`));
 
   Object.entries(STATIC_PAGE_SEO).forEach(([route, page]) => {
-    app.get(route, (req, res, next) => readAndRender(rootDirectory, page.file, {
-      ...page,
-      canonicalUrl: absoluteUrl(page.canonicalPath || route, siteOrigin),
-      imageUrl: absoluteUrl(DEFAULT_SOCIAL_IMAGE_PATH, siteOrigin),
-      type: 'website'
-    }, res, next));
+    app.get(route, async (req, res, next) => {
+      try {
+        const social = await socialSharingSettings(supabase);
+        const isHomepage = route === '/' || route === '/index.html';
+        return readAndRender(rootDirectory, page.file, {
+          ...page,
+          title: isHomepage ? social.title : page.title,
+          description: isHomepage ? social.description : page.description,
+          canonicalUrl: absoluteUrl(page.canonicalPath || route, siteOrigin),
+          imageUrl: socialPreviewUrl(siteOrigin, { v: social.version }),
+          type: 'website'
+        }, res, next);
+      } catch (error) {
+        return next(error);
+      }
+    });
   });
 
   app.get('/product.html', async (req, res, next) => {
@@ -245,7 +380,7 @@ function installSeoRoutes(app, { rootDirectory, supabase, siteOrigin }) {
     try {
       const { data: product, error } = await supabase
         .from('products')
-        .select('id,name,seo_title,seo_description,short_description,description,price_jmd,status,product_images(image_url,sort_order,is_primary)')
+        .select('id,name,seo_title,seo_description,short_description,description,price_jmd,status,updated_at,product_images(image_url,sort_order,is_primary)')
         .eq('id', productId)
         .eq('status', 'active')
         .maybeSingle();
@@ -255,12 +390,13 @@ function installSeoRoutes(app, { rootDirectory, supabase, siteOrigin }) {
       const description = product.seo_description || product.short_description || product.description
         || `Shop ${product.name}, handcrafted in Jamaica by Foryou Skin Bar.`;
       const canonicalUrl = absoluteUrl(`/product.html?id=${encodeURIComponent(product.id)}`, siteOrigin);
-      const imageUrl = absoluteUrl(primaryProductImage(product), siteOrigin);
+      const originalImageUrl = absoluteUrl(primaryProductImage(product), siteOrigin);
+      const imageUrl = socialPreviewUrl(siteOrigin, { product: product.id, v: product.updated_at || 1 });
       const schema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
         name: product.name,
-        image: [imageUrl],
+        image: [originalImageUrl],
         description: compactText(description, 500),
         brand: { '@type': 'Brand', name: 'Foryou Skin Bar' },
         url: canonicalUrl,
@@ -301,13 +437,14 @@ function installSeoRoutes(app, { rootDirectory, supabase, siteOrigin }) {
       const title = `${compactText(post.title, 70)} | Foryou Skin Bar Glow Journal`;
       const description = post.excerpt || post.content || 'Skincare education and routine guidance from Foryou Skin Bar Jamaica.';
       const canonicalUrl = absoluteUrl(`/blog-post.html?slug=${encodeURIComponent(post.slug)}`, siteOrigin);
-      const imageUrl = absoluteUrl(post.featured_image_url, siteOrigin);
+      const originalImageUrl = absoluteUrl(post.featured_image_url, siteOrigin);
+      const imageUrl = socialPreviewUrl(siteOrigin, { blog: post.slug, v: post.updated_at || post.published_at || 1 });
       const schema = {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: post.title,
         description: compactText(description, 500),
-        image: [imageUrl],
+        image: [originalImageUrl],
         datePublished: post.published_at,
         dateModified: post.updated_at || post.published_at,
         mainEntityOfPage: canonicalUrl,

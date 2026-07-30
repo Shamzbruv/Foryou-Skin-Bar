@@ -10,10 +10,11 @@
   <meta property="og:title" content="Foryou Skin Bar | Jamaican Handmade Skincare">
   <meta property="og:description" content="Handcrafted skincare made in Jamaica with plant-powered ingredients for acne, dark spots, hyperpigmentation, and everyday glow.">
   <meta property="og:url" content="https://foryouskinbar.com/">
-  <meta property="og:image" content="https://foryouskinbar.com/assets/brand/welcome-lifestyle-clean-branded-v2.png">
-  <meta property="og:image:secure_url" content="https://foryouskinbar.com/assets/brand/welcome-lifestyle-clean-branded-v2.png">
-  <meta property="og:image:width" content="1773">
-  <meta property="og:image:height" content="887">
+  <meta property="og:image" content="https://foryouskinbar.com/social-preview.jpg">
+  <meta property="og:image:secure_url" content="https://foryouskinbar.com/social-preview.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="For You Skin Bar handcrafted Jamaican skincare">
   <meta property="og:site_name" content="Foryou Skin Bar">
   <meta property="og:locale" content="en_JM">
@@ -21,7 +22,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Foryou Skin Bar | Jamaican Handmade Skincare">
   <meta name="twitter:description" content="Handcrafted Jamaican skincare for acne, dark spots, body care, and healthy glow routines.">
-  <meta name="twitter:image" content="https://foryouskinbar.com/assets/brand/welcome-lifestyle-clean-branded-v2.png">
+  <meta name="twitter:image" content="https://foryouskinbar.com/social-preview.jpg">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
@@ -466,7 +467,8 @@
         <div class="flex gap-2 flex-wrap" id="filterTabs">
           <button data-filter="all" class="filter-btn active px-4 py-2 rounded-full bg-amber-800 text-white text-sm">All</button>
           <button data-filter="Face Care" class="filter-btn px-4 py-2 rounded-full bg-amber-100 text-amber-900 text-sm">Face Care</button>
-          <button data-filter="Serums & Oils" class="filter-btn px-4 py-2 rounded-full bg-amber-100 text-amber-900 text-sm">Serums</button>
+          <button data-filter="Serums" class="filter-btn px-4 py-2 rounded-full bg-amber-100 text-amber-900 text-sm">Serums</button>
+          <button data-filter="Toners" class="filter-btn px-4 py-2 rounded-full bg-amber-100 text-amber-900 text-sm">Toners</button>
           <button data-filter="Body Care" class="filter-btn px-4 py-2 rounded-full bg-amber-100 text-amber-900 text-sm">Body Care</button>
           <button data-filter="Scrubs" class="filter-btn px-4 py-2 rounded-full bg-amber-100 text-amber-900 text-sm">Scrubs</button>
         </div>
@@ -692,10 +694,20 @@
             || /\b(face|facial|toner|serum|elixir|acne|blemish|kojie|fade)\b/.test(name);
         }
 
-        if (filter === "Serums & Oils") {
-          return /\b(serum|serums|toner|toners|essence|essences|elixir|elixirs)\b/.test(category)
-            || /\b(serum|toner|elixir|vitamin c)\b/.test(name)
-            || (/\boil\b/.test(name) && !/\b(body|feminine)\b/.test(category));
+        if (filter === "Serums") {
+          const isToner = /\b(toner|toners|mist|mists)\b/.test(category)
+            || /\b(toner|toners|mist|mists)\b/.test(name)
+            || routine === "tone";
+          return !isToner && (
+            /\b(serum|serums|elixir|elixirs|face oil|facial oil)\b/.test(category)
+            || /\b(serum|serums|elixir|elixirs|face oil|facial oil|vitamin c)\b/.test(name)
+          );
+        }
+
+        if (filter === "Toners") {
+          return /\b(toner|toners|face mist|facial mist)\b/.test(category)
+            || /\b(toner|toners|face mist|facial mist)\b/.test(name)
+            || routine === "tone";
         }
 
         if (filter === "Body Care") {

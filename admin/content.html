@@ -116,6 +116,51 @@
             </div>
         </div>
 
+        <!-- Social Sharing Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-stone-100 bg-stone-50 flex flex-wrap justify-between items-center gap-3">
+                <div>
+                    <h2 class="font-bold text-stone-800">Link Sharing Preview</h2>
+                    <p class="text-xs text-stone-500 mt-1">Controls the picture and wording shown when the homepage is shared on WhatsApp, Facebook, LinkedIn, and similar platforms.</p>
+                </div>
+                <a href="/" target="_blank" class="text-xs text-amber-700 hover:underline">View Live Page</a>
+            </div>
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-7">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1" for="social_title">Sharing Title</label>
+                        <input type="text" id="social_title" maxlength="90" class="w-full p-2.5 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none" placeholder="Foryou Skin Bar | Jamaican Handmade Skincare">
+                        <p class="text-xs text-stone-500 mt-1"><span id="social_title_count">0</span>/90 characters</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1" for="social_description">Sharing Description</label>
+                        <textarea id="social_description" rows="3" maxlength="180" class="w-full p-2.5 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none" placeholder="Handcrafted Jamaican skincare made for real skin goals."></textarea>
+                        <p class="text-xs text-stone-500 mt-1"><span id="social_description_count">0</span>/180 characters</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1" for="social_image_upload">Sharing Image</label>
+                        <input type="file" id="social_image_upload" accept="image/png,image/jpeg,image/webp" class="w-full text-sm border border-stone-300 rounded-lg p-2 bg-stone-50">
+                        <input type="text" id="social_image" class="w-full mt-2 p-2.5 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none" placeholder="Or paste an image URL or assets/... path">
+                        <p class="text-xs text-stone-500 mt-1">Use a clear landscape image. The website automatically prepares a lightweight 1200 x 630 sharing image.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">Preview</p>
+                    <div class="border border-stone-200 bg-stone-50 overflow-hidden rounded-lg shadow-sm">
+                        <div class="aspect-[1.91/1] bg-stone-200 overflow-hidden">
+                            <img id="social_preview_image" src="/assets/brand/welcome-lifestyle-clean-branded-v2.png" alt="Sharing preview" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-4 bg-white">
+                            <p class="text-xs uppercase tracking-wider text-stone-500 mb-1">foryouskinbar.com</p>
+                            <p id="social_preview_title" class="font-bold text-stone-900 leading-snug">Foryou Skin Bar | Jamaican Handmade Skincare</p>
+                            <p id="social_preview_description" class="text-sm text-stone-600 mt-1 leading-relaxed">Handcrafted Jamaican skincare made for real skin goals.</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-stone-500 mt-3">This image is used for the homepage and general pages. Product links use the product's primary image, while blog links use the post's featured image. Messaging apps may keep an older message's original preview.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- About Us Section -->
         <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden mb-8">
             <div class="px-6 py-4 border-b border-stone-100 bg-stone-50 flex justify-between items-center">
@@ -152,6 +197,15 @@
             home_btn: document.getElementById('home_btn'),
             home_subtitle: document.getElementById('home_subtitle'),
             home_image: document.getElementById('home_image'),
+            social_title: document.getElementById('social_title'),
+            social_description: document.getElementById('social_description'),
+            social_image: document.getElementById('social_image'),
+            social_image_upload: document.getElementById('social_image_upload'),
+            social_preview_title: document.getElementById('social_preview_title'),
+            social_preview_description: document.getElementById('social_preview_description'),
+            social_preview_image: document.getElementById('social_preview_image'),
+            social_title_count: document.getElementById('social_title_count'),
+            social_description_count: document.getElementById('social_description_count'),
             about_title: document.getElementById('about_title'),
             about_text1: document.getElementById('about_text1'),
             about_text2: document.getElementById('about_text2'),
@@ -172,6 +226,13 @@
             loadContent();
             
             els.saveBtn.addEventListener('click', saveContent);
+            [els.social_title, els.social_description, els.social_image].forEach(element => {
+                element.addEventListener('input', updateSocialPreview);
+            });
+            els.social_image_upload.addEventListener('change', () => {
+                const file = els.social_image_upload.files[0];
+                if (file) els.social_preview_image.src = URL.createObjectURL(file);
+            });
             document.getElementById('logoutBtn').addEventListener('click', async (e) => {
                 e.preventDefault();
                 await supabase.auth.signOut();
@@ -197,42 +258,88 @@
                     els.about_text1.value = item.value.text1 || '';
                     els.about_text2.value = item.value.text2 || '';
                     els.about_image.value = item.value.image_url || '';
+                } else if (item.key === 'social_sharing') {
+                    els.social_title.value = item.value.title || '';
+                    els.social_description.value = item.value.description || '';
+                    els.social_image.value = item.value.image_url || '';
                 }
             });
+            updateSocialPreview();
+        }
+
+        function previewImageUrl(value) {
+            try { return new URL(value || '/assets/brand/welcome-lifestyle-clean-branded-v2.png', window.location.origin).href; }
+            catch (_) { return '/assets/brand/welcome-lifestyle-clean-branded-v2.png'; }
+        }
+
+        function updateSocialPreview() {
+            const title = els.social_title.value.trim() || 'Foryou Skin Bar | Jamaican Handmade Skincare';
+            const description = els.social_description.value.trim() || 'Handcrafted Jamaican skincare made for real skin goals.';
+            els.social_preview_title.textContent = title;
+            els.social_preview_description.textContent = description;
+            els.social_title_count.textContent = String(els.social_title.value.length);
+            els.social_description_count.textContent = String(els.social_description.value.length);
+            if (!els.social_image_upload.files.length) els.social_preview_image.src = previewImageUrl(els.social_image.value.trim());
         }
 
         async function saveContent() {
             els.saveBtn.disabled = true;
             els.saveBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>Saving...';
 
-            const homeData = {
+            try {
+                let socialImageUrl = els.social_image.value.trim() || 'assets/brand/welcome-lifestyle-clean-branded-v2.png';
+                const socialImageFile = els.social_image_upload.files[0];
+                if (socialImageFile) {
+                    if (socialImageFile.size > 12 * 1024 * 1024) throw new Error('The sharing image must be 12 MB or smaller.');
+                    const extension = (socialImageFile.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const fileName = `social-previews/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+                    const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, socialImageFile, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+                    if (uploadError) throw new Error('Sharing image upload failed: ' + uploadError.message);
+                    const { data: publicUrlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
+                    socialImageUrl = publicUrlData.publicUrl;
+                    els.social_image.value = socialImageUrl;
+                }
+
+                const homeData = {
                 title: els.home_title.value,
                 subtitle: els.home_subtitle.value,
                 button_text: els.home_btn.value,
                 image_url: els.home_image.value
             };
 
-            const aboutData = {
+                const socialData = {
+                    title: els.social_title.value.trim() || 'Foryou Skin Bar | Jamaican Handmade Skincare',
+                    description: els.social_description.value.trim() || 'Handcrafted Jamaican skincare made for acne, dark spots, body care, and healthy glow routines.',
+                    image_url: socialImageUrl
+                };
+
+                const aboutData = {
                 title: els.about_title.value,
                 text1: els.about_text1.value,
                 text2: els.about_text2.value,
                 image_url: els.about_image.value
             };
 
-            const updates = [
-                { key: 'home_hero', value: homeData },
-                { key: 'about_us', value: aboutData }
-            ];
+                const updatedAt = new Date().toISOString();
+                const updates = [
+                    { key: 'home_hero', value: homeData, updated_at: updatedAt },
+                    { key: 'social_sharing', value: socialData, updated_at: updatedAt },
+                    { key: 'about_us', value: aboutData, updated_at: updatedAt }
+                ];
 
-            const { error } = await supabase.from('site_content').upsert(updates);
-
-            els.saveBtn.disabled = false;
-            els.saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save All Changes';
-
-            if (error) {
-                showMessage('Error saving content: ' + error.message, true);
-            } else {
+                const { error } = await supabase.from('site_content').upsert(updates);
+                if (error) throw error;
+                els.social_image_upload.value = '';
+                updateSocialPreview();
                 showMessage('Site content saved successfully! Changes are live immediately.');
+            } catch (error) {
+                showMessage('Error saving content: ' + error.message, true);
+            } finally {
+                els.saveBtn.disabled = false;
+                els.saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save All Changes';
             }
         }
 
