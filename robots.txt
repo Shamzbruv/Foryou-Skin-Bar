@@ -1,3 +1,10 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /account.html
+Disallow: /checkout.html
+Disallow: /customer-login.html
+Disallow: /payment-success.html
+Disallow: /cancel-order.html
 Sitemap: https://foryouskinbar.com/sitemap.xml

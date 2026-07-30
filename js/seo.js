@@ -1,6 +1,6 @@
 (function () {
   const SITE_ORIGIN = 'https://foryouskinbar.com';
-  const DEFAULT_IMAGE = `${SITE_ORIGIN}/assets/hero/natural_glow_skincare_hero_banner.png`;
+  const DEFAULT_IMAGE = `${SITE_ORIGIN}/assets/brand/welcome-lifestyle-clean-branded-v2.png`;
 
   function absoluteUrl(value) {
     if (!value) return DEFAULT_IMAGE;
@@ -42,12 +42,15 @@
     setMeta('meta[property="og:type"]', { property: 'og:type', content: type });
     setMeta('meta[property="og:url"]', { property: 'og:url', content: canonicalUrl });
     setMeta('meta[property="og:image"]', { property: 'og:image', content: image });
+    setMeta('meta[property="og:image:secure_url"]', { property: 'og:image:secure_url', content: image });
+    setMeta('meta[property="og:image:alt"]', { property: 'og:image:alt', content: `${title} - For You Skin Bar` });
     setMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: 'Foryou Skin Bar' });
     setMeta('meta[property="og:locale"]', { property: 'og:locale', content: 'en_JM' });
     setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
     setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: title });
     setMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: description });
     setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: image });
+    setMeta('meta[name="twitter:image:alt"]', { name: 'twitter:image:alt', content: `${title} - For You Skin Bar` });
 
     let canonical = document.head.querySelector('link[rel="canonical"]');
     if (!canonical) {

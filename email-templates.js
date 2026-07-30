@@ -68,7 +68,7 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
     sampleVariables: {
       post_title: 'How to Build a Consistent Glow Routine',
       post_excerpt: 'Simple steps for choosing products that support your skin goals.',
-      article_url: 'https://foryou-skin-bar-production.up.railway.app/blog-post.html?slug=glow-routine'
+      article_url: 'https://foryouskinbar.com/blog-post.html?slug=glow-routine'
     }
   },
   payment_pending: {

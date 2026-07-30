@@ -257,7 +257,7 @@ serve(async (req) => {
     const OWNER_EMAIL = Deno.env.get('OWNER_EMAIL') || 'foryouskinbar@gmail.com'
     const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'For You Skin Bar <noreply@foryouskinbar.com>'
     const REPLY_TO_EMAIL = Deno.env.get('REPLY_TO_EMAIL') || 'foryouskinbar@gmail.com'
-    const SITE_URL = (Deno.env.get('SERVER_BASE_URL') || 'https://foryouskinbar.com').replace(/\/+$/, '')
+    const SITE_URL = 'https://foryouskinbar.com'
     const policyFooter = `<p style="margin-top:28px;padding-top:16px;border-top:1px solid #e6d5b4;font-size:12px;"><a href="${SITE_URL}/policies.html">Store policies</a> &middot; <a href="mailto:foryouskinbar@gmail.com">Contact Foryou Skin Bar</a></p>`
 
     if (RESEND_API_KEY) {

@@ -13,10 +13,24 @@ const {
   renderEmailSubject,
   templateVariablesFor
 } = require('./email-templates');
+const { installSeoRoutes } = require('./seo-middleware');
 
 const app = express();
 const PORT = process.env.PORT || 5500;
 app.set('trust proxy', 1);
+
+app.use((req, res, next) => {
+  const forwardedHost = String(req.headers['x-forwarded-host'] || '').split(',')[0].trim();
+  const hostname = (forwardedHost || req.get('host') || '').split(':')[0].toLowerCase();
+  if (hostname === 'www.foryouskinbar.com' && ['GET', 'HEAD'].includes(req.method)) {
+    return res.redirect(301, `https://foryouskinbar.com${req.originalUrl || '/'}`);
+  }
+  if (/^\/(?:admin(?:\/|$)|api(?:\/|$))/.test(req.path)
+      || /^\/(?:account|checkout|customer-login|payment-success|cancel-order)(?:\.html)?$/.test(req.path)) {
+    res.set('X-Robots-Tag', 'noindex, nofollow');
+  }
+  return next();
+});
 
 app.use(cors());
 // Raw body middleware needed for Fygaro webhook signature verification
@@ -39,6 +53,18 @@ const FYGARO_API_KEY    = process.env.FYGARO_API_KEY    || '';
 const FYGARO_API_SECRET = process.env.FYGARO_API_SECRET || '';
 const FYGARO_BUTTON_URL = process.env.FYGARO_BUTTON_URL || 'https://www.fygaro.com/en/pb/00c0f5ec-24aa-4069-97ce-9495f7798ab4/';
 const SERVER_BASE_URL   = (process.env.SERVER_BASE_URL || `http://localhost:${PORT}`).replace(/\/+$/, '');
+const CANONICAL_PUBLIC_SITE_URL = 'https://foryouskinbar.com';
+const PUBLIC_SITE_URL = (() => {
+  try {
+    const configured = new URL(process.env.PUBLIC_SITE_URL || CANONICAL_PUBLIC_SITE_URL);
+    if (['foryouskinbar.com', 'www.foryouskinbar.com'].includes(configured.hostname.toLowerCase())) {
+      return CANONICAL_PUBLIC_SITE_URL;
+    }
+  } catch (_) {
+    // Invalid or non-public values must never leak into customer emails.
+  }
+  return CANONICAL_PUBLIC_SITE_URL;
+})();
 const RESEND_API_KEY    = process.env.RESEND_API_KEY || '';
 const STORE_CONTACT_EMAIL = 'foryouskinbar@gmail.com';
 const DEFAULT_FROM_EMAIL = 'For You Skin Bar <noreply@foryouskinbar.com>';
@@ -404,10 +430,10 @@ const EMAIL_TEMPLATE_CACHE_MS = 60 * 1000;
 function baseTemplateVariables(recipient = '') {
   return {
     recipient_email: String(recipient || '').trim().toLowerCase(),
-    site_url: SERVER_BASE_URL,
-    shop_url: `${SERVER_BASE_URL}/shop.html`,
-    contact_url: `${SERVER_BASE_URL}/contact.html`,
-    policy_url: `${SERVER_BASE_URL}/policies.html`,
+    site_url: PUBLIC_SITE_URL,
+    shop_url: `${PUBLIC_SITE_URL}/shop.html`,
+    contact_url: `${PUBLIC_SITE_URL}/contact.html`,
+    policy_url: `${PUBLIC_SITE_URL}/policies.html`,
     current_year: String(new Date().getFullYear())
   };
 }
@@ -508,8 +534,8 @@ function brandedEmailHtml(subject, bodyHtml, emailType = '') {
     <tr><td align="center">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fffdf9;border:1px solid #e6d5b4;">
         <tr><td style="padding:24px 30px 18px;border-bottom:3px solid #c89b3c;text-align:center;">
-          <a href="${escapeHtml(SERVER_BASE_URL)}" style="text-decoration:none;color:#2c211b;">
-            <img src="${emailLogoBase64 ? `cid:${EMAIL_LOGO_CONTENT_ID}` : `${escapeHtml(SERVER_BASE_URL)}/assets/brand/logo.png`}" width="178" alt="For You Skin Bar" style="display:block;width:178px;max-width:70%;height:auto;margin:0 auto;">
+          <a href="${escapeHtml(PUBLIC_SITE_URL)}" style="text-decoration:none;color:#2c211b;">
+            <img src="${emailLogoBase64 ? `cid:${EMAIL_LOGO_CONTENT_ID}` : `${escapeHtml(PUBLIC_SITE_URL)}/assets/brand/logo.png`}" width="178" alt="For You Skin Bar" style="display:block;width:178px;max-width:70%;height:auto;margin:0 auto;">
           </a>
         </td></tr>
         <tr><td style="padding:34px 34px 18px;">
@@ -519,12 +545,12 @@ function brandedEmailHtml(subject, bodyHtml, emailType = '') {
         </td></tr>
         <tr><td style="padding:22px 34px 32px;">
           <table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="background:#344633;">
-            <a href="${escapeHtml(SERVER_BASE_URL)}/shop.html" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Visit For You Skin Bar</a>
+            <a href="${escapeHtml(PUBLIC_SITE_URL)}/shop.html" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Visit For You Skin Bar</a>
           </td></tr></table>
         </td></tr>
         <tr><td style="padding:24px 34px;background:#201d1a;color:#e8ddcb;text-align:center;font-size:12px;line-height:1.7;">
           <strong style="color:#e1bd67;">Pure ingredients. Thoughtfully made. Beautifully you.</strong><br>
-          Handmade in Jamaica &nbsp;|&nbsp; <a href="${escapeHtml(SERVER_BASE_URL)}/contact.html" style="color:#ffffff;">Contact us</a> &nbsp;|&nbsp; <a href="${escapeHtml(SERVER_BASE_URL)}/policies.html" style="color:#ffffff;">Store policies</a>
+          Handmade in Jamaica &nbsp;|&nbsp; <a href="${escapeHtml(PUBLIC_SITE_URL)}/contact.html" style="color:#ffffff;">Contact us</a> &nbsp;|&nbsp; <a href="${escapeHtml(PUBLIC_SITE_URL)}/policies.html" style="color:#ffffff;">Store policies</a>
           ${isNewsletter ? '<br>You received this because you subscribed to Glow Letters. Reply with "unsubscribe" to opt out.' : ''}
         </td></tr>
       </table>
@@ -585,7 +611,7 @@ async function queueEmail({ orderId = null, recipient, emailType, subject, html,
   const initialStatus = isScheduled ? 'scheduled' : (RESEND_API_KEY ? 'queued' : 'pending_resend_setup');
   const orderNumber = String(templateVariables.order_number || metadata.order_number || '').trim();
   const cancellationUrl = orderNumber
-    ? `${SERVER_BASE_URL}/cancel-order.html?order=${encodeURIComponent(orderNumber)}&token=${encodeURIComponent(orderCancellationToken(orderNumber))}`
+    ? `${PUBLIC_SITE_URL}/cancel-order.html?order=${encodeURIComponent(orderNumber)}&token=${encodeURIComponent(orderCancellationToken(orderNumber))}`
     : '';
   const cancellationAction = cancellationUrl ? `
     <div style="margin:22px 0;padding:16px;border-left:4px solid #c89b3c;background:#f8f3e9;color:#4f433a;line-height:1.7;">
@@ -1272,7 +1298,7 @@ app.post('/api/blogs/:postId/notify-subscribers', async (req, res) => {
     if (subscribersError) throw subscribersError;
 
     const emails = [...new Set((subscribers || []).map((row) => String(row.email || '').trim().toLowerCase()).filter(isValidEmail))];
-    const articleUrl = `${SERVER_BASE_URL}/blog-post.html?slug=${encodeURIComponent(post.slug)}`;
+    const articleUrl = `${PUBLIC_SITE_URL}/blog-post.html?slug=${encodeURIComponent(post.slug)}`;
     const html = `
       <p>A new article is now available from For You Skin Bar.</p>
       <h2>${escapeHtml(post.title)}</h2>
@@ -2636,7 +2662,7 @@ app.post('/api/orders/cancel', async (req, res) => {
         cancellation_reason: reason,
         payment_status: order.payment_status,
         request_source: requestSource === 'customer_account' ? 'Customer account' : 'Guest email link',
-        admin_orders_url: `${SERVER_BASE_URL}/admin/orders.html`,
+        admin_orders_url: `${PUBLIC_SITE_URL}/admin/orders.html`,
         refund_action: order.payment_status === 'paid'
           ? '<p><strong>Paid order:</strong> if approved, process the refund in Fygaro separately and then update the payment status.</p>'
           : '<p>No refund action is currently expected.</p>'
@@ -2757,11 +2783,20 @@ app.get('/api/fygaro-integration-info', (req, res) => {
   });
 });
 
+installSeoRoutes(app, {
+  rootDirectory: __dirname,
+  supabase: supabaseAdmin,
+  siteOrigin: PUBLIC_SITE_URL
+});
+
 app.use(express.static(path.join(__dirname), { extensions: ['html'] }));
 
-// Fallback to index.html for SPA-like behavior (optional, if using client side routing)
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return res.status(404).json({ error: 'Not found.' });
+  }
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  return res.status(404).sendFile(path.join(__dirname, '404.html'));
 });
 
 app.listen(PORT, () => {
