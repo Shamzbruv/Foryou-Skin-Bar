@@ -81,7 +81,15 @@
       </div>`;
     }
 
-    const isEligibleForCancellation = !['shipped', 'delivered', 'cancelled', 'refunded'].includes(String(order.status || '').toLowerCase());
+    const cancellationRequest = order.cancellationRequest || null;
+    const isPendingCancellation = cancellationRequest?.status === 'pending';
+    const isEligibleForCancellation = !isPendingCancellation
+      && !['shipped', 'delivered', 'cancelled', 'refunded'].includes(String(order.status || '').toLowerCase())
+      && !['shipped', 'delivered', 'picked_up'].includes(String(order.fulfillmentStatus || '').toLowerCase());
+    const cancellationStatus = isPendingCancellation ? `
+      <div class="cancellation-request-status pending"><i class="fas fa-clock"></i><span><strong>Cancellation requested</strong><small>Waiting for store review since ${formatDate(cancellationRequest.createdAt)}. This order remains active until approved.</small></span></div>`
+      : cancellationRequest?.status === 'declined' ? `
+      <div class="cancellation-request-status declined"><i class="fas fa-circle-info"></i><span><strong>Previous request not approved</strong><small>${escapeHtml(cancellationRequest.adminNote || 'Contact the store if you need more help.')}</small></span></div>` : '';
     const trackingUrl = safeTrackingHref(order.trackingUrl);
     const hasTracking = Boolean(order.trackingCarrier || order.trackingNumber || trackingUrl);
     const trackingMarkup = hasTracking ? `
@@ -101,6 +109,7 @@
       </div>
       <div class="order-card-items">${orderItemsMarkup(order.items)}</div>
       ${trackingMarkup}
+      ${cancellationStatus}
       <div class="order-card-bottom">
         <div>
           <strong class="order-total">Order total: ${formatCurrency(order.grandTotalJmd)}</strong>
@@ -292,6 +301,24 @@
               </section>
             </div>
           </section>
+          <div id="cancellationRequestModal" class="cancellation-modal" hidden>
+            <div class="cancellation-modal-backdrop" data-close-cancellation-modal></div>
+            <section class="cancellation-modal-panel" role="dialog" aria-modal="true" aria-labelledby="cancellationModalTitle">
+              <button class="cancellation-modal-close" type="button" data-close-cancellation-modal aria-label="Close"><i class="fas fa-times"></i></button>
+              <p class="account-eyebrow">Order support</p>
+              <h2 id="cancellationModalTitle">Request a cancellation</h2>
+              <p>Your order will remain active until the Foryou Skin Bar team reviews and approves this request.</p>
+              <form id="accountCancellationForm">
+                <input id="accountCancellationOrder" type="hidden">
+                <label class="cancellation-order-label">Order <strong id="accountCancellationOrderLabel"></strong></label>
+                <label for="accountCancellationReason">Reason for cancellation</label>
+                <textarea id="accountCancellationReason" rows="5" minlength="5" maxlength="1000" required placeholder="Tell the team what changed."></textarea>
+                <label class="cancellation-confirmation"><input id="accountCancellationConfirm" type="checkbox" required><span>I understand this is a request and the order is not cancelled yet.</span></label>
+                <p id="accountCancellationMessage" class="auth-message" role="status"></p>
+                <div class="cancellation-modal-actions"><button type="button" class="account-outline" data-close-cancellation-modal>Keep order</button><button id="accountCancellationSubmit" type="submit" class="account-primary">Send request</button></div>
+              </form>
+            </section>
+          </div>
         </div>
       </main>`;
 
@@ -392,36 +419,53 @@
       }
     });
 
-    document.querySelectorAll('.cancel-order-portal-btn').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const orderNumber = button.dataset.orderNumber;
-        const email = portalData?.profile?.email;
-        if (!email) return alert('Unable to determine account email.');
-
-        const reason = prompt(`Are you sure you want to cancel order ${orderNumber}? If so, please enter a reason (optional):`);
-        if (reason === null) return; // cancelled the prompt
-
-        button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Processing…';
-
-        try {
-          const response = await fetch('/api/orders/cancel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderNumber, email, reason })
-          });
-          const payload = await response.json();
-          if (!response.ok) throw new Error(payload.error || 'Failed to cancel order.');
-
-          alert(`Your cancellation request for order ${orderNumber} has been received.`);
-          loadPortal();
-        } catch (error) {
-          alert(error.message);
-          button.disabled = false;
-          button.innerHTML = '<i class="fas fa-ban mr-1"></i>Request Cancellation';
-        }
-      });
+    const cancellationModal = document.getElementById('cancellationRequestModal');
+    const openCancellationModal = (orderNumber) => {
+      if (!cancellationModal || !orderNumber) return;
+      document.getElementById('accountCancellationOrder').value = orderNumber;
+      document.getElementById('accountCancellationOrderLabel').textContent = orderNumber;
+      document.getElementById('accountCancellationReason').value = '';
+      document.getElementById('accountCancellationConfirm').checked = false;
+      const modalMessage = document.getElementById('accountCancellationMessage');
+      modalMessage.textContent = '';
+      modalMessage.className = 'auth-message';
+      cancellationModal.hidden = false;
+      document.body.classList.add('cancellation-modal-open');
+      document.getElementById('accountCancellationReason').focus();
+    };
+    const closeCancellationModal = () => {
+      if (!cancellationModal) return;
+      cancellationModal.hidden = true;
+      document.body.classList.remove('cancellation-modal-open');
+    };
+    document.querySelectorAll('.cancel-order-portal-btn').forEach((button) => button.addEventListener('click', () => openCancellationModal(button.dataset.orderNumber)));
+    document.querySelectorAll('[data-close-cancellation-modal]').forEach((button) => button.addEventListener('click', closeCancellationModal));
+    document.getElementById('accountCancellationForm')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const orderNumber = document.getElementById('accountCancellationOrder').value;
+      const reason = document.getElementById('accountCancellationReason').value.trim();
+      const submitButton = document.getElementById('accountCancellationSubmit');
+      const modalMessage = document.getElementById('accountCancellationMessage');
+      setButtonBusy(submitButton, true, 'Send request');
+      try {
+        await portalFetch('/api/orders/cancel', { method: 'POST', body: JSON.stringify({ orderNumber, reason }) });
+        modalMessage.textContent = 'Request sent. Your order remains active while the store reviews it.';
+        modalMessage.className = 'auth-message visible success';
+        window.setTimeout(loadPortal, 900);
+      } catch (error) {
+        modalMessage.textContent = error.message;
+        modalMessage.className = 'auth-message visible error';
+        setButtonBusy(submitButton, false, 'Send request');
+      }
     });
+
+    const requestedOrder = new URLSearchParams(window.location.search).get('cancel');
+    if (requestedOrder) {
+      switchTab('orders');
+      const matchingButton = Array.from(document.querySelectorAll('.cancel-order-portal-btn')).find((button) => button.dataset.orderNumber === requestedOrder);
+      if (matchingButton) openCancellationModal(requestedOrder);
+      window.history.replaceState({}, '', `${window.location.pathname}${window.location.hash}`);
+    }
 
     document.querySelectorAll('[data-dismiss-policy-notification]').forEach((button) => {
       button.addEventListener('click', () => {

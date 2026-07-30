@@ -196,6 +196,102 @@ function trackingEditor(orderId, order, deliveryService = '') {
   updateState();
 }
 
+function cancellationReviewPanel(orderId, request) {
+  document.getElementById('orderCancellationReview')?.remove();
+  if (!request || request.status !== 'pending') return;
+  const panel = document.createElement('section');
+  panel.id = 'orderCancellationReview';
+  panel.className = 'mt-5 min-w-0 overflow-hidden rounded-lg border border-red-200 bg-red-50 p-4';
+  panel.innerHTML = `
+    <div class="flex items-start gap-3">
+      <i class="fas fa-circle-exclamation mt-1 text-red-700" aria-hidden="true"></i>
+      <div class="min-w-0"><h4 class="font-bold text-stone-900">Cancellation review required</h4><p class="mt-1 break-words text-xs leading-5 text-stone-600">The order remains active until this request is approved.</p></div>
+    </div>
+    <dl class="mt-4 grid gap-2 text-sm text-stone-700">
+      <div><dt class="font-bold">Customer</dt><dd class="break-words">${escapeHtml(request.customer_name || 'Customer')} &middot; ${escapeHtml(request.customer_email || '')}</dd></div>
+      <div><dt class="font-bold">Source</dt><dd>${request.request_source === 'customer_account' ? 'Signed-in customer account' : 'Secure guest email link'}</dd></div>
+      <div><dt class="font-bold">Submitted</dt><dd>${new Date(request.created_at).toLocaleString('en-JM', { dateStyle: 'medium', timeStyle: 'short' })}</dd></div>
+      <div><dt class="font-bold">Reason</dt><dd class="whitespace-pre-wrap break-words">${escapeHtml(request.reason || '')}</dd></div>
+    </dl>
+    <label class="mt-4 block text-xs font-bold text-stone-700">Decision note
+      <textarea id="cancellationAdminNote" rows="3" maxlength="1000" placeholder="Explain the decision for the customer email" class="mt-1 w-full min-w-0 rounded border border-stone-300 bg-white p-2 text-sm text-stone-900"></textarea>
+    </label>
+    <p id="cancellationReviewStatus" class="mt-3 text-xs leading-5 text-stone-600" aria-live="polite"></p>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button type="button" data-cancellation-action="decline" class="rounded-lg border border-stone-400 bg-white px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100">Decline request</button>
+      <button type="button" data-cancellation-action="approve" class="rounded-lg bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800">Approve &amp; cancel order</button>
+    </div>`;
+  const trackingPanel = document.getElementById('orderTrackingEditor');
+  (trackingPanel || document.getElementById('orderStatusSelect')?.closest('div'))?.insertAdjacentElement('afterend', panel);
+
+  panel.querySelectorAll('[data-cancellation-action]').forEach((button) => button.addEventListener('click', async () => {
+    const action = button.dataset.cancellationAction;
+    const note = panel.querySelector('#cancellationAdminNote').value.trim();
+    const status = panel.querySelector('#cancellationReviewStatus');
+    if (note.length < 3) {
+      status.textContent = 'Add a short note explaining the decision.';
+      panel.querySelector('#cancellationAdminNote').focus();
+      return;
+    }
+    if (action === 'approve' && !window.confirm('Approve this request and mark the order cancelled? Paid orders still require a separate Fygaro refund.')) return;
+    panel.querySelectorAll('button').forEach((item) => { item.disabled = true; });
+    status.textContent = action === 'approve' ? 'Cancelling the order and preparing the customer email...' : 'Saving the decision...';
+    try {
+      await adminApi(`/api/admin/cancellation-requests/${encodeURIComponent(request.id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ action, admin_note: note })
+      });
+      notify(action === 'approve' ? 'Cancellation approved and order marked cancelled.' : 'Cancellation request declined.');
+      window.setTimeout(() => window.location.reload(), 700);
+    } catch (error) {
+      status.textContent = error.message;
+      notify(`Unable to review cancellation: ${error.message}`, 'error');
+      panel.querySelectorAll('button').forEach((item) => { item.disabled = false; });
+    }
+  }));
+}
+
+async function loadCancellationQueue() {
+  const anchor = document.getElementById('pendingCheckoutsNotice');
+  if (!anchor || document.getElementById('cancellationRequestsQueue')) return;
+  const { data: requests, error } = await supabase
+    .from('order_cancellation_requests')
+    .select('id,order_id,order_number,customer_name,customer_email,reason,request_source,created_at,status')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true });
+  if (error) {
+    console.error('[Cancellation Queue]', error.message);
+    return;
+  }
+  if (!requests?.length) return;
+  const panel = document.createElement('section');
+  panel.id = 'cancellationRequestsQueue';
+  panel.className = 'mb-6 overflow-hidden rounded-xl border border-red-200 bg-white shadow-sm';
+  panel.innerHTML = `
+    <div class="border-b border-red-100 bg-red-50 px-5 py-4"><p class="text-xs font-bold uppercase tracking-wider text-red-700">Customer requests</p><h2 class="mt-1 text-lg font-bold text-stone-900">${requests.length} cancellation request${requests.length === 1 ? '' : 's'} need review</h2><p class="mt-1 text-sm text-stone-600">Orders stay active until you approve a request.</p></div>
+    <div class="divide-y divide-stone-200">${requests.map((request) => `
+      <article class="grid min-w-0 gap-3 px-5 py-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div class="min-w-0"><strong class="block break-words text-sm text-stone-900">${escapeHtml(request.order_number)}</strong><span class="mt-1 block break-words text-xs text-stone-600">${escapeHtml(request.customer_name || 'Customer')} &middot; ${escapeHtml(request.customer_email)}</span><p class="mt-2 line-clamp-2 break-words text-sm text-stone-700">${escapeHtml(request.reason)}</p></div>
+        <button type="button" data-review-cancellation-order="${escapeHtml(request.order_id)}" class="w-full rounded-lg bg-red-700 px-4 py-2 text-sm font-bold text-white hover:bg-red-800 md:w-auto">Review request</button>
+      </article>`).join('')}</div>`;
+  anchor.insertAdjacentElement('afterend', panel);
+  panel.querySelectorAll('[data-review-cancellation-order]').forEach((button) => button.addEventListener('click', () => window.openOrderModal?.(button.dataset.reviewCancellationOrder)));
+}
+
+async function loadOrderCancellationRequest(orderId) {
+  const { data, error } = await supabase
+    .from('order_cancellation_requests')
+    .select('id,order_id,customer_name,customer_email,customer_phone,reason,request_source,status,created_at')
+    .eq('order_id', orderId)
+    .eq('status', 'pending')
+    .maybeSingle();
+  if (error) {
+    console.error('[Cancellation Review]', error.message);
+    return;
+  }
+  cancellationReviewPanel(orderId, data);
+}
+
 async function enhanceOrderModal(orderId) {
   const { data: order, error } = await supabase
     .from('orders')
@@ -258,6 +354,7 @@ async function enhanceOrderModal(orderId) {
   statusHint.innerHTML = '<i class="fas fa-circle-info text-amber-800 mr-1"></i>Payment and fulfilment are shown separately in the customer portal. Mark an order <strong>Paid</strong> for eligible Glow Credits to appear in the customer account.';
   if (!document.getElementById('customerPortalStatusHint')) fulfillment.parentElement?.parentElement?.appendChild(statusHint);
   trackingEditor(orderId, order, order.delivery_service || '');
+  await loadOrderCancellationRequest(orderId);
 }
 
 function integrateOrders() {
@@ -271,6 +368,7 @@ function integrateOrders() {
   };
   wrapped.__customerIntegrationWrapped = true;
   window.openOrderModal = wrapped;
+  loadCancellationQueue();
 }
 
 function waitForOrderModule() {

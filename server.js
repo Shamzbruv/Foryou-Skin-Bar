@@ -40,9 +40,20 @@ const FYGARO_API_SECRET = process.env.FYGARO_API_SECRET || '';
 const FYGARO_BUTTON_URL = process.env.FYGARO_BUTTON_URL || 'https://www.fygaro.com/en/pb/00c0f5ec-24aa-4069-97ce-9495f7798ab4/';
 const SERVER_BASE_URL   = (process.env.SERVER_BASE_URL || `http://localhost:${PORT}`).replace(/\/+$/, '');
 const RESEND_API_KEY    = process.env.RESEND_API_KEY || '';
-const OWNER_EMAIL       = process.env.OWNER_EMAIL || 'hello@foryouskinbar.com';
-const FROM_EMAIL        = process.env.FROM_EMAIL || 'For You Skin Bar <hello@foryouskinbar.com>';
-const REPLY_TO_EMAIL    = process.env.REPLY_TO_EMAIL || 'hello@foryouskinbar.com';
+const STORE_CONTACT_EMAIL = 'foryouskinbar@gmail.com';
+const DEFAULT_FROM_EMAIL = 'For You Skin Bar <noreply@foryouskinbar.com>';
+const configuredOwnerEmail = String(process.env.OWNER_EMAIL || '').trim();
+const configuredFromEmail = String(process.env.FROM_EMAIL || '').trim();
+const configuredReplyEmail = String(process.env.REPLY_TO_EMAIL || '').trim();
+const OWNER_EMAIL = !configuredOwnerEmail || /^(?:hello@foryouskinbar\.com|clientemail@example\.com)$/i.test(configuredOwnerEmail)
+  ? STORE_CONTACT_EMAIL
+  : configuredOwnerEmail;
+const FROM_EMAIL = !configuredFromEmail || /(?:hello@foryouskinbar\.com|orders@orders\.foryouskinbar\.com)/i.test(configuredFromEmail)
+  ? DEFAULT_FROM_EMAIL
+  : configuredFromEmail;
+const REPLY_TO_EMAIL = !configuredReplyEmail || /^hello@foryouskinbar\.com$/i.test(configuredReplyEmail)
+  ? STORE_CONTACT_EMAIL
+  : configuredReplyEmail;
 const EMAIL_LOGO_CONTENT_ID = 'foryou-skin-bar-logo';
 let emailLogoBase64 = '';
 
@@ -105,6 +116,42 @@ function requestOrigin(req) {
   const protocol = forwardedProto || req.protocol || 'http';
   const host = forwardedHost || req.get('host');
   return host ? `${protocol}://${host}`.replace(/\/+$/, '') : SERVER_BASE_URL;
+}
+
+function orderCancellationToken(orderNumber) {
+  const secret = FYGARO_API_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'local-order-access-token';
+  return crypto.createHmac('sha256', secret).update(`cancel:${String(orderNumber)}`, 'utf8').digest('hex');
+}
+
+function verifyOrderCancellationToken(orderNumber, token) {
+  if (!orderNumber || !token) return false;
+  try {
+    const expected = Buffer.from(orderCancellationToken(orderNumber), 'hex');
+    const received = Buffer.from(String(token), 'hex');
+    return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+  } catch (_) {
+    return false;
+  }
+}
+
+function cancellationEligibility(order = {}) {
+  const orderStatus = String(order.status || '').toLowerCase();
+  const fulfillmentStatus = String(order.fulfillment_status || '').toLowerCase();
+  const blocked = ['shipped', 'delivered', 'cancelled', 'refunded'].includes(orderStatus)
+    || ['shipped', 'delivered', 'picked_up'].includes(fulfillmentStatus);
+  return {
+    eligible: !blocked,
+    reason: blocked
+      ? `This order can no longer be cancelled because it is ${order.status || order.fulfillment_status || 'already in fulfilment'}.`
+      : ''
+  };
+}
+
+function maskedEmail(email = '') {
+  const [local = '', domain = ''] = String(email).split('@');
+  if (!local || !domain) return '';
+  const visible = local.slice(0, Math.min(2, local.length));
+  return `${visible}${'*'.repeat(Math.max(3, local.length - visible.length))}@${domain}`;
 }
 
 function paymentCallbackUrls(origin, orderNumber) {
@@ -360,6 +407,7 @@ function baseTemplateVariables(recipient = '') {
     site_url: SERVER_BASE_URL,
     shop_url: `${SERVER_BASE_URL}/shop.html`,
     contact_url: `${SERVER_BASE_URL}/contact.html`,
+    policy_url: `${SERVER_BASE_URL}/policies.html`,
     current_year: String(new Date().getFullYear())
   };
 }
@@ -476,7 +524,7 @@ function brandedEmailHtml(subject, bodyHtml, emailType = '') {
         </td></tr>
         <tr><td style="padding:24px 34px;background:#201d1a;color:#e8ddcb;text-align:center;font-size:12px;line-height:1.7;">
           <strong style="color:#e1bd67;">Pure ingredients. Thoughtfully made. Beautifully you.</strong><br>
-          Handmade in Jamaica &nbsp;|&nbsp; <a href="${escapeHtml(SERVER_BASE_URL)}/contact.html" style="color:#ffffff;">Contact us</a>
+          Handmade in Jamaica &nbsp;|&nbsp; <a href="${escapeHtml(SERVER_BASE_URL)}/contact.html" style="color:#ffffff;">Contact us</a> &nbsp;|&nbsp; <a href="${escapeHtml(SERVER_BASE_URL)}/policies.html" style="color:#ffffff;">Store policies</a>
           ${isNewsletter ? '<br>You received this because you subscribed to Glow Letters. Reply with "unsubscribe" to opt out.' : ''}
         </td></tr>
       </table>
@@ -535,7 +583,21 @@ async function queueEmail({ orderId = null, recipient, emailType, subject, html,
   const scheduledDate = scheduledFor ? new Date(scheduledFor) : null;
   const isScheduled = scheduledDate && Number.isFinite(scheduledDate.getTime()) && scheduledDate.getTime() > Date.now();
   const initialStatus = isScheduled ? 'scheduled' : (RESEND_API_KEY ? 'queued' : 'pending_resend_setup');
-  const variables = { ...baseTemplateVariables(normalizedRecipient), ...templateVariables };
+  const orderNumber = String(templateVariables.order_number || metadata.order_number || '').trim();
+  const cancellationUrl = orderNumber
+    ? `${SERVER_BASE_URL}/cancel-order.html?order=${encodeURIComponent(orderNumber)}&token=${encodeURIComponent(orderCancellationToken(orderNumber))}`
+    : '';
+  const cancellationAction = cancellationUrl ? `
+    <div style="margin:22px 0;padding:16px;border-left:4px solid #c89b3c;background:#f8f3e9;color:#4f433a;line-height:1.7;">
+      <strong style="color:#2c211b;">Need to change this order?</strong><br>
+      <a href="${escapeHtml(cancellationUrl)}" style="color:#344633;font-weight:700;">Request an order cancellation</a>. Requests are reviewed before an order is cancelled.
+    </div>` : '';
+  const variables = {
+    ...baseTemplateVariables(normalizedRecipient),
+    cancellation_url: cancellationUrl,
+    cancellation_action: cancellationAction,
+    ...templateVariables
+  };
   const resolved = templateKey
     ? await resolveEmailContent(templateKey, subject, html, variables)
     : { subject, html, customized: false };
@@ -1549,8 +1611,8 @@ app.post('/api/create-order', async (req, res) => {
 
     // Resend Email Logic
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const OWNER_EMAIL = process.env.OWNER_EMAIL || 'clientemail@example.com';
-    const FROM_EMAIL = process.env.FROM_EMAIL || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
+    const OWNER_EMAIL = process.env.OWNER_EMAIL || STORE_CONTACT_EMAIL;
+    const FROM_EMAIL = process.env.FROM_EMAIL || DEFAULT_FROM_EMAIL;
 
     // All active delivery goes through queueEmail so every message is logged,
     // branded, and protected by a Resend idempotency key.
@@ -2113,8 +2175,8 @@ app.post('/api/fygaro-webhook', async (req, res) => {
 
     // Send payment confirmation email via Resend
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const OWNER_EMAIL    = process.env.OWNER_EMAIL || 'clientemail@example.com';
-    const FROM_EMAIL     = process.env.FROM_EMAIL  || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
+    const OWNER_EMAIL    = process.env.OWNER_EMAIL || STORE_CONTACT_EMAIL;
+    const FROM_EMAIL     = process.env.FROM_EMAIL  || DEFAULT_FROM_EMAIL;
 
     if (false && RESEND_API_KEY && customer?.email) {
       const itemsHtml = (items || []).map((item, i) =>
@@ -2280,7 +2342,7 @@ app.get('/api/orders/payment-status', async (req, res) => {
 });
 
 // ── Order Cancellation Endpoint (EU Compliance) ──
-app.post('/api/orders/cancel', async (req, res) => {
+async function legacyCancellationHandler(req, res) {
   try {
     const { orderNumber, email } = req.body;
     const reason = String(req.body?.reason || '').trim().slice(0, 1000);
@@ -2347,8 +2409,8 @@ app.post('/api/orders/cancel', async (req, res) => {
 
     // 5. Send confirmation emails via Resend
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const OWNER_EMAIL    = process.env.OWNER_EMAIL || 'clientemail@example.com';
-    const FROM_EMAIL     = process.env.FROM_EMAIL  || 'For You Skin Bar <orders@orders.foryouskinbar.com>';
+    const OWNER_EMAIL    = process.env.OWNER_EMAIL || STORE_CONTACT_EMAIL;
+    const FROM_EMAIL     = process.env.FROM_EMAIL  || DEFAULT_FROM_EMAIL;
 
     if (false && RESEND_API_KEY && customerEmail) {
       const customerHtml = `
@@ -2439,10 +2501,228 @@ app.post('/api/orders/cancel', async (req, res) => {
     console.error('[Cancel Order] API Error:', err);
     return res.status(500).json({ error: 'Failed to request order cancellation. Please try again.' });
   }
-});
+}
 
 
 // ── Static Files serving ──
+app.get('/api/orders/cancellation-details', async (req, res) => {
+  try {
+    const orderNumber = String(req.query.order || '').trim().slice(0, 80);
+    const token = String(req.query.token || '').trim();
+    if (!verifyOrderCancellationToken(orderNumber, token)) {
+      return res.status(403).json({ error: 'This cancellation link is invalid. Use the link from your order email.' });
+    }
+    const { data: order, error } = await supabaseAdmin
+      .from('orders')
+      .select('id,order_number,status,fulfillment_status,customers(email)')
+      .eq('order_number', orderNumber)
+      .maybeSingle();
+    if (error) throw error;
+    if (!order) return res.status(404).json({ error: 'Order not found.' });
+    const { data: pendingRequest, error: pendingError } = await supabaseAdmin
+      .from('order_cancellation_requests')
+      .select('id,status,created_at')
+      .eq('order_id', order.id)
+      .eq('status', 'pending')
+      .maybeSingle();
+    if (pendingError) throw pendingError;
+    const eligibility = cancellationEligibility(order);
+    return res.status(200).json({
+      orderNumber: order.order_number,
+      maskedEmail: maskedEmail(order.customers?.email || ''),
+      eligible: eligibility.eligible && !pendingRequest,
+      eligibilityMessage: pendingRequest ? 'A cancellation request for this order is already waiting for review.' : eligibility.reason,
+      pending: Boolean(pendingRequest)
+    });
+  } catch (error) {
+    console.error('[Cancellation Details]', error.message);
+    return res.status(500).json({ error: 'Unable to open this cancellation request.' });
+  }
+});
+
+app.post('/api/orders/cancel', async (req, res) => {
+  try {
+    const orderNumber = String(req.body?.orderNumber || '').trim().slice(0, 80);
+    const reason = String(req.body?.reason || '').trim().slice(0, 1000);
+    const suppliedEmail = String(req.body?.email || '').trim().toLowerCase();
+    const suppliedName = String(req.body?.fullName || '').trim().slice(0, 120);
+    const suppliedPhone = String(req.body?.phone || '').trim().slice(0, 40);
+    const suppliedToken = String(req.body?.token || '').trim();
+    if (!orderNumber || reason.length < 5) {
+      return res.status(400).json({ error: 'Select an order and provide a short reason for the request.' });
+    }
+
+    const { data: order, error: fetchError } = await supabaseAdmin
+      .from('orders')
+      .select('id,order_number,status,fulfillment_status,payment_status,grand_total_jmd,customers(full_name,email,phone)')
+      .eq('order_number', orderNumber)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+    if (!order) return res.status(404).json({ error: 'Order not found.' });
+
+    const customerEmail = String(order.customers?.email || '').trim().toLowerCase();
+    let authenticatedUser = null;
+    const authHeader = String(req.headers.authorization || '');
+    if (authHeader.startsWith('Bearer ')) {
+      const { data } = await supabaseAdmin.auth.getUser(authHeader.slice(7).trim());
+      authenticatedUser = data?.user || null;
+    }
+
+    let requestSource = 'guest_email';
+    if (authenticatedUser && String(authenticatedUser.email || '').trim().toLowerCase() === customerEmail) {
+      requestSource = 'customer_account';
+    } else {
+      if (!verifyOrderCancellationToken(orderNumber, suppliedToken)) {
+        return res.status(403).json({ error: 'Use the secure cancellation link from your order email.' });
+      }
+      if (!isValidEmail(suppliedEmail) || suppliedEmail !== customerEmail) {
+        return res.status(400).json({ error: 'The email address does not match this order.' });
+      }
+    }
+
+    const eligibility = cancellationEligibility(order);
+    if (!eligibility.eligible) return res.status(409).json({ error: eligibility.reason });
+
+    const requestRecord = {
+      order_id: order.id,
+      order_number: order.order_number,
+      customer_name: suppliedName || order.customers?.full_name || 'Customer',
+      customer_email: customerEmail,
+      customer_phone: suppliedPhone || order.customers?.phone || null,
+      reason,
+      request_source: requestSource,
+      requested_by_user_id: authenticatedUser?.id || null,
+      status: 'pending'
+    };
+    const { data: cancellationRequest, error: insertError } = await supabaseAdmin
+      .from('order_cancellation_requests')
+      .insert(requestRecord)
+      .select('id,status,created_at')
+      .single();
+    if (insertError?.code === '23505') {
+      return res.status(409).json({ error: 'A cancellation request for this order is already waiting for review.' });
+    }
+    if (insertError) throw insertError;
+
+    const refundMessage = order.payment_status === 'paid'
+      ? '<p>If the cancellation is approved, payment and refund handling will be reviewed separately. We will email you with the next step.</p>'
+      : '<p>No refund action is currently expected because payment is not marked paid.</p>';
+    await queueEmail({
+      orderId: order.id,
+      recipient: customerEmail,
+      emailType: 'order_cancelled',
+      subject: `Cancellation request received - ${order.order_number}`,
+      html: `<p>We received your request to cancel <strong>${escapeHtml(order.order_number)}</strong>. Your order remains active while our team reviews it.</p>`,
+      metadata: { order_number: order.order_number, cancellation_request_id: cancellationRequest.id },
+      templateVariables: {
+        customer_name: requestRecord.customer_name,
+        order_number: order.order_number,
+        payment_status: order.payment_status,
+        cancellation_reason: reason,
+        refund_message: refundMessage
+      }
+    });
+    await queueEmail({
+      orderId: order.id,
+      recipient: OWNER_EMAIL,
+      emailType: 'owner_order_cancelled',
+      subject: `Cancellation review needed - ${order.order_number}`,
+      html: `<p>A cancellation request for <strong>${escapeHtml(order.order_number)}</strong> is waiting in Admin Orders.</p>`,
+      metadata: { order_number: order.order_number, cancellation_request_id: cancellationRequest.id },
+      templateVariables: {
+        order_number: order.order_number,
+        customer_name: requestRecord.customer_name,
+        customer_email: customerEmail,
+        cancellation_reason: reason,
+        payment_status: order.payment_status,
+        request_source: requestSource === 'customer_account' ? 'Customer account' : 'Guest email link',
+        admin_orders_url: `${SERVER_BASE_URL}/admin/orders.html`,
+        refund_action: order.payment_status === 'paid'
+          ? '<p><strong>Paid order:</strong> if approved, process the refund in Fygaro separately and then update the payment status.</p>'
+          : '<p>No refund action is currently expected.</p>'
+      }
+    });
+    return res.status(202).json({ success: true, status: 'pending_review', requestId: cancellationRequest.id, orderNumber });
+  } catch (error) {
+    console.error('[Cancel Order]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to submit the cancellation request.' });
+  }
+});
+
+app.patch('/api/admin/cancellation-requests/:id', async (req, res) => {
+  try {
+    const adminUser = await requireAdmin(req);
+    const requestId = String(req.params.id || '').trim();
+    const action = String(req.body?.action || '').trim().toLowerCase();
+    const adminNote = String(req.body?.admin_note || '').trim().slice(0, 1000);
+    if (!['approve', 'decline'].includes(action)) return res.status(400).json({ error: 'Choose approve or decline.' });
+    if (adminNote.length < 3) return res.status(400).json({ error: 'Add a short note explaining the decision.' });
+
+    const { data: requestRow, error: requestError } = await supabaseAdmin
+      .from('order_cancellation_requests')
+      .select('*,orders(id,order_number,status,fulfillment_status,payment_status,admin_notes,customers(full_name,email))')
+      .eq('id', requestId)
+      .maybeSingle();
+    if (requestError) throw requestError;
+    if (!requestRow) return res.status(404).json({ error: 'Cancellation request not found.' });
+    if (requestRow.status !== 'pending') return res.status(409).json({ error: 'This request has already been reviewed.' });
+    const order = requestRow.orders;
+    if (!order) return res.status(404).json({ error: 'The related order no longer exists.' });
+    if (action === 'approve') {
+      const eligibility = cancellationEligibility(order);
+      if (!eligibility.eligible) return res.status(409).json({ error: eligibility.reason });
+    }
+
+    const decision = action === 'approve' ? 'approved' : 'declined';
+    const reviewedAt = new Date().toISOString();
+    const { error: decisionError } = await supabaseAdmin
+      .from('order_cancellation_requests')
+      .update({ status: decision, reviewed_by: adminUser.id, reviewed_at: reviewedAt, admin_note: adminNote, updated_at: reviewedAt })
+      .eq('id', requestId)
+      .eq('status', 'pending');
+    if (decisionError) throw decisionError;
+
+    if (action === 'approve') {
+      const note = `[Cancellation approved ${reviewedAt}] ${adminNote}${order.payment_status === 'paid' ? ' Paid order: Fygaro refund review required.' : ''}`;
+      const { error: orderUpdateError } = await supabaseAdmin
+        .from('orders')
+        .update({ status: 'cancelled', admin_notes: order.admin_notes ? `${note}\n\n${order.admin_notes}` : note, updated_at: reviewedAt })
+        .eq('id', order.id);
+      if (orderUpdateError) {
+        await supabaseAdmin.from('order_cancellation_requests').update({ status: 'pending', reviewed_by: null, reviewed_at: null, admin_note: null, updated_at: reviewedAt }).eq('id', requestId);
+        throw orderUpdateError;
+      }
+    }
+
+    const customerEmail = requestRow.customer_email || order.customers?.email;
+    if (customerEmail) {
+      const approved = action === 'approve';
+      await queueEmail({
+        orderId: order.id,
+        recipient: customerEmail,
+        emailType: approved ? 'cancellation_request_approved' : 'cancellation_request_declined',
+        subject: approved ? `Cancellation approved - ${order.order_number}` : `Update on your cancellation request - ${order.order_number}`,
+        html: approved
+          ? `<p>Your cancellation request for <strong>${escapeHtml(order.order_number)}</strong> was approved.</p>`
+          : `<p>Your cancellation request for <strong>${escapeHtml(order.order_number)}</strong> could not be approved.</p>`,
+        metadata: { order_number: order.order_number, cancellation_request_id: requestId, decision },
+        templateVariables: {
+          customer_name: requestRow.customer_name || order.customers?.full_name || 'Customer',
+          order_number: order.order_number,
+          admin_note: adminNote,
+          refund_message: approved && order.payment_status === 'paid'
+            ? '<p>Our team will contact you separately when the Fygaro refund has been processed. Bank posting times may vary.</p>'
+            : '<p>No refund action is expected for this order.</p>'
+        }
+      });
+    }
+    return res.status(200).json({ success: true, status: decision, order_status: action === 'approve' ? 'cancelled' : order.status });
+  } catch (error) {
+    console.error('[Cancellation Review]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to review this cancellation request.' });
+  }
+});
+
 // Serve all files from current directory
 // Fygaro redirects successful payments here. This must be registered before
 // the static-site fallback or the customer will be sent to the home page.

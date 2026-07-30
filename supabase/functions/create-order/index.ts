@@ -254,8 +254,11 @@ serve(async (req) => {
 
     // 6. Send emails via Resend
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-    const OWNER_EMAIL = Deno.env.get('OWNER_EMAIL') || 'clientemail@example.com'
-    const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'For You Skin Bar <orders@orders.foryouskinbar.com>'
+    const OWNER_EMAIL = Deno.env.get('OWNER_EMAIL') || 'foryouskinbar@gmail.com'
+    const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'For You Skin Bar <noreply@foryouskinbar.com>'
+    const REPLY_TO_EMAIL = Deno.env.get('REPLY_TO_EMAIL') || 'foryouskinbar@gmail.com'
+    const SITE_URL = (Deno.env.get('SERVER_BASE_URL') || 'https://foryouskinbar.com').replace(/\/+$/, '')
+    const policyFooter = `<p style="margin-top:28px;padding-top:16px;border-top:1px solid #e6d5b4;font-size:12px;"><a href="${SITE_URL}/policies.html">Store policies</a> &middot; <a href="mailto:foryouskinbar@gmail.com">Contact Foryou Skin Bar</a></p>`
 
     if (RESEND_API_KEY) {
       const itemsListText = validatedCart.map((item: any, idx: number) => `${idx + 1}. ${item.name} × ${item.quantity} — J$${(item.price * item.quantity).toLocaleString()}`).join('\n')
@@ -313,7 +316,8 @@ serve(async (req) => {
             from: FROM_EMAIL,
             to: customer.email,
             subject: `Your For You Skin Bar order has been received — ${orderNumber}`,
-            html: customerHtml
+            html: customerHtml + policyFooter,
+            reply_to: REPLY_TO_EMAIL
           })
         });
         resCustomerOk = resCustomer.ok;
@@ -343,7 +347,8 @@ serve(async (req) => {
             from: FROM_EMAIL,
             to: OWNER_EMAIL,
             subject: `New For You Skin Bar order — ${orderNumber}`,
-            html: ownerHtml
+            html: ownerHtml + policyFooter,
+            reply_to: REPLY_TO_EMAIL
           })
         });
         resOwnerOk = resOwner.ok;

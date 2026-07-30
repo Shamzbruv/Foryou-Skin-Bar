@@ -193,12 +193,20 @@ async function dashboardFor(user) {
 
   const ids = orders.map((order) => order.id);
   let items = [];
+  let cancellationRequests = [];
   if (ids.length) {
     const { data, error } = await db.from('order_items')
       .select('order_id, product_name, variant_name, sku, quantity, unit_price_jmd, line_total_jmd')
       .in('order_id', ids);
     if (error) throw error;
     items = data || [];
+
+    const { data: requestRows, error: requestError } = await db.from('order_cancellation_requests')
+      .select('id,order_id,status,reason,request_source,created_at,reviewed_at,admin_note')
+      .in('order_id', ids)
+      .order('created_at', { ascending: false });
+    if (requestError) throw requestError;
+    cancellationRequests = requestRows || [];
   }
 
   const { data: settingsRows, error: settingsError } = await db.from('store_settings').select('key, value').in('key', ['loyalty_program', 'loyalty_point_policy', 'policy_updates']);
@@ -211,6 +219,10 @@ async function dashboardFor(user) {
   const itemsByOrder = items.reduce((all, item) => {
     if (!all[item.order_id]) all[item.order_id] = [];
     all[item.order_id].push({ productName: item.product_name, variantName: item.variant_name || '', sku: item.sku || '', quantity: number(item.quantity), unitPriceJmd: number(item.unit_price_jmd), lineTotalJmd: number(item.line_total_jmd) });
+    return all;
+  }, {});
+  const cancellationByOrder = cancellationRequests.reduce((all, request) => {
+    if (!all[request.order_id]) all[request.order_id] = request;
     return all;
   }, {});
 
@@ -240,6 +252,15 @@ async function dashboardFor(user) {
       grandTotalJmd: number(order.grand_total_jmd),
       createdAt: order.created_at,
       pointsEarned: loyalty.pointsByOrder.get(order.id) || 0,
+      cancellationRequest: cancellationByOrder[order.id] ? {
+        id: cancellationByOrder[order.id].id,
+        status: cancellationByOrder[order.id].status,
+        reason: cancellationByOrder[order.id].reason,
+        source: cancellationByOrder[order.id].request_source,
+        createdAt: cancellationByOrder[order.id].created_at,
+        reviewedAt: cancellationByOrder[order.id].reviewed_at,
+        adminNote: cancellationByOrder[order.id].admin_note || ''
+      } : null,
       items: itemsByOrder[order.id] || []
     };
   });

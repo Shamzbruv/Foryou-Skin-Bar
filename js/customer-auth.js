@@ -6,6 +6,19 @@
   const loginForm = byId('loginForm');
   const registerForm = byId('registerForm');
   const resetButton = byId('resetPasswordBtn');
+  const requestedRedirect = new URLSearchParams(window.location.search).get('redirect');
+
+  function accountDestination() {
+    const value = String(requestedRedirect || '').trim();
+    if (!value || value.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(value)) return 'account.html';
+    try {
+      const resolved = new URL(value, window.location.origin);
+      if (resolved.origin !== window.location.origin) return 'account.html';
+      return `${resolved.pathname.replace(/^\//, '')}${resolved.search}${resolved.hash}` || 'account.html';
+    } catch (_) {
+      return 'account.html';
+    }
+  }
 
   function showMessage(text, type = 'success') {
     if (!message) return;
@@ -35,7 +48,7 @@
   async function redirectIfAuthenticated() {
     if (!window.supabase) return;
     const { data } = await window.supabase.auth.getSession();
-    if (data && data.session) window.location.replace('account.html');
+    if (data && data.session) window.location.replace(accountDestination());
   }
 
   tabs.forEach((button) => button.addEventListener('click', () => activateTab(button.dataset.authTab)));
@@ -53,7 +66,7 @@
     try {
       const { error } = await window.supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      window.location.assign('account.html');
+      window.location.assign(accountDestination());
     } catch (error) {
       showMessage(error.message || 'We could not sign you in. Please try again.', 'error');
     } finally {
@@ -87,7 +100,7 @@
       });
       if (error) throw error;
       if (data && data.session) {
-        window.location.assign('account.html');
+        window.location.assign(accountDestination());
         return;
       }
       showMessage('Your account has been created. Check your email to confirm it, then sign in to see your purchases and Glow Credits.', 'success');

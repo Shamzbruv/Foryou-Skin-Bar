@@ -1,0 +1,222 @@
+:root {
+  --ink: #2c211b;
+  --muted: #6b5d50;
+  --gold: #b98728;
+  --green: #344633;
+  --paper: #fffdf9;
+  --wash: #f4efe7;
+  --line: #e6d5b4;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--wash);
+  color: var(--ink);
+  font-family: Inter, Arial, sans-serif;
+}
+
+.cancel-header {
+  min-height: 88px;
+  padding: 14px max(24px, 5vw);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.cancel-header img {
+  display: block;
+  width: 210px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.cancel-header a:last-child,
+footer a {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.cancel-main {
+  min-height: calc(100vh - 150px);
+  display: grid;
+  place-items: center;
+  padding: 48px 20px;
+  background:
+    linear-gradient(90deg, rgba(244, 239, 231, .96), rgba(244, 239, 231, .9)),
+    url('../assets/hero/natural_glow_skincare_hero_banner.png') center / cover;
+}
+
+.cancel-card {
+  width: min(680px, 100%);
+  padding: 44px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: 0 22px 65px rgba(44, 33, 27, .13);
+}
+
+.cancel-eyebrow {
+  margin: 0 0 8px;
+  color: var(--gold);
+  font-size: .78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.cancel-card h1 {
+  margin: 0;
+  font: 600 clamp(2.4rem, 7vw, 4.1rem) / .95 'Cormorant Garamond', serif;
+}
+
+.cancel-intro {
+  margin: 18px 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.cancel-state {
+  margin: 20px 0;
+  padding: 15px 16px;
+  background: #f8f3e9;
+  border-left: 4px solid var(--gold);
+  line-height: 1.55;
+}
+
+.cancel-state.error {
+  background: #fff0ee;
+  border-color: #a9342a;
+  color: #7d241c;
+}
+
+.cancel-state.success {
+  background: #edf4eb;
+  border-color: var(--green);
+  color: #253d25;
+}
+
+.cancel-form {
+  display: grid;
+  gap: 16px;
+}
+
+.cancel-form label {
+  display: grid;
+  gap: 7px;
+  font-size: .86rem;
+  font-weight: 700;
+}
+
+.cancel-form label small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.cancel-form input,
+.cancel-form textarea {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid #cfc3b3;
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+.cancel-form input:focus,
+.cancel-form textarea:focus {
+  outline: 3px solid rgba(185, 135, 40, .2);
+  border-color: var(--gold);
+}
+
+.cancel-order-reference {
+  display: grid;
+  gap: 3px;
+  padding: 16px;
+  background: #f8f5ef;
+  border: 1px solid #ebe3d5;
+}
+
+.cancel-order-reference span {
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cancel-order-reference strong { font-size: 1.2rem; }
+.cancel-order-reference small { color: var(--muted); }
+
+.cancel-consent {
+  grid-template-columns: 20px 1fr !important;
+  align-items: start;
+  font-weight: 500 !important;
+  line-height: 1.45;
+}
+
+.cancel-consent input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
+.cancel-form button {
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--green);
+  color: #fff;
+  cursor: pointer;
+  font: 700 .95rem Inter, Arial, sans-serif;
+}
+
+.cancel-form button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.cancel-message {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.cancel-message.error { color: #982f27; }
+
+.cancel-account-option {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.cancel-account-option p {
+  margin: 5px 0 12px;
+  color: var(--muted);
+}
+
+.cancel-account-option a {
+  color: var(--green);
+  font-weight: 800;
+}
+
+footer {
+  padding: 20px;
+  background: #201d1a;
+  color: #e8ddcb;
+  text-align: center;
+  font-size: .85rem;
+}
+
+footer a { color: #fff; }
+
+@media (max-width: 600px) {
+  .cancel-header { min-height: 72px; }
+  .cancel-header img { width: 150px; }
+  .cancel-header a:last-child { font-size: .8rem; }
+  .cancel-main { padding: 28px 14px; }
+  .cancel-card { padding: 28px 22px; }
+}
