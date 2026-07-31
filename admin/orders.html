@@ -624,8 +624,8 @@
         async function loadProductCatalog() {
             const { data, error } = await supabase
                 .from('products')
-                .select('id, name, price_jmd, product_images(image_url, is_primary), product_variants(id, name, price_jmd)')
-                .eq('is_active', true)
+                .select('id, name, price_jmd, status, product_images(image_url, is_primary), product_variants(id, name, price_jmd)')
+                .in('status', ['active', 'draft'])
                 .order('name', { ascending: true });
             if (!error && data) allProducts = data;
         }
