@@ -675,9 +675,9 @@
                         showVariantPicker(product, variants);
                     } else {
                         addProductToOrder(product, null);
+                        dropdown.classList.add('hidden');
+                        document.getElementById('moProductSearch').value = '';
                     }
-                    dropdown.classList.add('hidden');
-                    document.getElementById('moProductSearch').value = '';
                 });
             });
         }
