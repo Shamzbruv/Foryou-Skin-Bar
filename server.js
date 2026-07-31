@@ -67,14 +67,14 @@ const PUBLIC_SITE_URL = (() => {
 })();
 const RESEND_API_KEY    = process.env.RESEND_API_KEY || '';
 const STORE_CONTACT_EMAIL = 'foryouskinbar@gmail.com';
-const DEFAULT_FROM_EMAIL = 'For You Skin Bar <noreply@foryouskinbar.com>';
+const DEFAULT_FROM_EMAIL = 'Foryou Skin Bar <noreply@foryouskinbar.com>';
 const configuredOwnerEmail = String(process.env.OWNER_EMAIL || '').trim();
 const configuredFromEmail = String(process.env.FROM_EMAIL || '').trim();
 const configuredReplyEmail = String(process.env.REPLY_TO_EMAIL || '').trim();
 const OWNER_EMAIL = !configuredOwnerEmail || /^(?:hello@foryouskinbar\.com|clientemail@example\.com)$/i.test(configuredOwnerEmail)
   ? STORE_CONTACT_EMAIL
   : configuredOwnerEmail;
-const FROM_EMAIL = !configuredFromEmail || /(?:hello@foryouskinbar\.com|orders@orders\.foryouskinbar\.com)/i.test(configuredFromEmail)
+const FROM_EMAIL = !configuredFromEmail || /(?:hello@foryouskinbar\.com|orders@orders\.foryouskinbar\.com|noreply@foryouskinbar\.com)/i.test(configuredFromEmail)
   ? DEFAULT_FROM_EMAIL
   : configuredFromEmail;
 const REPLY_TO_EMAIL = !configuredReplyEmail || /^hello@foryouskinbar\.com$/i.test(configuredReplyEmail)
@@ -222,7 +222,7 @@ function buildFygaroPaymentUrl(orderNumber, paymentAmount, currency = 'JMD') {
     paymentUrl.searchParams.set('amount', amount.toFixed(2));
     paymentUrl.searchParams.set('currency', paymentCurrency);
     paymentUrl.searchParams.set('client_reference', orderNumber);
-    paymentUrl.searchParams.set('client_note', `For You Skin Bar order ${orderNumber}`);
+    paymentUrl.searchParams.set('client_note', `Foryou Skin Bar order ${orderNumber}`);
     return { url: paymentUrl.toString(), mode: 'payment_link' };
   } catch (error) {
     console.error('[Fygaro] Invalid payment button URL:', error.message);
@@ -524,8 +524,8 @@ async function ensureEmailTemplateRows() {
 function brandedEmailHtml(subject, bodyHtml, emailType = '') {
   const isNewsletter = ['newsletter_welcome', 'newsletter_broadcast', 'blog_published'].includes(emailType);
   const preheader = isNewsletter
-    ? 'Glow Letters from For You Skin Bar'
-    : 'An update from For You Skin Bar';
+    ? 'Glow Letters from Foryou Skin Bar'
+    : 'An update from Foryou Skin Bar';
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;background:#f4efe7;color:#2c211b;font-family:Arial,Helvetica,sans-serif;">
@@ -535,7 +535,7 @@ function brandedEmailHtml(subject, bodyHtml, emailType = '') {
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fffdf9;border:1px solid #e6d5b4;">
         <tr><td style="padding:24px 30px 18px;border-bottom:3px solid #c89b3c;text-align:center;">
           <a href="${escapeHtml(PUBLIC_SITE_URL)}" style="text-decoration:none;color:#2c211b;">
-            <img src="${emailLogoBase64 ? `cid:${EMAIL_LOGO_CONTENT_ID}` : `${escapeHtml(PUBLIC_SITE_URL)}/assets/brand/logo.png`}" width="178" alt="For You Skin Bar" style="display:block;width:178px;max-width:70%;height:auto;margin:0 auto;">
+            <img src="${emailLogoBase64 ? `cid:${EMAIL_LOGO_CONTENT_ID}` : `${escapeHtml(PUBLIC_SITE_URL)}/assets/brand/logo.png`}" width="178" alt="Foryou Skin Bar" style="display:block;width:178px;max-width:70%;height:auto;margin:0 auto;">
           </a>
         </td></tr>
         <tr><td style="padding:34px 34px 18px;">
@@ -545,7 +545,7 @@ function brandedEmailHtml(subject, bodyHtml, emailType = '') {
         </td></tr>
         <tr><td style="padding:22px 34px 32px;">
           <table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="background:#344633;">
-            <a href="${escapeHtml(PUBLIC_SITE_URL)}/shop.html" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Visit For You Skin Bar</a>
+            <a href="${escapeHtml(PUBLIC_SITE_URL)}/shop.html" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Visit Foryou Skin Bar</a>
           </td></tr></table>
         </td></tr>
         <tr><td style="padding:24px 34px;background:#201d1a;color:#e8ddcb;text-align:center;font-size:12px;line-height:1.7;">
@@ -726,7 +726,7 @@ async function sendShippingUpdateEmail(orderId, { allowResend = false } = {}) {
     orderId,
     recipient: order.customers.email,
     emailType: 'shipping_update',
-    subject: `Your For You Skin Bar order ${order.order_number} is on the way`,
+    subject: `Your Foryou Skin Bar order ${order.order_number} is on the way`,
     html: `
       <p>Hi ${escapeHtml(order.customers.full_name || 'there')},</p>
       <p>Your order has been prepared and is now <strong>on the way</strong>.</p>
@@ -1195,7 +1195,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
 
     const welcomeHtml = `
       <p>Welcome to Glow Letters.</p>
-      <p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from For You Skin Bar.</p>
+      <p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from Foryou Skin Bar.</p>
       <p>Thank you for joining us.</p>
       <hr>
       <p style="font-size:12px;color:#666;">To unsubscribe, reply to this email with "unsubscribe".</p>
@@ -1244,7 +1244,7 @@ app.post('/api/newsletter/send', async (req, res) => {
       .split(/\n{2,}/)
       .map((paragraph) => `<p>${paragraph.replace(/\n/g, '<br>')}</p>`)
       .join('');
-    const html = `${htmlMessage}<hr><p style="font-size:12px;color:#666;">You are receiving this email because you subscribed to Glow Letters from For You Skin Bar. To unsubscribe, reply to this email with "unsubscribe".</p>`;
+    const html = `${htmlMessage}<hr><p style="font-size:12px;color:#666;">You are receiving this email because you subscribed to Glow Letters from Foryou Skin Bar. To unsubscribe, reply to this email with "unsubscribe".</p>`;
 
     let sent = 0;
     let queued = 0;
@@ -1300,7 +1300,7 @@ app.post('/api/blogs/:postId/notify-subscribers', async (req, res) => {
     const emails = [...new Set((subscribers || []).map((row) => String(row.email || '').trim().toLowerCase()).filter(isValidEmail))];
     const articleUrl = `${PUBLIC_SITE_URL}/blog-post.html?slug=${encodeURIComponent(post.slug)}`;
     const html = `
-      <p>A new article is now available from For You Skin Bar.</p>
+      <p>A new article is now available from Foryou Skin Bar.</p>
       <h2>${escapeHtml(post.title)}</h2>
       ${post.excerpt ? `<p>${escapeHtml(post.excerpt)}</p>` : ''}
       <p><a href="${escapeHtml(articleUrl)}">Read the article</a></p>
@@ -1314,7 +1314,7 @@ app.post('/api/blogs/:postId/notify-subscribers', async (req, res) => {
       const result = await queueEmail({
         recipient: email,
         emailType: 'blog_published',
-        subject: `New from For You Skin Bar: ${post.title}`,
+        subject: `New from Foryou Skin Bar: ${post.title}`,
         html,
         metadata: { post_id: post.id, slug: post.slug },
         templateVariables: {
@@ -1629,7 +1629,7 @@ app.post('/api/create-order', async (req, res) => {
           recipient: normalizedEmail,
           emailType: 'newsletter_welcome',
           subject: 'Welcome to Glow Letters',
-          html: '<p>Welcome to Glow Letters.</p><p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from For You Skin Bar.</p><p>Thank you for joining us.</p>',
+          html: '<p>Welcome to Glow Letters.</p><p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from Foryou Skin Bar.</p><p>Thank you for joining us.</p>',
           templateVariables: { signup_source: 'checkout' }
         });
       }
@@ -1647,7 +1647,7 @@ app.post('/api/create-order', async (req, res) => {
 
       const customerHtml = `
         <p>Hi ${customer.fullName},</p>
-        <p>Your checkout details have been saved with For You Skin Bar.</p>
+        <p>Your checkout details have been saved with Foryou Skin Bar.</p>
         <p><strong>Your order is not confirmed until payment is completed through Fygaro.</strong></p>
         <p><b>Order Number:</b> ${orderNumber}<br>
         <b>Payment Status:</b> Awaiting Fygaro payment<br>
@@ -1698,7 +1698,7 @@ app.post('/api/create-order', async (req, res) => {
           body: JSON.stringify({
             from: FROM_EMAIL,
             to: customer.email,
-            subject: `Complete payment for For You Skin Bar order ${orderNumber}`,
+            subject: `Complete payment for Foryou Skin Bar order ${orderNumber}`,
             html: customerHtml
           })
         });
@@ -1758,7 +1758,7 @@ app.post('/api/create-order', async (req, res) => {
         orderId,
         recipient: customer.email,
         emailType: 'payment_pending',
-        subject: `Complete payment for For You Skin Bar order ${orderNumber}`,
+        subject: `Complete payment for Foryou Skin Bar order ${orderNumber}`,
         html: `<p>Hi ${escapeHtml(customer.fullName)},</p><p>Your checkout is saved, but <strong>your order is not confirmed until Fygaro payment is complete.</strong></p>${paymentButton}<p><strong>Reference:</strong> ${escapeHtml(orderNumber)}<br><strong>Delivery:</strong> ${escapeHtml(isInternational ? `${shippingRules.internationalCarrier} international delivery` : deliveryService)}<br><strong>Amount due:</strong> ${paymentDisplay}</p><div style="margin:20px 0;">${pendingItemsHtml}</div><p><strong>Ship to:</strong><br>${escapeHtml(formattedAddress)}</p><p>This is a payment reminder, not a paid-order receipt.</p>`,
         metadata: { order_number: orderNumber, payment_currency: paymentCurrency, payment_amount: paymentAmount },
         templateVariables: {
@@ -1839,7 +1839,7 @@ app.post('/api/admin/payment-checkouts/:reference/confirm', async (req, res) => 
         orderId: order.id,
         recipient: customer.email,
         emailType: 'payment_confirmed',
-        subject: `Payment confirmed - For You Skin Bar order ${order.order_number}`,
+        subject: `Order confirmed - Foryou Skin Bar order ${order.order_number}`,
         html: `<p>Hi ${escapeHtml(customer.full_name)},</p><p>Your Fygaro payment for <strong>${escapeHtml(order.order_number)}</strong> has been confirmed.</p><p>We are now preparing your order and will send a fulfilment update when it is ready.</p>`,
         metadata: { order_number: order.order_number, payment_reference: paymentReference, source: 'admin_reconciliation' },
         templateVariables: {
@@ -2217,7 +2217,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
         <b>Payment Method:</b> Fygaro (Card)</p>
         <p><b>Items:</b><br>${itemsHtml}</p>
         <p>We are now preparing your order. You will receive a shipping update soon.</p>
-        <p>Thank you for shopping with For You Skin Bar.</p>
+        <p>Thank you for shopping with Foryou Skin Bar.</p>
       `;
 
       const ownerConfirmHtml = `
@@ -2237,7 +2237,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
           body: JSON.stringify({
             from: FROM_EMAIL,
             to: customer.email,
-            subject: `Payment Confirmed - Your For You Skin Bar order ${order.order_number}`,
+            subject: `Order Confirmed - Your Foryou Skin Bar order ${order.order_number}`,
             html: confirmHtml,
           }),
         });
@@ -2271,7 +2271,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
         orderId: order.id,
         recipient: customer.email,
         emailType: 'payment_confirmed',
-        subject: `Payment confirmed - For You Skin Bar order ${order.order_number}`,
+        subject: `Order confirmed - Foryou Skin Bar order ${order.order_number}`,
         html: `<p>Hi ${escapeHtml(customer.full_name)},</p><p>Your Fygaro payment for <strong>${escapeHtml(order.order_number)}</strong> is confirmed.</p><div style="margin:20px 0;">${pendingItemsHtml}</div><p><strong>Amount paid:</strong> ${confirmedDisplay}</p><p>We are preparing your order now. You will receive another update when it is ready for pickup or dispatch.</p>`,
         metadata: { order_number: order.order_number },
         templateVariables: {
@@ -2441,10 +2441,10 @@ async function legacyCancellationHandler(req, res) {
     if (false && RESEND_API_KEY && customerEmail) {
       const customerHtml = `
         <p>Hi ${escapeHtml(order.customers?.full_name || 'Valued Customer')},</p>
-        <p>Your request to cancel For You Skin Bar order <strong>${escapeHtml(order.order_number)}</strong> has been received and the order has been marked cancelled.</p>
+        <p>Your request to cancel Foryou Skin Bar order <strong>${escapeHtml(order.order_number)}</strong> has been received and the order has been marked cancelled.</p>
         ${order.payment_status === 'paid' ? `<p>Since this order was paid, our team will review and process the refund manually. Please allow 3-5 business days after refund processing for your bank to reflect it.</p>` : ''}
         <p>If you did not make this request or have any questions, please contact us on WhatsApp immediately.</p>
-        <p>Thank you,<br>For You Skin Bar Team</p>
+        <p>Thank you,<br>Foryou Skin Bar Team</p>
       `;
 
       const ownerHtml = `

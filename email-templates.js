@@ -16,7 +16,7 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
     defaultSubject: 'Welcome to Glow Letters',
     defaultBody: `
       <p>Welcome to Glow Letters.</p>
-      <p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from For You Skin Bar.</p>
+      <p>You are now subscribed to skincare guidance, product updates, new articles, and occasional offers from Foryou Skin Bar.</p>
       <p>Thank you for joining us.</p>
       <hr>
       <p style="font-size:12px;color:#666;">To unsubscribe, reply to this email with "unsubscribe".</p>
@@ -35,7 +35,7 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
     defaultBody: `
       {{{message_html}}}
       <hr>
-      <p style="font-size:12px;color:#666;">You are receiving this email because you subscribed to Glow Letters from For You Skin Bar. To unsubscribe, reply to this email with "unsubscribe".</p>
+      <p style="font-size:12px;color:#666;">You are receiving this email because you subscribed to Glow Letters from Foryou Skin Bar. To unsubscribe, reply to this email with "unsubscribe".</p>
     `,
     variables: [
       { key: 'broadcast_subject', label: 'Campaign subject', description: 'Subject entered when the newsletter is composed.' },
@@ -43,7 +43,7 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
     ],
     sampleVariables: {
       broadcast_subject: 'A little glow for your week',
-      message_html: '<p>Here is this week\'s skincare note, created for healthy and confident skin.</p><p>Explore the latest routines and product updates from For You Skin Bar.</p>'
+      message_html: '<p>Here is this week\'s skincare note, created for healthy and confident skin.</p><p>Explore the latest routines and product updates from Foryou Skin Bar.</p>'
     }
   },
   blog_published: {
@@ -51,9 +51,9 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
     category: 'Marketing',
     audience: 'Subscribers',
     description: 'Sent to newsletter subscribers when a published blog post is announced.',
-    defaultSubject: 'New from For You Skin Bar: {{post_title}}',
+    defaultSubject: 'New from Foryou Skin Bar: {{post_title}}',
     defaultBody: `
-      <p>A new article is now available from For You Skin Bar.</p>
+      <p>A new article is now available from Foryou Skin Bar.</p>
       <h2>{{post_title}}</h2>
       <p>{{post_excerpt}}</p>
       <p><a href="{{article_url}}">Read the article</a></p>
@@ -76,7 +76,7 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
     category: 'Orders',
     audience: 'Customer',
     description: 'Sent after checkout details are saved and before Fygaro payment is confirmed.',
-    defaultSubject: 'Complete payment for For You Skin Bar order {{order_number}}',
+    defaultSubject: 'Complete payment for Foryou Skin Bar order {{order_number}}',
     defaultBody: `
       <p>Hi {{customer_name}},</p>
       <p>Your checkout is saved, but <strong>your order is not confirmed until Fygaro payment is complete.</strong></p>
@@ -139,11 +139,11 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
     }
   },
   payment_confirmed: {
-    name: 'Payment confirmed',
+    name: 'Order confirmation',
     category: 'Orders',
     audience: 'Customer',
-    description: 'Sent after a Fygaro payment is successfully matched to an order.',
-    defaultSubject: 'Payment confirmed - For You Skin Bar order {{order_number}}',
+    description: 'Sent to the customer as their order confirmation after Fygaro payment is successfully matched.',
+    defaultSubject: 'Order confirmed - Foryou Skin Bar order {{order_number}}',
     defaultBody: `
       <p>Hi {{customer_name}},</p>
       <p>Your Fygaro payment for <strong>{{order_number}}</strong> is confirmed.</p>
@@ -192,7 +192,7 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
     category: 'Fulfilment',
     audience: 'Customer',
     description: 'Sent when an admin changes an order status to Shipped.',
-    defaultSubject: 'Your For You Skin Bar order {{order_number}} is on the way',
+    defaultSubject: 'Your Foryou Skin Bar order {{order_number}} is on the way',
     defaultBody: `
       <p>Hi {{customer_name}},</p>
       <p>Your order has been prepared and is now <strong>on the way</strong>.</p>

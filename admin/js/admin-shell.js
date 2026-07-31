@@ -31,7 +31,7 @@
         return `
             <div class="sidebar-brand">
                 <div>
-                    <p class="sidebar-eyebrow">For You Skin Bar</p>
+                    <p class="sidebar-eyebrow">Foryou Skin Bar</p>
                     <h2>Admin</h2>
                 </div>
                 <button id="closeSidebarBtn" class="sidebar-close" type="button" aria-label="Close navigation" title="Close navigation">
