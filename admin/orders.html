@@ -874,10 +874,45 @@
                 const itemSummary = moSelectedProducts.map(p => `${p.quantity}x ${p.displayName}`).join(', ');
                 const adminNotes = `Manual Order: ${customerName}${customerEmail ? ' (' + customerEmail + ')' : ''}${customerPhone ? ' | Phone: ' + customerPhone : ''}\nItems: ${itemSummary}${notes ? '\nNotes: ' + notes : ''}`;
 
+                let customerId = null;
+                
+                if (customerEmail) {
+                    const { data: existingCustomer } = await supabase
+                        .from('customers')
+                        .select('id')
+                        .ilike('email', customerEmail)
+                        .maybeSingle();
+                    if (existingCustomer) customerId = existingCustomer.id;
+                }
+                
+                if (!customerId && customerPhone) {
+                    const { data: existingPhone } = await supabase
+                        .from('customers')
+                        .select('id')
+                        .eq('phone', customerPhone)
+                        .maybeSingle();
+                    if (existingPhone) customerId = existingPhone.id;
+                }
+
+                if (!customerId) {
+                    const { data: newCustomer, error: customerError } = await supabase
+                        .from('customers')
+                        .insert({
+                            full_name: customerName,
+                            email: customerEmail || null,
+                            phone: customerPhone || null
+                        })
+                        .select('id')
+                        .single();
+                    if (customerError) throw new Error('Failed to create customer record: ' + customerError.message);
+                    customerId = newCustomer.id;
+                }
+
                 const { data: orderData, error: orderError } = await supabase
                     .from('orders')
                     .insert({
                         order_number: orderNum,
+                        customer_id: customerId,
                         status: paymentStatus === 'paid' ? 'delivered' : 'pending',
                         payment_status: paymentStatus,
                         fulfillment_status: 'picked_up',
