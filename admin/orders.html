@@ -665,7 +665,8 @@
             dropdown.classList.remove('hidden');
 
             dropdown.querySelectorAll('.mo-product-option').forEach(el => {
-                el.addEventListener('click', () => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     const pid = el.dataset.productId;
                     const product = allProducts.find(p => p.id === pid);
                     if (!product) return;
@@ -700,7 +701,8 @@
             `;
             dropdown.classList.remove('hidden');
             dropdown.querySelectorAll('.mo-variant-option').forEach(el => {
-                el.addEventListener('click', () => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     const vid = el.dataset.variantId;
                     if (vid === '__none__') {
                         addProductToOrder(product, null);
