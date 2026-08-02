@@ -90,6 +90,28 @@ document.addEventListener('DOMContentLoaded', () => {
       !el.closest('style');
   }
 
+  // Check if an element is currently in the viewport (with the same margin as the observer)
+  function isElementInViewport(el) {
+    const rect = el.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const bottomMargin = viewportHeight * 0.08; // matches rootMargin: '0px 0px -8% 0px'
+    return rect.top < (viewportHeight - bottomMargin) && rect.bottom > 0 && rect.height > 0;
+  }
+
+  // Observe an element and immediately reveal it if it's already in the viewport.
+  // This prevents the race condition where dynamically inserted content stays invisible
+  // because the IntersectionObserver's async initial check doesn't fire reliably.
+  function observeAndRevealIfVisible(el) {
+    scrollObserver.observe(el);
+    // Fallback: after a frame, check if the element is already in the viewport
+    requestAnimationFrame(() => {
+      if (!el.classList.contains('revealed') && isElementInViewport(el)) {
+        el.classList.add('revealed');
+        scrollObserver.unobserve(el);
+      }
+    });
+  }
+
   function prepareScrollAnimations(root = document) {
     if (prefersReducedMotion) return;
 
@@ -99,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!el.classList.contains('scroll-reveal') && !el.classList.contains('reveal-panel')) {
         el.classList.add('scroll-reveal');
       }
-      scrollObserver.observe(el);
+      observeAndRevealIfVisible(el);
     });
 
     const cardSelectors = [
@@ -123,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const siblings = Array.from(el.parentElement ? el.parentElement.children : []);
       const index = Math.max(0, siblings.indexOf(el));
       el.style.setProperty('--reveal-delay', `${Math.min(index * 70, 420)}ms`);
-      scrollObserver.observe(el);
+      observeAndRevealIfVisible(el);
     });
   }
 
