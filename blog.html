@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Skincare Tips for Melanin-Rich Skin | Foryou Glow Journal</title>
+  <title>Foryou Skin Journal | Trusted Skincare Education</title>
   <link rel="canonical" href="https://foryouskinbar.com/blog.html">
   <script src="js/seo.js?v=1" defer></script>
-  <meta name="description" content="Skincare education, routine tips, and ingredient deep-dives straight from our lab in Jamaica. Read, learn, and glow.">
+  <meta name="description" content="Explore trusted skincare education for acne, dark spots, routines, ingredients, healthy skin, and Jamaican skincare from Foryou Skin Bar.">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="css/styles.css">
@@ -60,6 +60,45 @@
   <link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
   <link rel="stylesheet" href="css/brand-theme.css?v=gold-headers-1">
+  <style>
+    :root { --journal-ink:#211c19; --journal-green:#344936; --journal-gold:#b78325; --journal-paper:#fbf9f4; }
+    body { background: var(--journal-paper); color: var(--journal-ink); }
+    .journal-hero { min-height: min(640px, 76vh); position: relative; display: flex !important; align-items:center !important; justify-content:center !important; background: url('assets/blog/blog_science.png') center 62% / cover no-repeat; isolation: isolate; }
+    .journal-hero::before { content:""; position:absolute; inset:0; background:rgba(24,31,24,.68); z-index:-1; }
+    .journal-hero-content { display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; width:min(100%,900px) !important; max-width:100% !important; min-width:0; margin:0 auto !important; text-align:center !important; }
+    .journal-hero-content > * { width:100% !important; max-width:100% !important; text-align:center !important; color:#fff !important; white-space:normal !important; overflow-wrap:anywhere; }
+    #journalTitle { color:#fff !important; text-shadow:0 2px 18px rgba(0,0,0,.2); }
+    .journal-hero-content .journal-kicker { color:#e4bb68 !important; }
+    .journal-kicker { color:#e4bb68; font-size:.75rem; font-weight:800; letter-spacing:.2em; text-transform:uppercase; }
+    .journal-title { font-family:"Cormorant Garamond",serif; font-size:clamp(3.5rem,8vw,7.5rem); line-height:.82; letter-spacing:0; }
+    .journal-section { width:100%; max-width:1320px; min-width:0; margin:0 auto; padding:4.5rem 1.5rem; }
+    .journal-section p,.journal-section h1,.journal-section h2,.journal-section h3 { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+    .journal-section-header { display:flex; align-items:end; justify-content:space-between; gap:1.5rem; margin-bottom:2rem; }
+    .journal-section h2 { font-family:"Cormorant Garamond",serif; font-size:clamp(2.25rem,4vw,3.7rem); line-height:1; letter-spacing:0; color:var(--journal-ink); }
+    .manifesto { display:grid; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); gap:clamp(2rem,8vw,8rem); align-items:start; }
+    .manifesto p { font-size:clamp(1.08rem,1.7vw,1.35rem); line-height:1.8; color:#514940; }
+    .journal-card { display:flex; flex-direction:column; min-width:0; background:#fff; border:1px solid #e4ded3; border-radius:6px; overflow:hidden; transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease; }
+    .journal-card:hover { transform:translateY(-3px); border-color:#caa55c; box-shadow:0 15px 35px rgba(35,28,21,.08); }
+    .journal-card img { width:100%; aspect-ratio:16/10; object-fit:cover; }
+    .journal-card-body { display:flex; flex-direction:column; flex:1; padding:1.35rem; }
+    .journal-card h3 { font-family:"Cormorant Garamond",serif; font-size:1.65rem; line-height:1.08; letter-spacing:0; color:#211c19; }
+    .journal-meta { display:flex; flex-wrap:wrap; gap:.45rem .8rem; color:#7a6959; font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+    .journal-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1.25rem; }
+    .foundation-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1.25rem; }
+    .topic-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-top:1px solid #d9d1c5; border-left:1px solid #d9d1c5; }
+    .topic-button { min-height:112px; padding:1rem 1.1rem; text-align:left; background:transparent; border-right:1px solid #d9d1c5; border-bottom:1px solid #d9d1c5; color:#2b3c2d; transition:background .2s ease,color .2s ease; }
+    .topic-button:hover,.topic-button[aria-pressed="true"] { background:#344936; color:#fff; }
+    .topic-button strong { display:block; font-family:"Cormorant Garamond",serif; font-size:1.35rem; line-height:1.05; letter-spacing:0; }
+    .topic-button span { display:block; margin-top:.45rem; font-size:.75rem; opacity:.75; }
+    .library-toolbar { display:flex; align-items:center; gap:.75rem; }
+    .library-search { width:min(100%,330px); border:1px solid #cfc5b8; background:#fff; padding:.75rem 1rem; color:#211c19; }
+    .journal-empty { grid-column:1/-1; padding:3rem; text-align:center; color:#766c62; border:1px solid #ded6ca; }
+    @media(max-width:1024px){ .journal-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.foundation-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.topic-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+    #foundationTitle { color:#fff !important; }
+    #foundationEyebrow { color:#e4bb68 !important; }
+    #foundationIntro { color:rgba(255,255,255,.78) !important; }
+    @media(max-width:640px){ .journal-hero{min-height:620px;padding-inline:1rem !important;background-position:60% center}.journal-hero::before{background:rgba(24,31,24,.76)}.journal-title{font-size:3.35rem}.journal-section{padding:3.5rem 1.1rem}.journal-section-header{align-items:start;flex-direction:column}.manifesto{grid-template-columns:minmax(0,1fr);gap:1.5rem}.manifesto>*,.journal-section-header>*{min-width:0;max-width:100%}.journal-grid,.foundation-grid{grid-template-columns:minmax(0,1fr)}.topic-grid{grid-template-columns:minmax(0,1fr)}.topic-button{min-height:88px}.library-toolbar,.library-search{width:100%;} }
+  </style>
 </head>
 <body class="antialiased">
 
@@ -75,7 +114,7 @@
       <a href="index.html" class="hover:text-amber-800 transition">Home</a>
       <a href="shop.html" class="hover:text-amber-800 transition">Shop</a>
       <a href="about.html" class="hover:text-amber-800 transition">About</a>
-      <a href="blog.html" class="text-amber-800 transition">Blog</a>
+      <a href="blog.html" class="text-amber-800 transition">Journal</a>
       <a href="ingredients.html" class="hover:text-amber-800 transition">Ingredients</a>
       <a href="quiz.html" class="hover:text-amber-800 transition">Skin Quiz</a>
       <a href="reviews.html" class="hover:text-amber-800 transition">Reviews</a>
@@ -99,20 +138,67 @@
   </nav>
 
   <main>
-    <!-- Hero -->
-    <section class="bg-gradient-to-br from-[#6E7F67] via-[#5A6B53] to-[#6E7F67] px-6 md:px-16 py-20 md:py-28 text-center border-b border-amber-900/5 scroll-reveal text-white">
-      <div class="max-w-4xl mx-auto">
-        <h1 class="serif-heading text-5xl md:text-7xl font-bold text-white mb-6">The Glow Journal</h1>
-        <p class="text-lg md:text-xl text-white max-w-2xl mx-auto leading-relaxed">
-          Skincare education, routine tips, and ingredient deep-dives straight from our lab in Jamaica. Read, learn, and glow.
-        </p>
+    <section class="journal-hero text-white px-6 py-16" aria-labelledby="journalTitle">
+      <div class="journal-hero-content">
+        <p class="journal-kicker mb-6">Education by Foryou Skin Bar</p>
+        <h1 id="journalTitle" class="journal-title font-semibold mb-8">Foryou Skin<br>Journal</h1>
+        <p class="text-2xl md:text-3xl font-serif leading-snug mb-5">Healthy Skin. Real Knowledge. Lasting Confidence.</p>
+        <p class="max-w-xl mx-auto text-base md:text-lg text-white/85 leading-relaxed">Trusted skincare education from Foryou Skin Bar, written to help you understand your skin and make informed routine choices.</p>
       </div>
     </section>
 
-    <!-- Blog Grid -->
-    <section class="px-6 md:px-16 max-w-[1600px] mx-auto py-20">
-      <div id="blogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-10">
-        <!-- Posts will be rendered here dynamically -->
+    <section class="journal-section manifesto" aria-labelledby="manifestoTitle">
+      <div>
+        <p class="journal-kicker mb-4">Editorial Manifesto</p>
+        <h2 id="manifestoTitle">Knowledge should make skincare feel clearer.</h2>
+      </div>
+      <div>
+        <p>The Foryou Skin Journal is an educational centre for thoughtful, practical skincare. We explain concerns without shame, ingredients without hype, and routines without unnecessary complexity.</p>
+        <p class="mt-5">Our articles are organized as guided reading: begin with a foundation, follow the supporting articles, and return as the library grows. We cite reputable health sources, distinguish education from medical care, and write with melanin-rich skin and Jamaican life in mind.</p>
+      </div>
+    </section>
+
+    <section class="border-y border-stone-200 bg-white">
+      <div class="journal-section">
+        <div class="journal-section-header">
+          <div><p class="journal-kicker mb-3">Fresh Reading</p><h2>New This Week</h2></div>
+          <p class="max-w-md text-stone-600">Four focused answers to questions readers ask most.</p>
+        </div>
+        <div id="newThisWeekGrid" class="journal-grid" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="journal-section" aria-labelledby="topicsTitle">
+      <div class="journal-section-header">
+        <div><p class="journal-kicker mb-3">Find Your Path</p><h2 id="topicsTitle">Browse by Topic</h2></div>
+        <button id="clearTopicFilter" type="button" class="hidden text-sm font-bold text-[#8b641e]">View all articles</button>
+      </div>
+      <div id="topicGrid" class="topic-grid"></div>
+    </section>
+
+    <section class="bg-[#263528] text-white">
+      <div class="journal-section">
+        <div class="journal-section-header">
+          <div><p id="foundationEyebrow" class="journal-kicker mb-3">Start Here</p><h2 id="foundationTitle">Foundation Guides</h2></div>
+          <p id="foundationIntro" class="max-w-md">Long-form guides that anchor the Journal's learning paths.</p>
+        </div>
+        <div id="foundationGrid" class="foundation-grid"></div>
+      </div>
+    </section>
+
+    <section class="journal-section" aria-labelledby="libraryTitle">
+      <div class="journal-section-header">
+        <div><p class="journal-kicker mb-3">Explore Everything</p><h2 id="libraryTitle">The Article Library</h2></div>
+        <div class="library-toolbar"><label class="sr-only" for="journalSearch">Search articles</label><input id="journalSearch" class="library-search" type="search" placeholder="Search the Journal"></div>
+      </div>
+      <p id="libraryFilterLabel" class="text-sm text-stone-600 mb-5">Showing all published articles.</p>
+      <div id="blogGrid" class="journal-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="bg-[#e8ddca] border-y border-[#cfb783]">
+      <div class="journal-section flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+        <div class="max-w-2xl"><p class="journal-kicker mb-3">Continue Learning</p><h2>New education, delivered thoughtfully.</h2><p class="mt-4 text-stone-700">Join Glow Letters for new Journal articles, practical routines, and considered product updates.</p></div>
+        <a href="#newsletterForm" class="bg-[#263528] text-white px-7 py-3 font-bold inline-flex items-center gap-2">Join Glow Letters <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
       </div>
     </section>
   </main>
@@ -127,7 +213,7 @@
       <a href="index.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-home w-5"></i>Home</a>
       <a href="shop.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-bag-shopping w-5"></i>Shop</a>
       <a href="about.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-heart w-5"></i>About</a>
-      <a href="blog.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3 text-amber-800 font-bold"><i class="fas fa-newspaper w-5"></i>Blog</a>
+      <a href="blog.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3 text-amber-800 font-bold"><i class="fas fa-newspaper w-5"></i>Journal</a>
       <a href="ingredients.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-leaf w-5"></i>Ingredients</a>
       <a href="quiz.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-magic w-5"></i>Skin Quiz</a>
       <a href="reviews.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-star w-5"></i>Reviews</a>
@@ -214,47 +300,76 @@
   <script src="js/currency.js?v=1"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=4"></script>
-  <script src="js/blog.js?v=2"></script>
+  <script src="js/blog.js?v=3"></script>
   <script>
-    // Render Blog Posts
     (async function() {
       await window.loadBlogPosts();
+      const topics = window.journalTopics || [];
+      const posts = window.blogPosts || [];
+      const requestedTopic = new URLSearchParams(window.location.search).get('topic') || '';
+      let selectedTopic = topics.some(topic => topic.slug === requestedTopic) ? requestedTopic : '';
+      let searchQuery = '';
 
-      function formatPublishedAt(value) {
-        if (!value) return '';
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return '';
-        return new Intl.DateTimeFormat('en-US', {
-          month: 'long', day: 'numeric', year: 'numeric',
-          hour: 'numeric', minute: '2-digit', timeZone: 'America/Jamaica'
-        }).format(date);
-      }
-      
-      function renderBlogGrid() {
-        const posts = window.blogPosts || [];
-        const grid = document.getElementById("blogGrid");
-        if (posts.length === 0) {
-          grid.innerHTML = '<p class="text-center col-span-3 text-stone-500 py-20">No blog posts found.</p>';
-          return;
-        }
-        grid.innerHTML = posts.map(post => {
-          const dateStr = formatPublishedAt(post.publishedAt || post.date);
-          return `
-            <div class="blog-card flex flex-col cursor-pointer" onclick="window.location.href='blog-post.html?slug=${post.slug}'">
-              <div class="h-56 overflow-hidden relative">
-                <img src="${post.image}" class="w-full h-full object-cover" alt="${post.title}">
-              </div>
-              <div class="p-6 flex flex-col flex-1">
-                <p class="text-amber-700 text-xs font-bold uppercase tracking-wider mb-2">${dateStr}</p>
-                <h3 class="serif-heading text-2xl mb-3 text-stone-800 line-clamp-2">${post.title}</h3>
-                <p class="text-stone-600 text-sm line-clamp-3 mb-4 flex-1">${post.excerpt}</p>
-                <span class="text-amber-800 font-medium text-sm inline-flex items-center group-hover:text-amber-900">Read Article <i class="fas fa-arrow-right ml-2 text-[10px]"></i></span>
-              </div>
-            </div>
-          `;
+      const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+      const formatDate = (value) => {
+        const date = value ? new Date(value) : null;
+        return date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat('en-US', { month:'short', day:'numeric', year:'numeric', timeZone:'America/Jamaica' }).format(date) : '';
+      };
+      const topicName = (slug) => topics.find(topic => topic.slug === slug)?.name || 'Healthy Skin';
+      const articleUrl = (post) => `blog-post.html?slug=${encodeURIComponent(post.slug)}`;
+      const card = (post) => `
+        <article class="journal-card">
+          <a href="${articleUrl(post)}" aria-label="Read ${escapeHtml(post.title)}"><img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.title)}" loading="lazy"></a>
+          <div class="journal-card-body">
+            <div class="journal-meta mb-3"><span>${escapeHtml(topicName(post.primaryTopic))}</span><span>${Number(post.readingTimeMinutes) || 5} min read</span></div>
+            <h3><a href="${articleUrl(post)}">${escapeHtml(post.title)}</a></h3>
+            <p class="text-sm text-stone-600 leading-relaxed mt-3 mb-5 flex-1">${escapeHtml(post.excerpt)}</p>
+            <div class="flex items-center justify-between gap-3 text-xs"><time class="text-stone-500" datetime="${escapeHtml(post.publishedAt || post.date)}">${formatDate(post.publishedAt || post.date)}</time><a href="${articleUrl(post)}" class="font-bold text-[#8b641e]">Read article <span aria-hidden="true">&rarr;</span></a></div>
+          </div>
+        </article>`;
+      const renderInto = (id, list, emptyMessage) => {
+        const element = document.getElementById(id);
+        element.innerHTML = list.length ? list.map(card).join('') : `<p class="journal-empty">${escapeHtml(emptyMessage)}</p>`;
+      };
+
+      function renderTopics() {
+        document.getElementById('topicGrid').innerHTML = topics.map(topic => {
+          const count = posts.filter(post => post.primaryTopic === topic.slug).length;
+          return `<a href="blog.html?topic=${encodeURIComponent(topic.slug)}" class="topic-button block" data-topic="${topic.slug}" aria-pressed="${selectedTopic === topic.slug}"><strong>${escapeHtml(topic.name)}</strong><span>${count} ${count === 1 ? 'article' : 'articles'}</span></a>`;
         }).join('');
+        document.querySelectorAll('[data-topic]').forEach(button => button.addEventListener('click', event => {
+          event.preventDefault();
+          selectedTopic = button.dataset.topic;
+          history.pushState({}, '', `blog.html?topic=${encodeURIComponent(selectedTopic)}`);
+          document.getElementById('clearTopicFilter').classList.remove('hidden');
+          renderTopics();
+          renderLibrary();
+          document.getElementById('libraryTitle').scrollIntoView({ behavior:'smooth', block:'start' });
+        }));
       }
-      renderBlogGrid();
+
+      function renderLibrary() {
+        const filtered = posts.filter(post => {
+          const matchesTopic = !selectedTopic || post.primaryTopic === selectedTopic;
+          const haystack = `${post.title} ${post.excerpt} ${topicName(post.primaryTopic)}`.toLowerCase();
+          return matchesTopic && (!searchQuery || haystack.includes(searchQuery));
+        });
+        const label = selectedTopic ? topicName(selectedTopic) : 'all published articles';
+        document.getElementById('libraryFilterLabel').textContent = `Showing ${filtered.length} ${filtered.length === 1 ? 'article' : 'articles'} in ${label}.`;
+        renderInto('blogGrid', filtered, 'No articles match this search yet.');
+      }
+
+      const weekly = posts.filter(post => post.isNewThisWeek).slice(0, 4);
+      const foundations = posts.filter(post => post.articleType === 'foundation').slice(0, 3);
+      renderInto('newThisWeekGrid', weekly.length ? weekly : posts.slice(0, 4), 'New articles are being prepared.');
+      renderInto('foundationGrid', foundations, 'Foundation guides are being prepared.');
+      if (selectedTopic) document.getElementById('clearTopicFilter').classList.remove('hidden');
+      renderTopics();
+      renderLibrary();
+
+      document.getElementById('journalSearch').addEventListener('input', event => { searchQuery = event.target.value.trim().toLowerCase(); renderLibrary(); });
+      document.getElementById('clearTopicFilter').addEventListener('click', event => { selectedTopic = ''; history.pushState({}, '', 'blog.html'); event.currentTarget.classList.add('hidden'); renderTopics(); renderLibrary(); });
+      window.addEventListener('popstate', () => { const topic = new URLSearchParams(window.location.search).get('topic') || ''; selectedTopic = topics.some(item => item.slug === topic) ? topic : ''; document.getElementById('clearTopicFilter').classList.toggle('hidden', !selectedTopic); renderTopics(); renderLibrary(); });
     })();
   </script>
 </body>

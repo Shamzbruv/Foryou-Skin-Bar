@@ -1182,10 +1182,37 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       .eq('email', email)
       .maybeSingle();
 
+    let { data: customer } = await supabaseAdmin
+      .from('customers')
+      .select('id,customer_origin,was_imported')
+      .ilike('email', email)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (!customer) {
+      const { data: createdCustomer, error: customerInsertError } = await supabaseAdmin.from('customers').insert({
+        full_name: email.split('@')[0],
+        email,
+        customer_origin: 'newsletter',
+        email_marketing_status: 'subscribed'
+      }).select('id,customer_origin,was_imported').single();
+      if (customerInsertError) throw customerInsertError;
+      customer = createdCustomer;
+    } else {
+      await supabaseAdmin.from('customers').update({ email_marketing_status: 'subscribed', updated_at: new Date().toISOString() }).eq('id', customer.id);
+    }
+
+    const now = new Date().toISOString();
     const { error } = await supabaseAdmin.from('newsletter_subscribers').upsert({
       email,
       source,
-      is_active: true
+      is_active: true,
+      customer_id: customer.id,
+      consent_status: 'subscribed',
+      consent_source: source,
+      subscribed_at: now,
+      unsubscribed_at: null,
+      updated_at: now
     }, { onConflict: 'email' });
     if (error) throw error;
 
@@ -1223,6 +1250,9 @@ app.post('/api/newsletter/send', async (req, res) => {
     await requireAdmin(req);
     const subject = String(req.body.subject || '').trim();
     const message = String(req.body.message || '').trim();
+    const requestedRecipients = Array.isArray(req.body.recipients)
+      ? [...new Set(req.body.recipients.map((email) => String(email || '').trim().toLowerCase()).filter(isValidEmail))]
+      : null;
     if (!subject) throw new Error('Subject is required.');
     if (!message) throw new Error('Message is required.');
 
@@ -1233,9 +1263,13 @@ app.post('/api/newsletter/send', async (req, res) => {
       .order('created_at', { ascending: false });
     if (subscribersError) throw subscribersError;
 
-    const uniqueEmails = [...new Set((subscribers || [])
+    let uniqueEmails = [...new Set((subscribers || [])
       .map((row) => String(row.email || '').trim().toLowerCase())
       .filter(isValidEmail))];
+    if (requestedRecipients) {
+      const allowed = new Set(requestedRecipients);
+      uniqueEmails = uniqueEmails.filter((email) => allowed.has(email));
+    }
     if (uniqueEmails.length === 0) {
       return res.status(200).json({ success: true, sent: 0, queued: 0, failed: 0, message: 'No active subscribers found.' });
     }
@@ -1509,7 +1543,7 @@ app.post('/api/create-order', async (req, res) => {
 
     let customerId = null;
     if (customer.email) {
-      const { data: existingByEmail } = await supabaseAdmin.from('customers').select('id').eq('email', customer.email).maybeSingle();
+      const { data: existingByEmail } = await supabaseAdmin.from('customers').select('id').ilike('email', customer.email).order('created_at', { ascending: true }).limit(1).maybeSingle();
       if (existingByEmail) customerId = existingByEmail.id;
     }
     if (!customerId && customer.phone) {
@@ -1523,12 +1557,19 @@ app.post('/api/create-order', async (req, res) => {
         .insert({
           full_name: customer.fullName,
           phone: customer.phone,
-          email: customer.email
+          email: customer.email,
+          customer_origin: 'checkout'
         })
         .select('id')
         .single();
       if (custError) throw custError;
       customerId = newCustomer.id;
+    } else {
+      await supabaseAdmin.from('customers').update({
+        full_name: customer.fullName || undefined,
+        phone: customer.phone || undefined,
+        updated_at: new Date().toISOString()
+      }).eq('id', customerId);
     }
 
     let formattedAddress = shipping.addressLine1;
@@ -1620,8 +1661,15 @@ app.post('/api/create-order', async (req, res) => {
         .upsert({
           email: normalizedEmail,
           source: 'checkout',
-          is_active: true
+          is_active: true,
+          customer_id: customerId,
+          consent_status: 'subscribed',
+          consent_source: 'checkout',
+          subscribed_at: new Date().toISOString(),
+          unsubscribed_at: null,
+          updated_at: new Date().toISOString()
         }, { onConflict: 'email' });
+      await supabaseAdmin.from('customers').update({ email_marketing_status: 'subscribed', updated_at: new Date().toISOString() }).eq('id', customerId);
       if (newsletterError) {
         console.warn('[Newsletter] Checkout opt-in could not be saved:', newsletterError.message);
       } else if (!existingSubscriber?.is_active) {

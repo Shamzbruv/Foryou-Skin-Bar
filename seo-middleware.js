@@ -44,8 +44,8 @@ const STATIC_PAGE_SEO = {
   },
   '/blog.html': {
     file: 'blog.html',
-    title: 'Skincare Tips for Melanin-Rich Skin | Foryou Glow Journal',
-    description: 'Read practical skincare education, ingredient guides, and routine tips for acne, dark spots, hyperpigmentation, and healthy-looking skin.'
+    title: 'Foryou Skin Journal | Trusted Skincare Education',
+    description: 'Explore trusted skincare education for acne, dark spots, routines, ingredients, healthy skin, and Jamaican skincare from Foryou Skin Bar.'
   },
   '/reviews.html': {
     file: 'reviews.html',
@@ -193,9 +193,10 @@ function injectSeoHead(html, options) {
 async function readAndRender(rootDirectory, page, options, res, next) {
   try {
     const html = await fs.readFile(path.join(rootDirectory, page), 'utf8');
+    const renderedHtml = typeof options.transformHtml === 'function' ? options.transformHtml(html) : html;
     res.type('html');
     res.set('Cache-Control', 'public, max-age=300, s-maxage=1800');
-    return res.status(options.status || 200).send(injectSeoHead(html, options));
+    return res.status(options.status || 200).send(injectSeoHead(renderedHtml, options));
   } catch (error) {
     return next(error);
   }
@@ -360,13 +361,40 @@ function installSeoRoutes(app, { rootDirectory, supabase, siteOrigin }) {
       try {
         const social = await socialSharingSettings(supabase);
         const isHomepage = route === '/' || route === '/index.html';
+        let schema;
+        if (route === '/blog.html') {
+          const { data: posts } = await supabase
+            .from('blog_posts')
+            .select('title,slug,excerpt,featured_image_url,published_at,primary_topic')
+            .eq('status', 'published')
+            .order('published_at', { ascending: false })
+            .limit(50);
+          schema = {
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: 'Foryou Skin Journal',
+            description: page.description,
+            url: absoluteUrl('/blog.html', siteOrigin),
+            isPartOf: { '@type': 'WebSite', name: 'Foryou Skin Bar', url: siteOrigin },
+            mainEntity: {
+              '@type': 'ItemList',
+              itemListElement: (posts || []).map((post, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                url: absoluteUrl(`/blog-post.html?slug=${encodeURIComponent(post.slug)}`, siteOrigin),
+                name: post.title
+              }))
+            }
+          };
+        }
         return readAndRender(rootDirectory, page.file, {
           ...page,
           title: isHomepage ? social.title : page.title,
           description: isHomepage ? social.description : page.description,
           canonicalUrl: absoluteUrl(page.canonicalPath || route, siteOrigin),
           imageUrl: socialPreviewUrl(siteOrigin, { v: social.version }),
-          type: 'website'
+          type: 'website',
+          schema
         }, res, next);
       } catch (error) {
         return next(error);
@@ -428,40 +456,74 @@ function installSeoRoutes(app, { rootDirectory, supabase, siteOrigin }) {
     try {
       const { data: post, error } = await supabase
         .from('blog_posts')
-        .select('title,slug,excerpt,content,featured_image_url,published_at,updated_at,status')
+        .select('title,slug,excerpt,content,featured_image_url,published_at,updated_at,status,seo_title,seo_description,primary_topic,article_type,reading_time_minutes,related_post_slugs')
         .eq('slug', slug)
         .eq('status', 'published')
         .maybeSingle();
       if (error) throw error;
       if (!post) return res.redirect(302, '/blog.html');
-      const title = `${compactText(post.title, 70)} | Foryou Skin Bar Glow Journal`;
-      const description = post.excerpt || post.content || 'Skincare education and routine guidance from Foryou Skin Bar Jamaica.';
+      const title = compactText(post.seo_title || `${post.title} | Foryou Skin Journal`, 90);
+      const description = post.seo_description || post.excerpt || post.content || 'Skincare education and routine guidance from Foryou Skin Bar Jamaica.';
       const canonicalUrl = absoluteUrl(`/blog-post.html?slug=${encodeURIComponent(post.slug)}`, siteOrigin);
       const originalImageUrl = absoluteUrl(post.featured_image_url, siteOrigin);
       const imageUrl = socialPreviewUrl(siteOrigin, { blog: post.slug, v: post.updated_at || post.published_at || 1 });
+      const topicNames = {
+        acne: 'Acne',
+        'dark-spots-hyperpigmentation': 'Dark Spots & Hyperpigmentation',
+        'skincare-routines': 'Skincare Routines',
+        'ingredients-library': 'Ingredients Library',
+        'healthy-skin': 'Healthy Skin',
+        'skin-school': 'Skin School',
+        'jamaican-skincare': 'Jamaican Skincare'
+      };
+      const topicName = topicNames[post.primary_topic] || 'Healthy Skin';
       const schema = {
         '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: post.title,
-        description: compactText(description, 500),
-        image: [originalImageUrl],
-        datePublished: post.published_at,
-        dateModified: post.updated_at || post.published_at,
-        mainEntityOfPage: canonicalUrl,
-        author: { '@type': 'Organization', name: 'Foryou Skin Bar', url: siteOrigin },
-        publisher: {
-          '@type': 'Organization',
-          name: 'Foryou Skin Bar',
-          logo: { '@type': 'ImageObject', url: absoluteUrl('/assets/brand/logo.png', siteOrigin) }
-        }
+        '@graph': [{
+          '@type': 'Article',
+          headline: post.title,
+          description: compactText(description, 500),
+          image: [originalImageUrl],
+          datePublished: post.published_at,
+          dateModified: post.updated_at || post.published_at,
+          articleSection: topicName,
+          timeRequired: `PT${Number(post.reading_time_minutes) || 5}M`,
+          mainEntityOfPage: canonicalUrl,
+          author: { '@type': 'Organization', name: 'Foryou Skin Bar', url: siteOrigin },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Foryou Skin Bar',
+            logo: { '@type': 'ImageObject', url: absoluteUrl('/assets/brand/logo.png', siteOrigin) }
+          }
+        }, {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: siteOrigin },
+            { '@type': 'ListItem', position: 2, name: 'Foryou Skin Journal', item: absoluteUrl('/blog.html', siteOrigin) },
+            { '@type': 'ListItem', position: 3, name: topicName, item: absoluteUrl(`/blog.html?topic=${encodeURIComponent(post.primary_topic || 'healthy-skin')}`, siteOrigin) },
+            { '@type': 'ListItem', position: 4, name: post.title, item: canonicalUrl }
+          ]
+        }]
       };
+      const serverArticle = `
+        <article class="max-w-4xl mx-auto px-6 md:px-12 py-12 md:py-20">
+          <header class="text-center mb-10">
+            <nav aria-label="Breadcrumb"><a href="/blog.html">Foryou Skin Journal</a> / <a href="/blog.html?topic=${escapeHtml(post.primary_topic || 'healthy-skin')}">${escapeHtml(topicName)}</a></nav>
+            <p>${escapeHtml(topicName)} &bull; ${Number(post.reading_time_minutes) || 5} min read</p>
+            <h1>${escapeHtml(post.title)}</h1>
+            ${post.excerpt ? `<p>${escapeHtml(post.excerpt)}</p>` : ''}
+          </header>
+          ${post.featured_image_url ? `<img src="${escapeHtml(absoluteUrl(post.featured_image_url, siteOrigin))}" alt="${escapeHtml(post.title)}">` : ''}
+          <div class="article-content">${post.content || ''}</div>
+        </article>`;
       return readAndRender(rootDirectory, 'blog-post.html', {
         title,
         description,
         canonicalUrl,
         imageUrl,
         type: 'article',
-        schema
+        schema,
+        transformHtml: (html) => html.replace(/<main id="articleContainer">[\s\S]*?<\/main>/i, `<main id="articleContainer">${serverArticle}</main>`)
       }, res, next);
     } catch (error) {
       return next(error);

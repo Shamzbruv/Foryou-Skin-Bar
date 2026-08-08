@@ -160,7 +160,8 @@ async function authenticatedUser(req) {
 
 async function customerForEmail(email, user = null) {
   if (!email) return null;
-  const { data, error } = await db.from('customers').select('id, full_name, email, phone, whatsapp, created_at, loyalty_points_balance, lifetime_earned_points, default_country, default_address_line1, default_address_line2, default_city, default_parish, default_state_province, default_postal_code').ilike('email', email).order('created_at', { ascending: true }).limit(1);
+  const customerFields = 'id, full_name, email, phone, whatsapp, created_at, loyalty_points_balance, lifetime_earned_points, default_country, default_address_line1, default_address_line2, default_city, default_parish, default_state_province, default_postal_code, customer_origin, was_imported, imported_at, account_user_id, account_created_at';
+  const { data, error } = await db.from('customers').select(customerFields).ilike('email', email).order('created_at', { ascending: true }).limit(1);
   if (error) throw error;
   
   if (!data?.[0] && user) {
@@ -171,12 +172,25 @@ async function customerForEmail(email, user = null) {
       email: email,
       full_name: fullName,
       phone: phone,
-      created_at: user.created_at
-    }).select('id, full_name, email, phone, whatsapp, created_at, loyalty_points_balance, lifetime_earned_points, default_country, default_address_line1, default_address_line2, default_city, default_parish, default_state_province, default_postal_code').single();
+      created_at: user.created_at,
+      customer_origin: 'account',
+      account_user_id: user.id,
+      account_created_at: user.created_at
+    }).select(customerFields).single();
     
     if (!insertError && newData) return newData;
   }
   
+  if (data?.[0] && user && (data[0].account_user_id !== user.id || data[0].customer_origin !== 'account')) {
+    const { data: linkedCustomer, error: linkError } = await db.from('customers').update({
+      account_user_id: user.id,
+      account_created_at: user.created_at || new Date().toISOString(),
+      customer_origin: 'account',
+      updated_at: new Date().toISOString()
+    }).eq('id', data[0].id).select(customerFields).single();
+    if (!linkError && linkedCustomer) return linkedCustomer;
+  }
+
   return data?.[0] || null;
 }
 

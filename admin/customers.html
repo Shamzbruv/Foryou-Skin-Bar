@@ -78,25 +78,39 @@
     </div>
     
     <div class="flex-1 p-8 overflow-y-auto relative">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-bold text-stone-800">Customers</h1>
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-8">
+            <div><p class="text-xs font-bold uppercase tracking-widest text-amber-800">Customer Directory</p><h1 class="text-3xl font-serif font-bold text-stone-900">Customers</h1><p class="text-sm text-stone-500 mt-1">Accounts, checkout customers, and imported legacy contacts in one place.</p></div>
             <div class="relative w-64">
                 <i class="fas fa-search absolute left-3 top-3 text-stone-400"></i>
                 <input type="text" id="searchInput" placeholder="Search customers..." class="w-full pl-10 pr-4 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-800">
             </div>
         </div>
 
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+            <div class="bg-white border border-stone-200 rounded-lg p-4"><p class="text-xs uppercase font-bold text-stone-500">Total contacts</p><strong id="customerCount" class="text-2xl text-stone-900">0</strong></div>
+            <div class="bg-white border border-stone-200 rounded-lg p-4"><p class="text-xs uppercase font-bold text-stone-500">Active subscribers</p><strong id="activeSubscriberStat" class="text-2xl text-stone-900">0</strong></div>
+            <div class="bg-white border border-stone-200 rounded-lg p-4"><p class="text-xs uppercase font-bold text-stone-500">Imported contacts</p><strong id="importedCount" class="text-2xl text-stone-900">0</strong></div>
+            <div class="bg-white border border-stone-200 rounded-lg p-4"><p class="text-xs uppercase font-bold text-stone-500">Customer accounts</p><strong id="accountCount" class="text-2xl text-stone-900">0</strong></div>
+        </div>
+
         <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6 mb-8">
             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-5">
                 <div>
                     <h2 class="text-xl font-bold text-stone-800">Newsletter Broadcast</h2>
-                    <p class="text-sm text-stone-500 mt-1">Send a Glow Letters update to every active newsletter subscriber.</p>
+                    <p class="text-sm text-stone-500 mt-1">Send to every active subscriber or only the subscribed customers you select below.</p>
                 </div>
                 <div class="text-sm bg-amber-50 text-amber-900 border border-amber-100 rounded-lg px-4 py-2">
                     <span class="font-bold" id="subscriberCount">0</span> active subscribers
                 </div>
             </div>
             <form id="newsletterBroadcastForm" class="space-y-4">
+                <fieldset>
+                    <legend class="block text-sm font-semibold text-stone-700 mb-2">Recipients</legend>
+                    <div class="flex flex-wrap gap-4">
+                        <label class="inline-flex items-center gap-2 text-sm"><input type="radio" name="recipientScope" value="all" checked class="accent-amber-800"> All active subscribers</label>
+                        <label class="inline-flex items-center gap-2 text-sm"><input type="radio" name="recipientScope" value="selected" class="accent-amber-800"> Selected active subscribers (<span id="selectedSubscriberCount">0</span>)</label>
+                    </div>
+                </fieldset>
                 <div>
                     <label class="block text-sm font-semibold text-stone-700 mb-1">Subject</label>
                     <input type="text" id="newsletterSubject" class="w-full px-4 py-3 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-800" placeholder="New skincare tips from Foryou Skin Bar" required>
@@ -108,7 +122,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                     <button type="submit" id="sendNewsletterBtn" class="inline-flex items-center justify-center gap-2 bg-amber-800 text-white px-5 py-3 rounded-lg font-semibold hover:bg-amber-900 transition">
                         <i class="fas fa-paper-plane"></i>
-                        Send to Subscribers
+                        Send Newsletter
                     </button>
                     <button type="button" id="copySubscriberEmailsBtn" class="inline-flex items-center justify-center gap-2 border border-stone-300 text-stone-700 px-5 py-3 rounded-lg font-semibold hover:bg-stone-50 transition">
                         <i class="fas fa-copy"></i>
@@ -120,174 +134,228 @@
         </div>
 
         <!-- Customers Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-            <table class="w-full text-left border-collapse">
+        <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-x-auto">
+            <table class="w-full min-w-[980px] text-left border-collapse">
                 <thead>
                     <tr class="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold text-sm">
-                        <th class="p-4">Name</th>
-                        <th class="p-4">Email</th>
-                        <th class="p-4">Phone</th>
-                        <th class="p-4">WhatsApp</th>
-                        <th class="p-4">Joined Date</th>
+                        <th class="p-4 w-10"><input id="selectAllCustomers" type="checkbox" aria-label="Select all visible subscribed customers" class="accent-amber-800"></th>
+                        <th class="p-4">Customer</th>
+                        <th class="p-4">Contact</th>
+                        <th class="p-4">Newsletter</th>
+                        <th class="p-4">Origin</th>
+                        <th class="p-4">Last activity</th>
                     </tr>
                 </thead>
                 <tbody id="customersTableBody" class="divide-y divide-stone-100 text-sm">
-                    <tr><td colspan="5" class="p-8 text-center text-stone-500">Loading customers...</td></tr>
+                    <tr><td colspan="6" class="p-8 text-center text-stone-500">Loading customers...</td></tr>
                 </tbody>
             </table>
+        </div>
+
+        <div id="customerProfileModal" class="fixed inset-0 bg-stone-900/60 hidden items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="customerProfileTitle">
+            <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+                <header class="px-6 py-4 border-b border-stone-200 flex items-center justify-between"><div><p class="text-xs font-bold uppercase tracking-widest text-amber-800">Customer Profile</p><h2 id="customerProfileTitle" class="text-2xl font-serif font-bold text-stone-900">Customer</h2></div><button id="closeCustomerProfile" type="button" class="w-10 h-10 text-stone-500 hover:text-stone-900" aria-label="Close profile"><i class="fas fa-times"></i></button></header>
+                <div id="customerProfileBody" class="p-6 overflow-y-auto"><p class="text-stone-500">Loading profile...</p></div>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { supabase, checkAuth } from '/admin/js/supabase-client.js';
-        
+
         let allCustomers = [];
         let allSubscribers = [];
+        let visibleCustomers = [];
         let adminSession = null;
+        const selectedCustomerIds = new Set();
+        const escapeHtml = (value = '') => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+        const formatDate = (value, fallback = '-') => {
+            const date = value ? new Date(value) : null;
+            return date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat('en-JM', { dateStyle:'medium', timeStyle:'short', timeZone:'America/Jamaica' }).format(date) : fallback;
+        };
+        const subscriberMap = () => new Map(allSubscribers.map(item => [String(item.email || '').toLowerCase(), item]));
 
         async function init() {
             adminSession = await checkAuth();
-            loadCustomers();
-            loadSubscribers();
-        }
-        
-        async function loadCustomers() {
-            const tbody = document.getElementById('customersTableBody');
-            const { data, error } = await supabase.from('customers').select('*').order('created_at', { ascending: false });
-            
-            if (error) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-red-500">Error: ${error.message}</td></tr>`;
-                return;
-            }
-            
-            allCustomers = data;
+            await Promise.all([loadCustomers(), loadSubscribers()]);
+            updateStats();
             renderCustomers(allCustomers);
+        }
+
+        async function loadCustomers() {
+            const { data, error } = await supabase.from('customers').select('*').order('created_at', { ascending: false });
+            if (error) throw new Error(`Customers could not be loaded: ${error.message}`);
+            allCustomers = data || [];
         }
 
         async function loadSubscribers() {
             const statusEl = document.getElementById('newsletterStatus');
-            const countEl = document.getElementById('subscriberCount');
-            const { data, error } = await supabase
-                .from('newsletter_subscribers')
-                .select('email, source, is_active, created_at')
-                .eq('is_active', true)
-                .order('created_at', { ascending: false });
-
+            const { data, error } = await supabase.from('newsletter_subscribers').select('*').order('created_at', { ascending: false });
             if (error) {
                 allSubscribers = [];
-                countEl.textContent = '0';
                 statusEl.textContent = `Newsletter subscribers could not be loaded: ${error.message}`;
                 statusEl.className = 'text-sm text-red-600';
                 return;
             }
-
             allSubscribers = data || [];
-            countEl.textContent = allSubscribers.length;
-            statusEl.textContent = allSubscribers.length ? 'Ready to send when the message is complete.' : 'No active subscribers yet.';
-            statusEl.className = 'text-sm text-stone-500';
+            const active = allSubscribers.filter(item => item.is_active);
+            document.getElementById('subscriberCount').textContent = active.length;
+            statusEl.textContent = active.length ? 'Ready to send when the message is complete.' : 'No active subscribers yet.';
+        }
+
+        function updateStats() {
+            const activeCount = allSubscribers.filter(item => item.is_active).length;
+            document.getElementById('customerCount').textContent = allCustomers.length;
+            document.getElementById('activeSubscriberStat').textContent = activeCount;
+            document.getElementById('importedCount').textContent = allCustomers.filter(item => item.was_imported).length;
+            document.getElementById('accountCount').textContent = allCustomers.filter(item => item.account_user_id || item.customer_origin === 'account').length;
+        }
+
+        function originBadges(customer) {
+            const badges = [];
+            if (customer.account_user_id || customer.customer_origin === 'account') badges.push('<span class="inline-flex bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">Account</span>');
+            else if (customer.customer_origin === 'imported') badges.push('<span class="inline-flex bg-amber-100 text-amber-900 px-2 py-1 rounded-full text-xs font-bold">Imported</span>');
+            else badges.push(`<span class="inline-flex bg-stone-100 text-stone-700 px-2 py-1 rounded-full text-xs font-bold capitalize">${escapeHtml(customer.customer_origin || 'system')}</span>`);
+            if (customer.was_imported && customer.customer_origin !== 'imported') badges.push('<span class="inline-flex bg-amber-50 text-amber-900 px-2 py-1 rounded-full text-xs font-bold">Previously imported</span>');
+            return badges.join(' ');
+        }
+
+        function newsletterBadge(subscriber) {
+            if (!subscriber) return '<span class="text-stone-500">Not subscribed</span>';
+            if (subscriber.is_active) return '<span class="inline-flex bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">Subscribed</span>';
+            return '<span class="inline-flex bg-red-50 text-red-700 px-2 py-1 rounded-full text-xs font-bold">Unsubscribed</span>';
         }
 
         function renderCustomers(customers) {
+            visibleCustomers = customers;
             const tbody = document.getElementById('customersTableBody');
-            if (customers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-stone-500">No customers found.</td></tr>`;
+            const subscribers = subscriberMap();
+            if (!customers.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-stone-500">No customers found.</td></tr>';
                 return;
             }
-            
-            tbody.innerHTML = customers.map(c => {
-                const date = new Date(c.created_at).toLocaleDateString();
-                const waLink = c.whatsapp ? `<a href="https://wa.me/${c.whatsapp.replace(/\D/g,'')}" target="_blank" class="text-green-600 hover:underline"><i class="fab fa-whatsapp mr-1"></i>${c.whatsapp}</a>` : '-';
-                return `
-                <tr class="hover:bg-stone-50 transition">
-                    <td class="p-4 font-bold text-stone-800">${c.full_name}</td>
-                    <td class="p-4 text-stone-600"><a href="mailto:${c.email}" class="text-amber-800 hover:underline">${c.email}</a></td>
-                    <td class="p-4 text-stone-600">${c.phone || '-'}</td>
-                    <td class="p-4">${waLink}</td>
-                    <td class="p-4 text-stone-600">${date}</td>
-                </tr>
-                `;
+            tbody.innerHTML = customers.map(customer => {
+                const subscriber = subscribers.get(String(customer.email || '').toLowerCase());
+                const selectable = Boolean(subscriber?.is_active);
+                return `<tr class="hover:bg-stone-50 transition cursor-pointer" data-customer-row="${customer.id}">
+                    <td class="p-4"><input type="checkbox" data-customer-select="${customer.id}" ${selectedCustomerIds.has(customer.id) ? 'checked' : ''} ${selectable ? '' : 'disabled'} aria-label="Select ${escapeHtml(customer.full_name)}" class="accent-amber-800 disabled:opacity-30"></td>
+                    <td class="p-4"><button type="button" data-open-customer="${customer.id}" class="text-left"><strong class="block text-stone-900">${escapeHtml(customer.full_name || 'Unnamed customer')}</strong><span class="text-xs text-amber-800 font-semibold">View full profile</span></button></td>
+                    <td class="p-4 text-stone-600"><span class="block">${customer.email ? escapeHtml(customer.email) : 'No email'}</span><span class="text-xs">${escapeHtml(customer.phone || 'No phone')}</span></td>
+                    <td class="p-4">${newsletterBadge(subscriber)}${customer.email_quality_status === 'needs_review' ? '<span class="block text-xs text-red-600 mt-1">Email needs review</span>' : ''}</td>
+                    <td class="p-4"><div class="flex flex-wrap gap-1">${originBadges(customer)}</div></td>
+                    <td class="p-4 text-stone-600"><span class="block max-w-[240px] truncate">${escapeHtml(customer.legacy_last_activity || 'Customer added')}</span><span class="text-xs">${formatDate(customer.legacy_last_activity_at || customer.created_at)}</span></td>
+                </tr>`;
             }).join('');
+            bindCustomerRows();
+            updateSelectedCount();
         }
 
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            const filtered = allCustomers.filter(c => 
-                (c.full_name && c.full_name.toLowerCase().includes(query)) || 
-                (c.email && c.email.toLowerCase().includes(query)) ||
-                (c.phone && c.phone.includes(query))
-            );
-            renderCustomers(filtered);
+        function bindCustomerRows() {
+            document.querySelectorAll('[data-open-customer]').forEach(button => button.addEventListener('click', event => { event.stopPropagation(); openCustomerProfile(button.dataset.openCustomer); }));
+            document.querySelectorAll('[data-customer-row]').forEach(row => row.addEventListener('click', event => { if (!event.target.closest('input')) openCustomerProfile(row.dataset.customerRow); }));
+            document.querySelectorAll('[data-customer-select]').forEach(input => input.addEventListener('click', event => event.stopPropagation()));
+            document.querySelectorAll('[data-customer-select]').forEach(input => input.addEventListener('change', () => {
+                if (input.checked) selectedCustomerIds.add(input.dataset.customerSelect); else selectedCustomerIds.delete(input.dataset.customerSelect);
+                updateSelectedCount();
+            }));
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedSubscriberCount').textContent = selectedCustomerIds.size;
+            const selectable = visibleCustomers.filter(customer => subscriberMap().get(String(customer.email || '').toLowerCase())?.is_active);
+            document.getElementById('selectAllCustomers').checked = selectable.length > 0 && selectable.every(customer => selectedCustomerIds.has(customer.id));
+        }
+
+        function selectedEmails() {
+            const map = subscriberMap();
+            return allCustomers.filter(customer => selectedCustomerIds.has(customer.id) && map.get(String(customer.email || '').toLowerCase())?.is_active).map(customer => customer.email.toLowerCase());
+        }
+
+        async function openCustomerProfile(customerId) {
+            const customer = allCustomers.find(item => item.id === customerId);
+            if (!customer) return;
+            const modal = document.getElementById('customerProfileModal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            document.getElementById('customerProfileTitle').textContent = customer.full_name || 'Customer';
+            const body = document.getElementById('customerProfileBody');
+            body.innerHTML = '<p class="text-stone-500"><i class="fas fa-spinner fa-spin mr-2"></i>Loading profile...</p>';
+            const [historyResult, ordersResult] = await Promise.all([
+                supabase.from('customer_import_history').select('*').eq('customer_id', customerId).order('imported_at', { ascending:false }),
+                supabase.from('orders').select('order_number,status,payment_status,grand_total_jmd,created_at').eq('customer_id', customerId).order('created_at', { ascending:false }).limit(25)
+            ]);
+            const subscriber = subscriberMap().get(String(customer.email || '').toLowerCase());
+            const addresses = Array.isArray(customer.alternate_addresses) ? customer.alternate_addresses : [];
+            const phones = [...new Set([customer.phone, ...(customer.alternate_phones || [])].filter(Boolean))];
+            const orders = ordersResult.data || [];
+            const importRows = historyResult.data || [];
+            const importAuditHtml = importRows.map((entry, index) => {
+                const fields = Object.entries(entry.raw_data || {}).filter(([, value]) => String(value || '').trim());
+                return `<details class="border border-stone-200 rounded-lg"><summary class="cursor-pointer p-3 font-semibold text-stone-800">Original import row ${index + 1} - ${escapeHtml(entry.source || 'Legacy database')}</summary><dl class="grid md:grid-cols-2 gap-x-6 gap-y-2 border-t border-stone-200 p-4 text-xs">${fields.map(([key, value]) => `<div><dt class="text-stone-500">${escapeHtml(key)}</dt><dd class="font-semibold break-words">${escapeHtml(value)}</dd></div>`).join('')}</dl></details>`;
+            }).join('');
+            const lifetimeSpend = orders.filter(order => order.payment_status === 'paid' && !['cancelled','refunded'].includes(order.status)).reduce((sum, order) => sum + Number(order.grand_total_jmd || 0), 0);
+            body.innerHTML = `
+                <div class="flex flex-wrap gap-2 mb-6">${originBadges(customer)} ${newsletterBadge(subscriber)}</div>
+                <div class="grid md:grid-cols-3 gap-4 mb-8">
+                    <section class="border border-stone-200 rounded-lg p-4"><p class="text-xs uppercase font-bold text-stone-500 mb-2">Contact</p><p class="font-semibold break-all">${escapeHtml(customer.email || 'No email')}</p><p class="text-sm text-stone-600 mt-2">${phones.length ? phones.map(escapeHtml).join('<br>') : 'No phone saved'}</p></section>
+                    <section class="border border-stone-200 rounded-lg p-4"><p class="text-xs uppercase font-bold text-stone-500 mb-2">Customer activity</p><p class="font-semibold">${orders.length} recent order${orders.length === 1 ? '' : 's'}</p><p class="text-sm text-stone-600 mt-2">Paid spend shown: J$${lifetimeSpend.toLocaleString()}</p></section>
+                    <section class="border border-stone-200 rounded-lg p-4"><p class="text-xs uppercase font-bold text-stone-500 mb-2">Marketing consent</p><p class="font-semibold capitalize">Email: ${escapeHtml(customer.email_marketing_status || subscriber?.consent_status || 'unknown')}</p><p class="text-sm text-stone-600 mt-2 capitalize">SMS: ${escapeHtml(customer.sms_marketing_status || 'unknown')}</p></section>
+                </div>
+                <section class="mb-8"><h3 class="font-serif text-2xl font-bold mb-3">Addresses</h3>${addresses.length ? `<div class="grid md:grid-cols-2 gap-3">${addresses.map(address => `<address class="not-italic border border-stone-200 rounded-lg p-4 text-sm leading-6"><strong class="block uppercase text-xs text-amber-800">${escapeHtml(address.type || 'Address')}</strong>${[address.street,address.street_line_2,address.city,address.state_region,address.postal_code,address.country].filter(Boolean).map(escapeHtml).join('<br>')}</address>`).join('')}</div>` : '<p class="text-stone-500">No imported address was provided.</p>'}</section>
+                <section class="mb-8"><h3 class="font-serif text-2xl font-bold mb-3">Imported details</h3><dl class="grid md:grid-cols-2 gap-x-8 gap-y-3 text-sm"><div><dt class="text-stone-500">Sources</dt><dd class="font-semibold">${escapeHtml((customer.legacy_sources || []).join(', ') || '-')}</dd></div><div><dt class="text-stone-500">Labels</dt><dd class="font-semibold">${escapeHtml((customer.labels || []).join(', ') || '-')}</dd></div><div><dt class="text-stone-500">Original created date</dt><dd class="font-semibold">${formatDate(customer.legacy_created_at)}</dd></div><div><dt class="text-stone-500">Last imported activity</dt><dd class="font-semibold">${escapeHtml(customer.legacy_last_activity || '-')} (${formatDate(customer.legacy_last_activity_at)})</dd></div><div><dt class="text-stone-500">Import rows retained</dt><dd class="font-semibold">${importRows.length}</dd></div><div><dt class="text-stone-500">Language</dt><dd class="font-semibold">${escapeHtml(customer.preferred_language || '-')}</dd></div></dl>${importRows.length ? `<div class="space-y-2 mt-5">${importAuditHtml}</div>` : ''}</section>
+                <section><h3 class="font-serif text-2xl font-bold mb-3">Recent orders</h3>${orders.length ? `<div class="border border-stone-200 rounded-lg divide-y divide-stone-200">${orders.map(order => `<div class="p-3 flex flex-wrap justify-between gap-2 text-sm"><strong>${escapeHtml(order.order_number)}</strong><span>${formatDate(order.created_at)}</span><span class="capitalize">${escapeHtml(order.status)}</span><span>J$${Number(order.grand_total_jmd || 0).toLocaleString()}</span></div>`).join('')}</div>` : '<p class="text-stone-500">No orders are linked to this profile.</p>'}</section>`;
+        }
+
+        document.getElementById('searchInput').addEventListener('input', event => {
+            const query = event.target.value.toLowerCase().trim();
+            renderCustomers(allCustomers.filter(customer => `${customer.full_name || ''} ${customer.email || ''} ${customer.phone || ''} ${(customer.labels || []).join(' ')}`.toLowerCase().includes(query)));
         });
 
+        document.getElementById('selectAllCustomers').addEventListener('change', event => {
+            const map = subscriberMap();
+            visibleCustomers.forEach(customer => {
+                if (!map.get(String(customer.email || '').toLowerCase())?.is_active) return;
+                if (event.target.checked) selectedCustomerIds.add(customer.id); else selectedCustomerIds.delete(customer.id);
+            });
+            renderCustomers(visibleCustomers);
+        });
+
+        document.getElementById('closeCustomerProfile').addEventListener('click', () => { const modal = document.getElementById('customerProfileModal'); modal.classList.add('hidden'); modal.classList.remove('flex'); });
+        document.getElementById('customerProfileModal').addEventListener('click', event => { if (event.target.id === 'customerProfileModal') document.getElementById('closeCustomerProfile').click(); });
+
+        function recipientScope() { return document.querySelector('input[name="recipientScope"]:checked').value; }
         document.getElementById('copySubscriberEmailsBtn').addEventListener('click', async () => {
             const statusEl = document.getElementById('newsletterStatus');
-            const emails = allSubscribers.map(subscriber => subscriber.email).filter(Boolean).join(', ');
-            if (!emails) {
-                statusEl.textContent = 'There are no active subscriber emails to copy.';
-                statusEl.className = 'text-sm text-amber-700';
-                return;
-            }
-            await navigator.clipboard.writeText(emails);
-            statusEl.textContent = 'Subscriber email list copied.';
+            const emails = recipientScope() === 'selected' ? selectedEmails() : allSubscribers.filter(item => item.is_active).map(item => item.email).filter(Boolean);
+            if (!emails.length) { statusEl.textContent = 'No active subscriber emails are in this selection.'; statusEl.className = 'text-sm text-amber-700'; return; }
+            await navigator.clipboard.writeText([...new Set(emails)].join(', '));
+            statusEl.textContent = `${emails.length} subscriber email${emails.length === 1 ? '' : 's'} copied.`;
             statusEl.className = 'text-sm text-green-700';
         });
 
-        document.getElementById('newsletterBroadcastForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        document.getElementById('newsletterBroadcastForm').addEventListener('submit', async event => {
+            event.preventDefault();
             const statusEl = document.getElementById('newsletterStatus');
             const sendBtn = document.getElementById('sendNewsletterBtn');
             const subject = document.getElementById('newsletterSubject').value.trim();
             const message = document.getElementById('newsletterMessage').value.trim();
-
-            if (!allSubscribers.length) {
-                statusEl.textContent = 'There are no active subscribers to send to.';
-                statusEl.className = 'text-sm text-amber-700';
-                return;
-            }
-
-            sendBtn.disabled = true;
-            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            statusEl.textContent = 'Sending newsletter broadcast...';
-            statusEl.className = 'text-sm text-stone-500';
-
+            const scope = recipientScope();
+            const recipients = scope === 'selected' ? selectedEmails() : null;
+            if (scope === 'selected' && !recipients.length) { statusEl.textContent = 'Select at least one active subscriber below.'; statusEl.className = 'text-sm text-amber-700'; return; }
+            sendBtn.disabled = true; sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            statusEl.textContent = 'Sending newsletter broadcast...'; statusEl.className = 'text-sm text-stone-500';
             try {
-                if (!adminSession?.access_token) {
-                    adminSession = await checkAuth();
-                }
-
-                const response = await fetch('/api/newsletter/send', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${adminSession.access_token}`
-                    },
-                    body: JSON.stringify({ subject, message })
-                });
+                if (!adminSession?.access_token) adminSession = await checkAuth();
+                const response = await fetch('/api/newsletter/send', { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${adminSession.access_token}` }, body:JSON.stringify({ subject, message, recipients }) });
                 const result = await response.json();
-                if (!response.ok && response.status !== 207) {
-                    throw new Error(result.error || 'Newsletter broadcast failed.');
-                }
-
-                statusEl.textContent = result.resend_configured
-                    ? `Newsletter sent to ${result.sent || 0} subscriber(s).${result.failed ? ` ${result.failed} failed.` : ''}`
-                    : `Newsletter queued for ${result.queued || 0} subscriber(s). It will send after Resend is configured.`;
+                if (!response.ok && response.status !== 207) throw new Error(result.error || 'Newsletter broadcast failed.');
+                statusEl.textContent = result.resend_configured ? `Newsletter sent to ${result.sent || 0} subscriber(s).${result.failed ? ` ${result.failed} failed.` : ''}` : `Newsletter queued for ${result.queued || 0} subscriber(s).`;
                 statusEl.className = result.failed ? 'text-sm text-amber-700' : 'text-sm text-green-700';
-            } catch (error) {
-                statusEl.textContent = error.message || 'Newsletter broadcast failed.';
-                statusEl.className = 'text-sm text-red-600';
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send to Subscribers';
-            }
+            } catch (error) { statusEl.textContent = error.message || 'Newsletter broadcast failed.'; statusEl.className = 'text-sm text-red-600'; }
+            finally { sendBtn.disabled = false; sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Newsletter'; }
         });
-        
-        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
-            e.preventDefault();
-            await supabase.auth.signOut();
-            window.location.href = '/admin/login.html';
-        });
-        
-        init();
+
+        document.getElementById('logoutBtn').addEventListener('click', async event => { event.preventDefault(); await supabase.auth.signOut(); window.location.href = '/admin/login.html'; });
+        init().catch(error => { document.getElementById('customersTableBody').innerHTML = `<tr><td colspan="6" class="p-5 text-red-600">${escapeHtml(error.message)}</td></tr>`; });
     </script>
 </div>
 </body>

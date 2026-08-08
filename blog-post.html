@@ -74,7 +74,7 @@
       <a href="index.html" class="hover:text-amber-800 transition">Home</a>
       <a href="shop.html" class="hover:text-amber-800 transition">Shop</a>
       <a href="about.html" class="hover:text-amber-800 transition">About</a>
-      <a href="blog.html" class="hover:text-amber-800 transition">Blog</a>
+      <a href="blog.html" class="hover:text-amber-800 transition">Journal</a>
       <a href="ingredients.html" class="hover:text-amber-800 transition">Ingredients</a>
       <a href="quiz.html" class="hover:text-amber-800 transition">Skin Quiz</a>
       <a href="reviews.html" class="hover:text-amber-800 transition">Reviews</a>
@@ -112,7 +112,7 @@
       <a href="index.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-home w-5"></i>Home</a>
       <a href="shop.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-bag-shopping w-5"></i>Shop</a>
       <a href="about.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-heart w-5"></i>About</a>
-      <a href="blog.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-newspaper w-5"></i>Blog</a>
+      <a href="blog.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-newspaper w-5"></i>Journal</a>
       <a href="ingredients.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-leaf w-5"></i>Ingredients</a>
       <a href="quiz.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-magic w-5"></i>Skin Quiz</a>
       <a href="reviews.html" class="text-lg hover:text-amber-800 transition flex items-center gap-3"><i class="fas fa-star w-5"></i>Reviews</a>
@@ -199,7 +199,7 @@
   <script src="js/currency.js?v=1"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=4"></script>
-  <script src="js/blog.js?v=2"></script>
+  <script src="js/blog.js?v=3"></script>
   <script src="js/blog-engagement.js?v=1"></script>
   <script>
     (async function() {
@@ -234,40 +234,58 @@
           return;
         }
         
-        document.title = `${post.title} | Glow Journal`;
+        document.title = `${post.title} | Foryou Skin Journal`;
         const seoDescription = String(post.excerpt || post.content || '')
           .replace(/<[^>]+>/g, ' ')
           .replace(/\s+/g, ' ')
           .trim()
           .slice(0, 160) || 'Skincare education and routine guidance from Foryou Skin Bar Jamaica.';
         window.updateSeo?.({
-          title: `${post.title} | Foryou Skin Bar Glow Journal`,
+          title: `${post.title} | Foryou Skin Journal`,
           description: seoDescription,
           image: post.image,
           type: 'article',
           canonicalPath: `/blog-post.html?slug=${encodeURIComponent(post.slug)}`
         });
         const dateStr = formatPublishedAt(post.publishedAt || post.date);
+        const topic = (window.journalTopics || []).find(item => item.slug === post.primaryTopic) || { name: 'Healthy Skin', slug: 'healthy-skin' };
+        const relatedPosts = (post.relatedPostSlugs || []).map(relatedSlug => posts.find(item => item.slug === relatedSlug)).filter(Boolean).slice(0, 3);
 
         container.innerHTML = `
           <div class="max-w-4xl mx-auto px-6 md:px-12 py-12 md:py-20 animate-fade-in">
             <div class="text-center mb-10">
-              <a href="blog.html" class="text-amber-800 font-medium text-sm inline-flex items-center hover:text-amber-900 mb-6"><i class="fas fa-arrow-left mr-2 text-[10px]"></i> Back to Journal</a>
+              <nav aria-label="Breadcrumb" class="flex flex-wrap justify-center items-center gap-2 text-amber-800 font-medium text-sm mb-6"><a href="blog.html">Journal</a><span aria-hidden="true">/</span><a href="blog.html?topic=${encodeURIComponent(topic.slug)}">${topic.name}</a></nav>
               <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-amber-700 text-sm font-bold uppercase tracking-wider mb-4">
                 <span>${dateStr}</span>
+                <span aria-hidden="true">&bull;</span>
+                <span>${Number(post.readingTimeMinutes) || 5} min read</span>
                 <span aria-hidden="true">&bull;</span>
                 <span class="inline-flex items-center gap-1.5" aria-label="Article views"><i class="far fa-eye" aria-hidden="true"></i><span id="blogViewCount">${Number(post.viewCount) || 0}</span> <span id="blogViewNoun">${Number(post.viewCount) === 1 ? 'view' : 'views'}</span></span>
               </div>
               <h1 class="serif-heading text-4xl md:text-6xl font-bold text-stone-800 leading-tight">${post.title}</h1>
             </div>
             
-            <div class="w-full h-64 md:h-96 rounded-3xl overflow-hidden mb-12 shadow-lg">
+            <div class="w-full h-64 md:h-96 rounded-md overflow-hidden mb-12 shadow-lg">
               <img src="${post.image}" alt="${post.title}" class="w-full h-full object-cover">
             </div>
             
             <div class="max-w-2xl mx-auto article-content text-lg">
               ${post.content}
             </div>
+
+            <aside class="max-w-2xl mx-auto mt-10 border-l-4 border-amber-600 bg-stone-50 px-5 py-4 text-sm leading-relaxed text-stone-700">
+              <strong class="block text-stone-900 mb-1">Editorial note</strong>
+              Foryou Skin Journal provides general skincare education, not a diagnosis or personal treatment plan. Persistent, painful, changing, or scarring concerns should be assessed by a qualified healthcare professional.
+            </aside>
+
+            ${relatedPosts.length ? `
+              <section class="max-w-4xl mx-auto mt-16 pt-10 border-t border-stone-200" aria-labelledby="relatedReadingTitle">
+                <p class="text-xs font-bold uppercase tracking-widest text-amber-800 mb-2">Guided Learning</p>
+                <h2 id="relatedReadingTitle" class="serif-heading text-3xl md:text-4xl text-stone-800 mb-7">Continue reading</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  ${relatedPosts.map(related => `<article class="border border-stone-200 bg-white rounded-md overflow-hidden"><a href="blog-post.html?slug=${encodeURIComponent(related.slug)}"><img src="${related.image}" alt="" class="w-full aspect-[16/10] object-cover"><div class="p-4"><p class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-2">${related.category}</p><h3 class="serif-heading text-xl leading-tight text-stone-900">${related.title}</h3></div></a></article>`).join('')}
+                </div>
+              </section>` : ''}
             
             <div class="max-w-2xl mx-auto mt-16 pt-8 border-t border-amber-900/10 text-center">
               <h3 class="serif-heading text-2xl mb-4">Share this article</h3>
@@ -329,7 +347,7 @@
           "mainEntityOfPage": `https://foryouskinbar.com/blog-post.html?slug=${encodeURIComponent(post.slug)}`,
           "author": [{
             "@type": "Organization",
-            "name": "For You Skin Bar",
+            "name": "Foryou Skin Bar",
             "url": "https://foryouskinbar.com"
           }],
           "publisher": {

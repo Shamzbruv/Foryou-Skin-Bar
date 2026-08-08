@@ -1,4 +1,18 @@
 window.blogPosts = window.blogPosts || [];
+window.journalTopics = [
+    { slug: 'acne', name: 'Acne' },
+    { slug: 'dark-spots-hyperpigmentation', name: 'Dark Spots & Hyperpigmentation' },
+    { slug: 'skincare-routines', name: 'Skincare Routines' },
+    { slug: 'ingredients-library', name: 'Ingredients Library' },
+    { slug: 'healthy-skin', name: 'Healthy Skin' },
+    { slug: 'skin-school', name: 'Skin School' },
+    { slug: 'jamaican-skincare', name: 'Jamaican Skincare' }
+];
+
+function estimateReadingTime(content = '') {
+    const text = String(content).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return Math.max(1, Math.ceil((text ? text.split(' ').length : 0) / 220));
+}
 
 window.loadBlogPosts = async function() {
     if (window.blogPosts.length > 0 && window.blogPosts[0].slug) return window.blogPosts;
@@ -24,7 +38,13 @@ window.loadBlogPosts = async function() {
                     publishedAt: post.published_at || post.created_at,
                     updatedAt: post.updated_at || post.published_at || post.created_at,
                     viewCount: Number(post.view_count) || 0,
-                    category: 'Skincare'
+                    primaryTopic: post.primary_topic || 'healthy-skin',
+                    category: (window.journalTopics.find(topic => topic.slug === post.primary_topic) || {}).name || 'Healthy Skin',
+                    articleType: post.article_type || 'guide',
+                    isNewThisWeek: Boolean(post.is_new_this_week),
+                    isFeatured: Boolean(post.is_featured),
+                    readingTimeMinutes: Number(post.reading_time_minutes) || estimateReadingTime(post.content),
+                    relatedPostSlugs: Array.isArray(post.related_post_slugs) ? post.related_post_slugs : []
                 }));
                 loadedFromDb = true;
             }

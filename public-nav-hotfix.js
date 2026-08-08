@@ -232,12 +232,22 @@ const navigationScript = `
     else contact.insertAdjacentElement('beforebegin', item);
   }
 
+  function renameJournalLinks() {
+    document.querySelectorAll('a').forEach(function (link) {
+      if (normalHref(link) !== 'blog.html' && normalHref(link) !== 'blog') return;
+      Array.from(link.childNodes).forEach(function (node) {
+        if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() === 'Blog') node.nodeValue = node.nodeValue.replace('Blog', 'Journal');
+      });
+    });
+  }
+
   function ensureNavigation() {
     desktopNavContainers().forEach(function (container) { ensureGlowLink(container, false); });
     mobileNavContainers().forEach(function (container) { ensureGlowLink(container, true); });
     addFooterLoyaltyLink();
     addAccountEntry();
     addFooterCancelOrderLink();
+    renameJournalLinks();
   }
 
   function start() {
