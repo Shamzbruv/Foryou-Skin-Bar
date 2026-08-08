@@ -30,7 +30,7 @@ const EMAIL_TEMPLATE_DEFINITIONS = Object.freeze({
     name: 'Newsletter broadcast',
     category: 'Marketing',
     audience: 'Subscribers',
-    description: 'Wraps newsletters composed in Blog & Content before they are sent to all active subscribers.',
+    description: 'Wraps newsletters composed in Journal & Content before they are sent to all active subscribers.',
     defaultSubject: '{{broadcast_subject}}',
     defaultBody: `
       {{{message_html}}}

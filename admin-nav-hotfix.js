@@ -44,7 +44,7 @@ const adminSidebarNormalizer = `
     ['/admin/loyalty.html', 'Loyalty Program'],
     ['/admin/recommendation-rules.html', 'Quiz Rules'],
     ['/admin/reviews.html', 'Reviews'],
-    ['/admin/blog.html', 'Blog & Content'],
+    ['/admin/blog.html', 'Journal & Content'],
     ['/admin/email-templates.html', 'Email Templates'],
     ['/admin/content.html', 'Site Content (CMS)'],
     ['/admin/policies.html', 'Policies'],
