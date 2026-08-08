@@ -1014,6 +1014,189 @@ app.put('/api/admin/email-templates/:templateKey', async (req, res) => {
   }
 });
 
+app.put('/api/admin/customers/:id', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const customerId = String(req.params.id || '').trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(customerId)) {
+      return res.status(400).json({ error: 'A valid customer ID is required.' });
+    }
+
+    const text = (value, max = 250) => String(value ?? '').trim().slice(0, max);
+    const textArray = (values, maxItems = 20, maxLength = 250) => [...new Set((Array.isArray(values) ? values : [])
+      .map(value => text(value, maxLength))
+      .filter(Boolean))].slice(0, maxItems);
+    const marketingStatuses = new Set(['subscribed', 'unsubscribed', 'never_subscribed', 'unknown']);
+    const qualityStatuses = new Set(['valid', 'needs_review', 'missing']);
+    const fullName = text(req.body.fullName, 160);
+    const email = text(req.body.email, 320).toLowerCase() || null;
+    const emailMarketingStatus = text(req.body.emailMarketingStatus, 30).toLowerCase() || 'unknown';
+    const smsMarketingStatus = text(req.body.smsMarketingStatus, 30).toLowerCase() || 'unknown';
+    const emailQualityStatus = text(req.body.emailQualityStatus, 30).toLowerCase() || (email ? 'valid' : 'missing');
+    if (!fullName) return res.status(400).json({ error: 'Customer name is required.' });
+    if (email && !isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid customer email address.' });
+    if (!marketingStatuses.has(emailMarketingStatus) || !marketingStatuses.has(smsMarketingStatus)) {
+      return res.status(400).json({ error: 'A valid marketing status is required.' });
+    }
+    if (!qualityStatuses.has(emailQualityStatus)) return res.status(400).json({ error: 'A valid email quality status is required.' });
+
+    const { data: existingCustomer, error: existingError } = await supabaseAdmin
+      .from('customers')
+      .select('id,email')
+      .eq('id', customerId)
+      .maybeSingle();
+    if (existingError) throw existingError;
+    if (!existingCustomer) return res.status(404).json({ error: 'Customer not found.' });
+
+    if (email) {
+      const { data: duplicate, error: duplicateError } = await supabaseAdmin
+        .from('customers')
+        .select('id')
+        .ilike('email', email)
+        .neq('id', customerId)
+        .limit(1)
+        .maybeSingle();
+      if (duplicateError) throw duplicateError;
+      if (duplicate) return res.status(409).json({ error: 'Another customer already uses this email address.' });
+
+      const { data: subscriberConflict, error: subscriberConflictError } = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .select('id,customer_id')
+        .ilike('email', email)
+        .limit(1)
+        .maybeSingle();
+      if (subscriberConflictError) throw subscriberConflictError;
+      if (subscriberConflict?.customer_id && subscriberConflict.customer_id !== customerId) {
+        return res.status(409).json({ error: 'This email address is already linked to another newsletter customer.' });
+      }
+    }
+
+    const addresses = (Array.isArray(req.body.addresses) ? req.body.addresses : []).slice(0, 3).map(address => ({
+      type: text(address?.type, 40),
+      street: text(address?.street, 180),
+      street_line_2: text(address?.street_line_2, 180),
+      city: text(address?.city, 100),
+      state_region: text(address?.state_region, 100),
+      postal_code: text(address?.postal_code, 30),
+      country: text(address?.country, 100)
+    })).filter(address => Object.values(address).some(Boolean));
+    const primaryAddress = addresses[0] || {};
+    const update = {
+      full_name: fullName,
+      first_name: text(req.body.firstName, 80) || null,
+      last_name: text(req.body.lastName, 80) || null,
+      email,
+      phone: text(req.body.phone, 50) || null,
+      whatsapp: text(req.body.whatsapp, 50) || null,
+      alternate_phones: textArray(req.body.alternatePhones, 8, 50),
+      alternate_addresses: addresses,
+      labels: textArray(req.body.labels, 30, 80),
+      legacy_sources: textArray(req.body.sources, 20, 120),
+      preferred_language: text(req.body.language, 60) || null,
+      email_marketing_status: emailMarketingStatus,
+      sms_marketing_status: smsMarketingStatus,
+      email_quality_status: email ? emailQualityStatus : 'missing',
+      default_country: primaryAddress.country || null,
+      default_address_line1: primaryAddress.street || null,
+      default_address_line2: primaryAddress.street_line_2 || null,
+      default_city: primaryAddress.city || null,
+      default_state_province: primaryAddress.state_region || null,
+      default_postal_code: primaryAddress.postal_code || null,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: customer, error: updateError } = await supabaseAdmin
+      .from('customers')
+      .update(update)
+      .eq('id', customerId)
+      .select('*')
+      .single();
+    if (updateError) throw updateError;
+
+    const oldEmail = String(existingCustomer.email || '').trim().toLowerCase();
+    const { data: linkedRows, error: linkedError } = await supabaseAdmin
+      .from('newsletter_subscribers')
+      .select('id,email,is_active,consent_status')
+      .eq('customer_id', customerId)
+      .limit(1);
+    if (linkedError) throw linkedError;
+    let subscriber = linkedRows?.[0] || null;
+    if (!subscriber && oldEmail) {
+      const { data: oldSubscriber, error: oldSubscriberError } = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .select('id,email,is_active,consent_status')
+        .ilike('email', oldEmail)
+        .limit(1)
+        .maybeSingle();
+      if (oldSubscriberError) throw oldSubscriberError;
+      subscriber = oldSubscriber;
+    }
+
+    if (!email) {
+      if (subscriber) {
+        const { error: subscriberDeleteError } = await supabaseAdmin.from('newsletter_subscribers').delete().eq('id', subscriber.id);
+        if (subscriberDeleteError) throw subscriberDeleteError;
+      }
+      subscriber = null;
+    } else {
+      const { data: subscriberForEmail, error: subscriberForEmailError } = await supabaseAdmin
+        .from('newsletter_subscribers')
+        .select('id,email,is_active,consent_status')
+        .ilike('email', email)
+        .limit(1)
+        .maybeSingle();
+      if (subscriberForEmailError) throw subscriberForEmailError;
+      if (subscriberForEmail && subscriber?.id && subscriberForEmail.id !== subscriber.id) {
+        const { error: oldDeleteError } = await supabaseAdmin.from('newsletter_subscribers').delete().eq('id', subscriber.id);
+        if (oldDeleteError) throw oldDeleteError;
+      }
+      subscriber = subscriberForEmail || subscriber;
+      const now = new Date().toISOString();
+      const subscriberUpdate = {
+        email,
+        customer_id: customerId,
+        source: subscriber ? undefined : 'admin-customer-edit',
+        is_active: emailMarketingStatus === 'subscribed',
+        consent_status: emailMarketingStatus,
+        consent_source: 'admin-customer-edit',
+        subscribed_at: emailMarketingStatus === 'subscribed' ? now : null,
+        unsubscribed_at: emailMarketingStatus === 'unsubscribed' ? now : null,
+        updated_at: now
+      };
+      const subscriberQuery = subscriber
+        ? supabaseAdmin.from('newsletter_subscribers').update(subscriberUpdate).eq('id', subscriber.id)
+        : supabaseAdmin.from('newsletter_subscribers').insert(subscriberUpdate);
+      const { data: savedSubscribers, error: subscriberSaveError } = await subscriberQuery.select('*').limit(1);
+      if (subscriberSaveError) throw subscriberSaveError;
+      subscriber = savedSubscribers?.[0] || null;
+    }
+
+    return res.status(200).json({ success: true, customer, subscriber });
+  } catch (error) {
+    console.error('[Admin Customer Update]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to update this customer.' });
+  }
+});
+
+app.delete('/api/admin/customers/:id', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const customerId = String(req.params.id || '').trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(customerId)) {
+      return res.status(400).json({ error: 'A valid customer ID is required.' });
+    }
+    const { data, error } = await supabaseAdmin.rpc('admin_delete_customer_record', { target_customer_id: customerId });
+    if (error) {
+      if (error.code === 'P0002') return res.status(404).json({ error: 'Customer not found.' });
+      throw error;
+    }
+    return res.status(200).json(data || { success: true });
+  } catch (error) {
+    console.error('[Admin Customer Delete]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to delete this customer.' });
+  }
+});
+
 app.post('/api/admin/email-templates/:templateKey/reset', async (req, res) => {
   try {
     const user = await requireAdmin(req);

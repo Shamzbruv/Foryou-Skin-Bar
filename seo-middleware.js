@@ -361,19 +361,24 @@ function installSeoRoutes(app, { rootDirectory, supabase, siteOrigin }) {
       try {
         const social = await socialSharingSettings(supabase);
         const isHomepage = route === '/' || route === '/index.html';
+        let routeTitle = isHomepage ? social.title : page.title;
+        let routeDescription = isHomepage ? social.description : page.description;
+        let routeImageUrl = socialPreviewUrl(siteOrigin, { v: social.version });
         let schema;
         if (route === '/blog.html') {
-          const { data: posts } = await supabase
-            .from('blog_posts')
-            .select('title,slug,excerpt,featured_image_url,published_at,primary_topic')
-            .eq('status', 'published')
-            .order('published_at', { ascending: false })
-            .limit(50);
+          const [{ data: posts }, { data: journalContent }] = await Promise.all([
+            supabase.from('blog_posts').select('title,slug,excerpt,featured_image_url,published_at,primary_topic').eq('status', 'published').order('published_at', { ascending: false }).limit(50),
+            supabase.from('site_content').select('value,updated_at').eq('key', 'journal_page').maybeSingle()
+          ]);
+          const journal = journalContent?.value && typeof journalContent.value === 'object' ? journalContent.value : {};
+          routeTitle = compactText(journal.seo_title || page.title, 90);
+          routeDescription = compactText(journal.seo_description || page.description, 180);
+          if (journal.social_image_url) routeImageUrl = absoluteUrl(journal.social_image_url, siteOrigin);
           schema = {
             '@context': 'https://schema.org',
             '@type': 'CollectionPage',
-            name: 'Foryou Skin Journal',
-            description: page.description,
+            name: compactText(journal.hero_title || 'Foryou Skin Journal', 120),
+            description: routeDescription,
             url: absoluteUrl('/blog.html', siteOrigin),
             isPartOf: { '@type': 'WebSite', name: 'Foryou Skin Bar', url: siteOrigin },
             mainEntity: {
@@ -389,10 +394,10 @@ function installSeoRoutes(app, { rootDirectory, supabase, siteOrigin }) {
         }
         return readAndRender(rootDirectory, page.file, {
           ...page,
-          title: isHomepage ? social.title : page.title,
-          description: isHomepage ? social.description : page.description,
+          title: routeTitle,
+          description: routeDescription,
           canonicalUrl: absoluteUrl(page.canonicalPath || route, siteOrigin),
-          imageUrl: socialPreviewUrl(siteOrigin, { v: social.version }),
+          imageUrl: routeImageUrl,
           type: 'website',
           schema
         }, res, next);

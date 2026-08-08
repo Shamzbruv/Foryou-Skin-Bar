@@ -140,29 +140,29 @@
   <main>
     <section class="journal-hero text-white px-6 py-16" aria-labelledby="journalTitle">
       <div class="journal-hero-content">
-        <p class="journal-kicker mb-6">Education by Foryou Skin Bar</p>
+        <p id="journalHeroEyebrow" class="journal-kicker mb-6">Education by Foryou Skin Bar</p>
         <h1 id="journalTitle" class="journal-title font-semibold mb-8">Foryou Skin<br>Journal</h1>
-        <p class="text-2xl md:text-3xl font-serif leading-snug mb-5">Healthy Skin. Real Knowledge. Lasting Confidence.</p>
-        <p class="max-w-xl mx-auto text-base md:text-lg text-white/85 leading-relaxed">Trusted skincare education from Foryou Skin Bar, written to help you understand your skin and make informed routine choices.</p>
+        <p id="journalHeroTagline" class="text-2xl md:text-3xl font-serif leading-snug mb-5">Healthy Skin. Real Knowledge. Lasting Confidence.</p>
+        <p id="journalHeroDescription" class="max-w-xl mx-auto text-base md:text-lg text-white/85 leading-relaxed">Trusted skincare education from Foryou Skin Bar, written to help you understand your skin and make informed routine choices.</p>
       </div>
     </section>
 
     <section class="journal-section manifesto" aria-labelledby="manifestoTitle">
       <div>
-        <p class="journal-kicker mb-4">Editorial Manifesto</p>
+        <p id="journalManifestoEyebrow" class="journal-kicker mb-4">Editorial Manifesto</p>
         <h2 id="manifestoTitle">Knowledge should make skincare feel clearer.</h2>
       </div>
       <div>
-        <p>The Foryou Skin Journal is an educational centre for thoughtful, practical skincare. We explain concerns without shame, ingredients without hype, and routines without unnecessary complexity.</p>
-        <p class="mt-5">Our articles are organized as guided reading: begin with a foundation, follow the supporting articles, and return as the library grows. We cite reputable health sources, distinguish education from medical care, and write with melanin-rich skin and Jamaican life in mind.</p>
+        <p id="journalManifestoBody1">The Foryou Skin Journal is an educational centre for thoughtful, practical skincare. We explain concerns without shame, ingredients without hype, and routines without unnecessary complexity.</p>
+        <p id="journalManifestoBody2" class="mt-5">Our articles are organized as guided reading: begin with a foundation, follow the supporting articles, and return as the library grows. We cite reputable health sources, distinguish education from medical care, and write with melanin-rich skin and Jamaican life in mind.</p>
       </div>
     </section>
 
     <section class="border-y border-stone-200 bg-white">
       <div class="journal-section">
         <div class="journal-section-header">
-          <div><p class="journal-kicker mb-3">Fresh Reading</p><h2>New This Week</h2></div>
-          <p class="max-w-md text-stone-600">Four focused answers to questions readers ask most.</p>
+          <div><p id="journalWeeklyEyebrow" class="journal-kicker mb-3">Fresh Reading</p><h2 id="journalWeeklyTitle">New This Week</h2></div>
+          <p id="journalWeeklyDescription" class="max-w-md text-stone-600">Four focused answers to questions readers ask most.</p>
         </div>
         <div id="newThisWeekGrid" class="journal-grid" aria-live="polite"></div>
       </div>
@@ -170,7 +170,7 @@
 
     <section class="journal-section" aria-labelledby="topicsTitle">
       <div class="journal-section-header">
-        <div><p class="journal-kicker mb-3">Find Your Path</p><h2 id="topicsTitle">Browse by Topic</h2></div>
+        <div><p id="journalTopicsEyebrow" class="journal-kicker mb-3">Find Your Path</p><h2 id="topicsTitle">Browse by Topic</h2></div>
         <button id="clearTopicFilter" type="button" class="hidden text-sm font-bold text-[#8b641e]">View all articles</button>
       </div>
       <div id="topicGrid" class="topic-grid"></div>
@@ -188,7 +188,7 @@
 
     <section class="journal-section" aria-labelledby="libraryTitle">
       <div class="journal-section-header">
-        <div><p class="journal-kicker mb-3">Explore Everything</p><h2 id="libraryTitle">The Article Library</h2></div>
+        <div><p id="journalLibraryEyebrow" class="journal-kicker mb-3">Explore Everything</p><h2 id="libraryTitle">The Article Library</h2></div>
         <div class="library-toolbar"><label class="sr-only" for="journalSearch">Search articles</label><input id="journalSearch" class="library-search" type="search" placeholder="Search the Journal"></div>
       </div>
       <p id="libraryFilterLabel" class="text-sm text-stone-600 mb-5">Showing all published articles.</p>
@@ -197,8 +197,8 @@
 
     <section class="bg-[#e8ddca] border-y border-[#cfb783]">
       <div class="journal-section flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-        <div class="max-w-2xl"><p class="journal-kicker mb-3">Continue Learning</p><h2>New education, delivered thoughtfully.</h2><p class="mt-4 text-stone-700">Join Glow Letters for new Journal articles, practical routines, and considered product updates.</p></div>
-        <a href="#newsletterForm" class="bg-[#263528] text-white px-7 py-3 font-bold inline-flex items-center gap-2">Join Glow Letters <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        <div class="max-w-2xl"><p id="journalCtaEyebrow" class="journal-kicker mb-3">Continue Learning</p><h2 id="journalCtaTitle">New education, delivered thoughtfully.</h2><p id="journalCtaDescription" class="mt-4 text-stone-700">Join Glow Letters for new Journal articles, practical routines, and considered product updates.</p></div>
+        <a id="journalCtaButton" href="#newsletterForm" class="bg-[#263528] text-white px-7 py-3 font-bold inline-flex items-center gap-2"><span>Join Glow Letters</span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>
       </div>
     </section>
   </main>
@@ -300,9 +300,23 @@
   <script src="js/currency.js?v=1"></script>
   <script src="js/cart.js"></script>
   <script src="js/main.js?v=4"></script>
-  <script src="js/blog.js?v=3"></script>
+  <script src="js/blog.js?v=4"></script>
   <script>
     (async function() {
+      const settings = await window.loadJournalSettings();
+      const settingTargets = {
+        journalHeroEyebrow:'hero_eyebrow', journalTitle:'hero_title', journalHeroTagline:'hero_tagline', journalHeroDescription:'hero_description',
+        journalManifestoEyebrow:'manifesto_eyebrow', manifestoTitle:'manifesto_title', journalManifestoBody1:'manifesto_body_1', journalManifestoBody2:'manifesto_body_2',
+        journalWeeklyEyebrow:'weekly_eyebrow', journalWeeklyTitle:'weekly_title', journalWeeklyDescription:'weekly_description', journalTopicsEyebrow:'topics_eyebrow', topicsTitle:'topics_title',
+        foundationEyebrow:'foundation_eyebrow', foundationTitle:'foundation_title', foundationIntro:'foundation_description', journalLibraryEyebrow:'library_eyebrow', libraryTitle:'library_title',
+        journalCtaEyebrow:'cta_eyebrow', journalCtaTitle:'cta_title', journalCtaDescription:'cta_description'
+      };
+      Object.entries(settingTargets).forEach(([id, key]) => { const element = document.getElementById(id); if (element && settings[key]) element.textContent = settings[key]; });
+      if (settings.hero_image_url) document.querySelector('.journal-hero').style.backgroundImage = `url("${String(settings.hero_image_url).replace(/["\\]/g, '')}")`;
+      const ctaButton = document.getElementById('journalCtaButton');
+      const ctaUrl = String(settings.cta_button_url || '#newsletterForm').trim();
+      ctaButton.href = /^(?:https?:\/\/|\/|#|[a-z0-9][a-z0-9._/-]*\.html(?:[?#].*)?$)/i.test(ctaUrl) ? ctaUrl : '#newsletterForm';
+      ctaButton.querySelector('span').textContent = settings.cta_button_text || 'Join Glow Letters';
       await window.loadBlogPosts();
       const topics = window.journalTopics || [];
       const posts = window.blogPosts || [];
@@ -359,9 +373,12 @@
         renderInto('blogGrid', filtered, 'No articles match this search yet.');
       }
 
-      const weekly = posts.filter(post => post.isNewThisWeek).slice(0, 4);
-      const foundations = posts.filter(post => post.articleType === 'foundation').slice(0, 3);
-      renderInto('newThisWeekGrid', weekly.length ? weekly : posts.slice(0, 4), 'New articles are being prepared.');
+      const prioritize = (left, right) => Number(right.isFeatured) - Number(left.isFeatured) || Number(left.journalSortOrder ?? 100) - Number(right.journalSortOrder ?? 100) || new Date(right.publishedAt || right.date) - new Date(left.publishedAt || left.date);
+      const weeklyLimit = Math.min(8, Math.max(1, Number(settings.weekly_limit) || 4));
+      const foundationLimit = Math.min(6, Math.max(1, Number(settings.foundation_limit) || 3));
+      const weekly = posts.filter(post => post.isNewThisWeek).sort(prioritize).slice(0, weeklyLimit);
+      const foundations = posts.filter(post => post.articleType === 'foundation').sort(prioritize).slice(0, foundationLimit);
+      renderInto('newThisWeekGrid', weekly.length ? weekly : posts.slice(0, weeklyLimit), 'New articles are being prepared.');
       renderInto('foundationGrid', foundations, 'Foundation guides are being prepared.');
       if (selectedTopic) document.getElementById('clearTopicFilter').classList.remove('hidden');
       renderTopics();

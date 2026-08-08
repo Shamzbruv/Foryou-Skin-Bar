@@ -135,7 +135,7 @@
 
         <!-- Customers Table -->
         <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-x-auto">
-            <table class="w-full min-w-[980px] text-left border-collapse">
+            <table class="w-full min-w-[1120px] text-left border-collapse">
                 <thead>
                     <tr class="bg-stone-50 border-b border-stone-200 text-stone-600 font-semibold text-sm">
                         <th class="p-4 w-10"><input id="selectAllCustomers" type="checkbox" aria-label="Select all visible subscribed customers" class="accent-amber-800"></th>
@@ -144,18 +144,69 @@
                         <th class="p-4">Newsletter</th>
                         <th class="p-4">Origin</th>
                         <th class="p-4">Last activity</th>
+                        <th class="p-4 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="customersTableBody" class="divide-y divide-stone-100 text-sm">
-                    <tr><td colspan="6" class="p-8 text-center text-stone-500">Loading customers...</td></tr>
+                    <tr><td colspan="7" class="p-8 text-center text-stone-500">Loading customers...</td></tr>
                 </tbody>
             </table>
         </div>
 
         <div id="customerProfileModal" class="fixed inset-0 bg-stone-900/60 hidden items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="customerProfileTitle">
             <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
-                <header class="px-6 py-4 border-b border-stone-200 flex items-center justify-between"><div><p class="text-xs font-bold uppercase tracking-widest text-amber-800">Customer Profile</p><h2 id="customerProfileTitle" class="text-2xl font-serif font-bold text-stone-900">Customer</h2></div><button id="closeCustomerProfile" type="button" class="w-10 h-10 text-stone-500 hover:text-stone-900" aria-label="Close profile"><i class="fas fa-times"></i></button></header>
+                <header class="px-6 py-4 border-b border-stone-200 flex items-center justify-between gap-4"><div><p class="text-xs font-bold uppercase tracking-widest text-amber-800">Customer Profile</p><h2 id="customerProfileTitle" class="text-2xl font-serif font-bold text-stone-900">Customer</h2></div><div class="flex items-center gap-2"><button id="editCustomerFromProfile" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-800 text-white rounded-lg text-sm font-semibold"><i class="fas fa-pen"></i>Edit</button><button id="closeCustomerProfile" type="button" class="w-10 h-10 text-stone-500 hover:text-stone-900" aria-label="Close profile"><i class="fas fa-times"></i></button></div></header>
                 <div id="customerProfileBody" class="p-6 overflow-y-auto"><p class="text-stone-500">Loading profile...</p></div>
+            </div>
+        </div>
+
+        <div id="customerEditModal" class="fixed inset-0 bg-stone-900/60 hidden items-center justify-center z-[60] p-4" role="dialog" aria-modal="true" aria-labelledby="customerEditTitle">
+            <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden">
+                <header class="px-6 py-4 border-b border-stone-200 flex items-center justify-between gap-4"><div><p class="text-xs font-bold uppercase tracking-widest text-amber-800">Customer Management</p><h2 id="customerEditTitle" class="text-2xl font-serif font-bold text-stone-900">Edit customer</h2></div><button id="closeCustomerEdit" type="button" class="w-10 h-10 text-stone-500 hover:text-stone-900" aria-label="Close editor"><i class="fas fa-times"></i></button></header>
+                <form id="customerEditForm" class="p-6 overflow-y-auto space-y-8">
+                    <input type="hidden" id="editCustomerId">
+                    <section>
+                        <h3 class="font-serif text-xl font-bold mb-4">Identity and contact</h3>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <label class="text-sm font-semibold text-stone-700">Full name *<input id="editFullName" required maxlength="160" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"></label>
+                            <label class="text-sm font-semibold text-stone-700">First name<input id="editFirstName" maxlength="80" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"></label>
+                            <label class="text-sm font-semibold text-stone-700">Last name<input id="editLastName" maxlength="80" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"></label>
+                            <label class="text-sm font-semibold text-stone-700">Email<input id="editEmail" type="email" maxlength="320" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"></label>
+                            <label class="text-sm font-semibold text-stone-700">Primary phone<input id="editPhone" maxlength="50" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"></label>
+                            <label class="text-sm font-semibold text-stone-700">WhatsApp<input id="editWhatsapp" maxlength="50" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"></label>
+                            <label class="md:col-span-2 text-sm font-semibold text-stone-700">Other phone numbers<textarea id="editAlternatePhones" rows="3" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal" placeholder="One number per line"></textarea></label>
+                            <label class="text-sm font-semibold text-stone-700">Preferred language<input id="editLanguage" maxlength="60" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"></label>
+                        </div>
+                    </section>
+
+                    <section>
+                        <div class="flex items-end justify-between gap-4 mb-4"><div><h3 class="font-serif text-xl font-bold">Addresses</h3><p class="text-xs text-stone-500">The first address is also used as the customer's default address.</p></div></div>
+                        <div id="customerAddressFields" class="space-y-4"></div>
+                    </section>
+
+                    <section>
+                        <h3 class="font-serif text-xl font-bold mb-4">Customer organization</h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <label class="text-sm font-semibold text-stone-700">Labels<input id="editLabels" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal" placeholder="VIP, Retail, Kingston"></label>
+                            <label class="text-sm font-semibold text-stone-700">Sources<input id="editSources" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal" placeholder="Legacy database, Checkout"></label>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h3 class="font-serif text-xl font-bold mb-4">Marketing consent</h3>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <label class="text-sm font-semibold text-stone-700">Email status<select id="editEmailStatus" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"><option value="subscribed">Subscribed</option><option value="unsubscribed">Unsubscribed</option><option value="never_subscribed">Never subscribed</option><option value="unknown">Unknown</option></select></label>
+                            <label class="text-sm font-semibold text-stone-700">SMS status<select id="editSmsStatus" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"><option value="subscribed">Subscribed</option><option value="unsubscribed">Unsubscribed</option><option value="never_subscribed">Never subscribed</option><option value="unknown">Unknown</option></select></label>
+                            <label class="text-sm font-semibold text-stone-700">Email quality<select id="editEmailQuality" class="mt-1 w-full border border-stone-300 rounded-lg px-3 py-2 font-normal"><option value="valid">Valid</option><option value="needs_review">Needs review</option><option value="missing">Missing</option></select></label>
+                        </div>
+                        <p class="mt-3 text-xs text-stone-500">Changing email status to Subscribed activates this address for newsletters. Unsubscribed and Never subscribed remain excluded.</p>
+                    </section>
+                    <p id="customerEditStatus" class="text-sm" role="status"></p>
+                </form>
+                <footer class="px-6 py-4 border-t border-stone-200 bg-stone-50 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <button id="deleteCustomerBtn" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2 border border-red-300 text-red-700 rounded-lg font-semibold hover:bg-red-50"><i class="fas fa-trash"></i>Delete customer</button>
+                    <div class="flex gap-3"><button id="cancelCustomerEdit" type="button" class="px-4 py-2 text-stone-600 font-semibold">Cancel</button><button id="saveCustomerBtn" type="submit" form="customerEditForm" class="inline-flex items-center justify-center gap-2 px-5 py-2 bg-amber-800 text-white rounded-lg font-semibold"><i class="fas fa-save"></i>Save customer</button></div>
+                </footer>
             </div>
         </div>
     </div>
@@ -167,6 +218,7 @@
         let allSubscribers = [];
         let visibleCustomers = [];
         let adminSession = null;
+        let activeProfileCustomerId = null;
         const selectedCustomerIds = new Set();
         const escapeHtml = (value = '') => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
         const formatDate = (value, fallback = '-') => {
@@ -231,7 +283,7 @@
             const tbody = document.getElementById('customersTableBody');
             const subscribers = subscriberMap();
             if (!customers.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-stone-500">No customers found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-stone-500">No customers found.</td></tr>';
                 return;
             }
             tbody.innerHTML = customers.map(customer => {
@@ -244,6 +296,7 @@
                     <td class="p-4">${newsletterBadge(subscriber)}${customer.email_quality_status === 'needs_review' ? '<span class="block text-xs text-red-600 mt-1">Email needs review</span>' : ''}</td>
                     <td class="p-4"><div class="flex flex-wrap gap-1">${originBadges(customer)}</div></td>
                     <td class="p-4 text-stone-600"><span class="block max-w-[240px] truncate">${escapeHtml(customer.legacy_last_activity || 'Customer added')}</span><span class="text-xs">${formatDate(customer.legacy_last_activity_at || customer.created_at)}</span></td>
+                    <td class="p-4"><div class="flex items-center justify-end gap-2"><button type="button" data-edit-customer="${customer.id}" class="w-9 h-9 rounded-lg border border-stone-200 text-amber-800 hover:bg-amber-50" title="Edit customer" aria-label="Edit ${escapeHtml(customer.full_name)}"><i class="fas fa-pen"></i></button><button type="button" data-delete-customer="${customer.id}" class="w-9 h-9 rounded-lg border border-red-200 text-red-600 hover:bg-red-50" title="Delete customer" aria-label="Delete ${escapeHtml(customer.full_name)}"><i class="fas fa-trash"></i></button></div></td>
                 </tr>`;
             }).join('');
             bindCustomerRows();
@@ -252,8 +305,10 @@
 
         function bindCustomerRows() {
             document.querySelectorAll('[data-open-customer]').forEach(button => button.addEventListener('click', event => { event.stopPropagation(); openCustomerProfile(button.dataset.openCustomer); }));
-            document.querySelectorAll('[data-customer-row]').forEach(row => row.addEventListener('click', event => { if (!event.target.closest('input')) openCustomerProfile(row.dataset.customerRow); }));
+            document.querySelectorAll('[data-customer-row]').forEach(row => row.addEventListener('click', event => { if (!event.target.closest('input,button,a')) openCustomerProfile(row.dataset.customerRow); }));
             document.querySelectorAll('[data-customer-select]').forEach(input => input.addEventListener('click', event => event.stopPropagation()));
+            document.querySelectorAll('[data-edit-customer]').forEach(button => button.addEventListener('click', event => { event.stopPropagation(); openCustomerEditor(button.dataset.editCustomer); }));
+            document.querySelectorAll('[data-delete-customer]').forEach(button => button.addEventListener('click', event => { event.stopPropagation(); deleteCustomer(button.dataset.deleteCustomer); }));
             document.querySelectorAll('[data-customer-select]').forEach(input => input.addEventListener('change', () => {
                 if (input.checked) selectedCustomerIds.add(input.dataset.customerSelect); else selectedCustomerIds.delete(input.dataset.customerSelect);
                 updateSelectedCount();
@@ -274,6 +329,7 @@
         async function openCustomerProfile(customerId) {
             const customer = allCustomers.find(item => item.id === customerId);
             if (!customer) return;
+            activeProfileCustomerId = customerId;
             const modal = document.getElementById('customerProfileModal');
             modal.classList.remove('hidden'); modal.classList.add('flex');
             document.getElementById('customerProfileTitle').textContent = customer.full_name || 'Customer';
@@ -305,6 +361,84 @@
                 <section><h3 class="font-serif text-2xl font-bold mb-3">Recent orders</h3>${orders.length ? `<div class="border border-stone-200 rounded-lg divide-y divide-stone-200">${orders.map(order => `<div class="p-3 flex flex-wrap justify-between gap-2 text-sm"><strong>${escapeHtml(order.order_number)}</strong><span>${formatDate(order.created_at)}</span><span class="capitalize">${escapeHtml(order.status)}</span><span>J$${Number(order.grand_total_jmd || 0).toLocaleString()}</span></div>`).join('')}</div>` : '<p class="text-stone-500">No orders are linked to this profile.</p>'}</section>`;
         }
 
+        function addressFields(customer) {
+            const imported = Array.isArray(customer.alternate_addresses) ? customer.alternate_addresses : [];
+            const fallback = [customer.default_address_line1, customer.default_address_line2, customer.default_city, customer.default_state_province, customer.default_postal_code, customer.default_country].some(Boolean) ? [{
+                type: 'Default', street: customer.default_address_line1 || '', street_line_2: customer.default_address_line2 || '', city: customer.default_city || '', state_region: customer.default_state_province || '', postal_code: customer.default_postal_code || '', country: customer.default_country || ''
+            }] : [];
+            const addresses = imported.length ? imported : fallback;
+            document.getElementById('customerAddressFields').innerHTML = [0, 1, 2].map(index => {
+                const address = addresses[index] || {};
+                return `<fieldset data-address-index="${index}" class="border border-stone-200 rounded-lg p-4"><legend class="px-2 text-sm font-bold text-stone-700">Address ${index + 1}</legend><div class="grid md:grid-cols-2 lg:grid-cols-4 gap-3"><label class="text-xs font-semibold text-stone-600">Type<input data-address-field="type" value="${escapeHtml(address.type || '')}" class="mt-1 w-full border border-stone-300 rounded px-3 py-2 font-normal"></label><label class="lg:col-span-2 text-xs font-semibold text-stone-600">Street<input data-address-field="street" value="${escapeHtml(address.street || '')}" class="mt-1 w-full border border-stone-300 rounded px-3 py-2 font-normal"></label><label class="text-xs font-semibold text-stone-600">Street line 2<input data-address-field="street_line_2" value="${escapeHtml(address.street_line_2 || '')}" class="mt-1 w-full border border-stone-300 rounded px-3 py-2 font-normal"></label><label class="text-xs font-semibold text-stone-600">City<input data-address-field="city" value="${escapeHtml(address.city || '')}" class="mt-1 w-full border border-stone-300 rounded px-3 py-2 font-normal"></label><label class="text-xs font-semibold text-stone-600">Parish / state<input data-address-field="state_region" value="${escapeHtml(address.state_region || '')}" class="mt-1 w-full border border-stone-300 rounded px-3 py-2 font-normal"></label><label class="text-xs font-semibold text-stone-600">Postal code<input data-address-field="postal_code" value="${escapeHtml(address.postal_code || '')}" class="mt-1 w-full border border-stone-300 rounded px-3 py-2 font-normal"></label><label class="text-xs font-semibold text-stone-600">Country<input data-address-field="country" value="${escapeHtml(address.country || '')}" class="mt-1 w-full border border-stone-300 rounded px-3 py-2 font-normal"></label></div></fieldset>`;
+            }).join('');
+        }
+
+        function openCustomerEditor(customerId) {
+            const customer = allCustomers.find(item => item.id === customerId);
+            if (!customer) return;
+            activeProfileCustomerId = customerId;
+            const subscriber = subscriberMap().get(String(customer.email || '').toLowerCase());
+            document.getElementById('editCustomerId').value = customer.id;
+            document.getElementById('customerEditTitle').textContent = `Edit ${customer.full_name || 'customer'}`;
+            document.getElementById('editFullName').value = customer.full_name || '';
+            document.getElementById('editFirstName').value = customer.first_name || '';
+            document.getElementById('editLastName').value = customer.last_name || '';
+            document.getElementById('editEmail').value = customer.email || '';
+            document.getElementById('editPhone').value = customer.phone || '';
+            document.getElementById('editWhatsapp').value = customer.whatsapp || '';
+            document.getElementById('editAlternatePhones').value = (customer.alternate_phones || []).filter(phone => phone && phone !== customer.phone).join('\n');
+            document.getElementById('editLanguage').value = customer.preferred_language || '';
+            document.getElementById('editLabels').value = (customer.labels || []).join(', ');
+            document.getElementById('editSources').value = (customer.legacy_sources || []).join(', ');
+            document.getElementById('editEmailStatus').value = customer.email_marketing_status || subscriber?.consent_status || (subscriber?.is_active ? 'subscribed' : 'unknown');
+            document.getElementById('editSmsStatus').value = customer.sms_marketing_status || 'unknown';
+            document.getElementById('editEmailQuality').value = customer.email_quality_status || (customer.email ? 'valid' : 'missing');
+            document.getElementById('customerEditStatus').textContent = '';
+            addressFields(customer);
+            const profileModal = document.getElementById('customerProfileModal');
+            profileModal.classList.add('hidden'); profileModal.classList.remove('flex');
+            const modal = document.getElementById('customerEditModal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        }
+
+        function closeCustomerEditor() {
+            const modal = document.getElementById('customerEditModal');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+        }
+
+        function customerPayload() {
+            const list = value => String(value || '').split(/[\n,]/).map(item => item.trim()).filter(Boolean);
+            const addresses = [...document.querySelectorAll('[data-address-index]')].map(fieldset => Object.fromEntries([...fieldset.querySelectorAll('[data-address-field]')].map(input => [input.dataset.addressField, input.value.trim()]))).filter(address => Object.values(address).some(Boolean));
+            return {
+                fullName: document.getElementById('editFullName').value.trim(), firstName: document.getElementById('editFirstName').value.trim(), lastName: document.getElementById('editLastName').value.trim(), email: document.getElementById('editEmail').value.trim(), phone: document.getElementById('editPhone').value.trim(), whatsapp: document.getElementById('editWhatsapp').value.trim(), alternatePhones: list(document.getElementById('editAlternatePhones').value), language: document.getElementById('editLanguage').value.trim(), labels: list(document.getElementById('editLabels').value), sources: list(document.getElementById('editSources').value), emailMarketingStatus: document.getElementById('editEmailStatus').value, smsMarketingStatus: document.getElementById('editSmsStatus').value, emailQualityStatus: document.getElementById('editEmailQuality').value, addresses
+            };
+        }
+
+        async function refreshCustomerDirectory() {
+            await Promise.all([loadCustomers(), loadSubscribers()]);
+            updateStats();
+            renderCustomers(allCustomers);
+        }
+
+        async function deleteCustomer(customerId) {
+            const customer = allCustomers.find(item => item.id === customerId);
+            if (!customer) return;
+            const accountNotice = customer.account_user_id
+                ? '\n\nThis customer has a website account. Their login will remain active, and signing in again can recreate their customer profile.'
+                : '';
+            const confirmed = confirm(`Delete ${customer.full_name || 'this customer'}?\n\nTheir CRM profile, imported details, and newsletter record will be removed. Historical orders and payment records will be preserved but unlinked.${accountNotice}\n\nThis cannot be undone.`);
+            if (!confirmed) return;
+            if (!adminSession?.access_token) adminSession = await checkAuth();
+            const response = await fetch(`/api/admin/customers/${encodeURIComponent(customerId)}`, { method:'DELETE', headers:{ Authorization:`Bearer ${adminSession.access_token}` } });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) { alert(result.error || 'Customer could not be deleted.'); return; }
+            selectedCustomerIds.delete(customerId);
+            closeCustomerEditor();
+            const profileModal = document.getElementById('customerProfileModal'); profileModal.classList.add('hidden'); profileModal.classList.remove('flex');
+            await refreshCustomerDirectory();
+            alert(`Customer deleted. ${Number(result.preserved_orders) || 0} historical order(s) and ${Number(result.preserved_payment_checkouts) || 0} payment checkout(s) were preserved.`);
+        }
+
         document.getElementById('searchInput').addEventListener('input', event => {
             const query = event.target.value.toLowerCase().trim();
             renderCustomers(allCustomers.filter(customer => `${customer.full_name || ''} ${customer.email || ''} ${customer.phone || ''} ${(customer.labels || []).join(' ')}`.toLowerCase().includes(query)));
@@ -321,6 +455,35 @@
 
         document.getElementById('closeCustomerProfile').addEventListener('click', () => { const modal = document.getElementById('customerProfileModal'); modal.classList.add('hidden'); modal.classList.remove('flex'); });
         document.getElementById('customerProfileModal').addEventListener('click', event => { if (event.target.id === 'customerProfileModal') document.getElementById('closeCustomerProfile').click(); });
+        document.getElementById('editCustomerFromProfile').addEventListener('click', () => { if (activeProfileCustomerId) openCustomerEditor(activeProfileCustomerId); });
+        document.getElementById('closeCustomerEdit').addEventListener('click', closeCustomerEditor);
+        document.getElementById('cancelCustomerEdit').addEventListener('click', closeCustomerEditor);
+        document.getElementById('customerEditModal').addEventListener('click', event => { if (event.target.id === 'customerEditModal') closeCustomerEditor(); });
+        document.getElementById('deleteCustomerBtn').addEventListener('click', () => { const customerId = document.getElementById('editCustomerId').value; if (customerId) deleteCustomer(customerId); });
+        document.getElementById('customerEditForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!event.currentTarget.checkValidity()) { event.currentTarget.reportValidity(); return; }
+            const customerId = document.getElementById('editCustomerId').value;
+            const saveButton = document.getElementById('saveCustomerBtn');
+            const status = document.getElementById('customerEditStatus');
+            saveButton.disabled = true;
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Saving...';
+            status.textContent = 'Saving customer information...'; status.className = 'text-sm text-stone-500';
+            try {
+                if (!adminSession?.access_token) adminSession = await checkAuth();
+                const response = await fetch(`/api/admin/customers/${encodeURIComponent(customerId)}`, { method:'PUT', headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${adminSession.access_token}` }, body:JSON.stringify(customerPayload()) });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || 'Customer could not be updated.');
+                await refreshCustomerDirectory();
+                status.textContent = 'Customer information and newsletter status were updated.'; status.className = 'text-sm text-green-700';
+                setTimeout(closeCustomerEditor, 550);
+            } catch (error) {
+                status.textContent = error.message || 'Customer could not be updated.'; status.className = 'text-sm text-red-600';
+            } finally {
+                saveButton.disabled = false;
+                saveButton.innerHTML = '<i class="fas fa-save"></i>Save customer';
+            }
+        });
 
         function recipientScope() { return document.querySelector('input[name="recipientScope"]:checked').value; }
         document.getElementById('copySubscriberEmailsBtn').addEventListener('click', async () => {
