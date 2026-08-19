@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Loyalty Program - For You Skin Bar Admin</title>
+  <title>Glow & Go Rewards - For You Skin Bar Admin</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/brand/favicon-16.png">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -43,81 +43,90 @@
 
     <main class="flex-1 p-6 lg:p-9 overflow-x-hidden">
       <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5 mb-8">
+        <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5 mb-6">
           <div>
-            <p class="text-xs font-bold uppercase tracking-[0.18em] text-sage-700">Storefront programme manager</p>
-            <h1 class="text-3xl lg:text-4xl font-serif text-stone-800 mt-1">Glow & Go Inner Circle</h1>
-            <p class="text-stone-500 mt-2 max-w-2xl">Control every customer-facing part of the loyalty page: programme visibility, hero message, journey steps, tiers, points language, rewards, calls to action, and terms.</p>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-sage-700">Storefront rewards manager</p>
+            <h1 class="text-3xl lg:text-4xl font-serif text-stone-800 mt-1">Glow & Go Rewards Programme</h1>
+            <p class="text-stone-500 mt-2 max-w-2xl">Everything the Glow & Go Inner Circle needs: the rules that actually calculate and expire credits, the words customers see on the loyalty page, every member's balance and history, Glow Days, referrals, and VIP fulfilment.</p>
           </div>
           <div class="flex flex-wrap gap-3">
             <a href="/loyalty.html" target="_blank" class="px-4 py-2.5 rounded-lg border border-sage-300 bg-white text-sage-800 font-semibold text-sm hover:bg-sage-50 transition"><i class="fas fa-arrow-up-right-from-square mr-2"></i>Open Live Page</a>
-            <button id="saveBtn" class="px-5 py-2.5 rounded-lg bg-amber-800 hover:bg-amber-900 text-white font-semibold text-sm shadow-sm transition"><i class="fas fa-save mr-2"></i>Save Loyalty Program</button>
           </div>
         </div>
 
-        <div class="mb-8 rounded-2xl border border-amber-200 bg-amber-50/70 p-5 flex flex-col md:flex-row gap-4 md:items-start">
-          <div class="w-10 h-10 rounded-xl bg-amber-200/70 text-amber-900 flex items-center justify-center shrink-0"><i class="fas fa-lightbulb"></i></div>
-          <div>
-            <h2 class="font-bold text-stone-800">This editor controls the live loyalty page.</h2>
-            <p class="text-sm text-stone-600 mt-1 leading-6">The page updates from this saved programme record. It presents rewards and programme terms exactly as you set them. Actual customer balances, payment-triggered point calculations, and automated redemption codes need a separate customer-account and loyalty-transaction system before they can be switched on safely.</p>
-          </div>
+        <div class="flex flex-wrap gap-2 mb-7 border-b border-stone-200" id="rewardsTabs">
+          <button class="rewards-tab active" data-rewards-tab="rules" type="button">Programme Rules</button>
+          <button class="rewards-tab" data-rewards-tab="content" type="button">Page Content</button>
+          <button class="rewards-tab" data-rewards-tab="members" type="button">Members &amp; Ledger</button>
+          <button class="rewards-tab" data-rewards-tab="glowdays" type="button">Glow Days</button>
+          <button class="rewards-tab" data-rewards-tab="referrals" type="button">Referrals</button>
+          <button class="rewards-tab" data-rewards-tab="vip" type="button">VIP Rewards</button>
         </div>
 
-        <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-          <div class="px-6 py-4 border-b border-stone-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-stone-50">
-            <div><h2 class="font-bold text-stone-800">Programme basics</h2><p class="text-xs text-stone-500 mt-1">Turn the page on or off without removing your setup.</p></div>
-            <label class="inline-flex items-center gap-3 text-sm font-bold text-stone-700 cursor-pointer"><input id="programEnabled" type="checkbox" class="w-5 h-5 accent-amber-800"><span>Publish the loyalty page</span></label>
-          </div>
-          <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div><label class="label">Programme name</label><input id="programName" class="input" placeholder="Glow & Go Inner Circle"></div>
-            <div><label class="label">Hero background image URL</label><input id="heroImageUrl" class="input" placeholder="assets/products/gift_set.png"><p class="help">Optional. Use a complete image URL or a file path already on the website.</p></div>
+        <section id="rewardsPanel-rules" class="rewards-panel active"></section>
+
+        <section id="rewardsPanel-content" class="rewards-panel">
+          <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-stone-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-stone-50">
+              <div><h2 class="font-bold text-stone-800">Programme basics</h2><p class="text-xs text-stone-500 mt-1">Turn the customer-facing page on or off without removing your setup.</p></div>
+              <label class="inline-flex items-center gap-3 text-sm font-bold text-stone-700 cursor-pointer"><input id="programEnabled" type="checkbox" class="w-5 h-5 accent-amber-800"><span>Publish the loyalty page</span></label>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div><label class="label">Programme name</label><input id="programName" class="input" placeholder="Glow & Go Inner Circle"></div>
+              <div><label class="label">Hero background image URL</label><input id="heroImageUrl" class="input" placeholder="assets/products/gift_set.png"><p class="help">Optional. Use a complete image URL or a file path already on the website.</p></div>
+            </div>
+          </section>
+
+          <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-stone-100 bg-stone-50"><h2 class="font-bold text-stone-800">Hero area and calls to action</h2><p class="text-xs text-stone-500 mt-1">The first message customers see on the loyalty page.</p></div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div><label class="label">Eyebrow label</label><input id="heroEyebrow" class="input"></div>
+              <div><label class="label">Primary button label</label><input id="heroPrimaryLabel" class="input" placeholder="Join Free"></div>
+              <div class="md:col-span-2"><label class="label">Hero heading</label><textarea id="heroTitle" class="input min-h-24" placeholder="Use <em>text</em> to highlight a word. Press Enter for a new line."></textarea><p class="help">Example: Join the Glow.\nGet &lt;em&gt;Rewarded&lt;/em&gt;.</p></div>
+              <div class="md:col-span-2"><label class="label">Hero description</label><textarea id="heroDescription" class="input min-h-24"></textarea></div>
+              <div class="md:col-span-2"><label class="label">Primary button link</label><input id="heroPrimaryHref" class="input" placeholder="customer-login.html or https://wa.me/..."></div>
+              <div><label class="label">Secondary button label</label><input id="heroSecondaryLabel" class="input" placeholder="Explore Rewards"></div>
+              <div><label class="label">Trust points</label><textarea id="heroProof" class="input min-h-24" placeholder="One proof point per line"></textarea></div>
+            </div>
+          </section>
+
+          <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-stone-100 flex items-center justify-between gap-4 bg-stone-50">
+              <div><h2 class="font-bold text-stone-800">How it works</h2><p class="text-xs text-stone-500 mt-1">Control the three (or more) journey steps shown before the tier cards.</p></div>
+              <button id="addStepBtn" class="small-btn"><i class="fas fa-plus mr-1"></i>Add Step</button>
+            </div>
+            <div id="stepsEditor" class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-4"></div>
+          </section>
+
+          <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-stone-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-stone-50">
+              <div><h2 class="font-bold text-stone-800">Tier marketing copy</h2><p class="text-xs text-stone-500 mt-1">Wording only. Actual thresholds, multipliers, and redemption amounts are controlled in the <strong>Programme Rules</strong> tab — keep this copy in sync with what's set there.</p></div>
+              <button id="addTierBtn" class="small-btn"><i class="fas fa-plus mr-1"></i>Add Tier</button>
+            </div>
+            <div class="p-6 space-y-6" id="tiersEditor"></div>
+          </section>
+
+          <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-stone-100 bg-stone-50"><h2 class="font-bold text-stone-800">Closing call to action and terms</h2><p class="text-xs text-stone-500 mt-1">Finish the page with a clear next step and programme conditions.</p></div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div class="md:col-span-2"><label class="label">Closing heading</label><input id="ctaTitle" class="input"></div>
+              <div class="md:col-span-2"><label class="label">Closing description</label><textarea id="ctaDescription" class="input min-h-24"></textarea></div>
+              <div><label class="label">Closing button label</label><input id="ctaLabel" class="input"></div>
+              <div><label class="label">Closing button link</label><input id="ctaHref" class="input"></div>
+              <div class="md:col-span-2"><label class="label">Programme terms</label><textarea id="terms" class="input min-h-28"></textarea></div>
+            </div>
+          </section>
+
+          <div class="flex flex-col sm:flex-row sm:justify-between gap-3 pb-8">
+            <button id="restoreDefaultsBtn" class="px-4 py-2.5 text-sm text-stone-600 hover:text-stone-900 font-semibold"><i class="fas fa-rotate-left mr-2"></i>Restore original loyalty content</button>
+            <button id="saveBottomBtn" class="px-5 py-2.5 rounded-lg bg-amber-800 hover:bg-amber-900 text-white font-semibold text-sm shadow-sm transition"><i class="fas fa-save mr-2"></i>Save Page Content</button>
           </div>
         </section>
 
-        <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-          <div class="px-6 py-4 border-b border-stone-100 bg-stone-50"><h2 class="font-bold text-stone-800">Hero area and calls to action</h2><p class="text-xs text-stone-500 mt-1">The first message customers see on the loyalty page.</p></div>
-          <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div><label class="label">Eyebrow label</label><input id="heroEyebrow" class="input"></div>
-            <div><label class="label">Primary button label</label><input id="heroPrimaryLabel" class="input" placeholder="Become a Member"></div>
-            <div class="md:col-span-2"><label class="label">Hero heading</label><textarea id="heroTitle" class="input min-h-24" placeholder="Use <em>text</em> to highlight a word. Press Enter for a new line."></textarea><p class="help">Example: Glow more.\nGet &lt;em&gt;more&lt;/em&gt; back.</p></div>
-            <div class="md:col-span-2"><label class="label">Hero description</label><textarea id="heroDescription" class="input min-h-24"></textarea></div>
-            <div class="md:col-span-2"><label class="label">Primary button link</label><input id="heroPrimaryHref" class="input" placeholder="https://wa.me/... or contact.html"></div>
-            <div><label class="label">Secondary button label</label><input id="heroSecondaryLabel" class="input" placeholder="Explore Rewards"></div>
-            <div><label class="label">Trust points</label><textarea id="heroProof" class="input min-h-24" placeholder="One proof point per line"></textarea></div>
-          </div>
-        </section>
-
-        <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-          <div class="px-6 py-4 border-b border-stone-100 flex items-center justify-between gap-4 bg-stone-50">
-            <div><h2 class="font-bold text-stone-800">How it works</h2><p class="text-xs text-stone-500 mt-1">Control the three (or more) journey steps shown before the tier cards.</p></div>
-            <button id="addStepBtn" class="small-btn"><i class="fas fa-plus mr-1"></i>Add Step</button>
-          </div>
-          <div id="stepsEditor" class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-4"></div>
-        </section>
-
-        <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-6">
-          <div class="px-6 py-4 border-b border-stone-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-stone-50">
-            <div><h2 class="font-bold text-stone-800">Programme tiers, earning methods, and rewards</h2><p class="text-xs text-stone-500 mt-1">Every field here appears live on the customer loyalty page. One item per line keeps editing simple.</p></div>
-            <button id="addTierBtn" class="small-btn"><i class="fas fa-plus mr-1"></i>Add Tier</button>
-          </div>
-          <div class="p-6 space-y-6" id="tiersEditor"></div>
-        </section>
-
-        <section class="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden mb-8">
-          <div class="px-6 py-4 border-b border-stone-100 bg-stone-50"><h2 class="font-bold text-stone-800">Closing call to action and terms</h2><p class="text-xs text-stone-500 mt-1">Finish the page with a clear next step and programme conditions.</p></div>
-          <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div class="md:col-span-2"><label class="label">Closing heading</label><input id="ctaTitle" class="input"></div>
-            <div class="md:col-span-2"><label class="label">Closing description</label><textarea id="ctaDescription" class="input min-h-24"></textarea></div>
-            <div><label class="label">Closing button label</label><input id="ctaLabel" class="input"></div>
-            <div><label class="label">Closing button link</label><input id="ctaHref" class="input"></div>
-            <div class="md:col-span-2"><label class="label">Programme terms</label><textarea id="terms" class="input min-h-28"></textarea></div>
-          </div>
-        </section>
-
-        <div class="flex flex-col sm:flex-row sm:justify-between gap-3 pb-8">
-          <button id="restoreDefaultsBtn" class="px-4 py-2.5 text-sm text-stone-600 hover:text-stone-900 font-semibold"><i class="fas fa-rotate-left mr-2"></i>Restore original loyalty content</button>
-          <button id="saveBottomBtn" class="px-5 py-2.5 rounded-lg bg-amber-800 hover:bg-amber-900 text-white font-semibold text-sm shadow-sm transition"><i class="fas fa-save mr-2"></i>Save Loyalty Program</button>
-        </div>
+        <section id="rewardsPanel-members" class="rewards-panel"></section>
+        <section id="rewardsPanel-glowdays" class="rewards-panel"></section>
+        <section id="rewardsPanel-referrals" class="rewards-panel"></section>
+        <section id="rewardsPanel-vip" class="rewards-panel"></section>
       </div>
     </main>
   </div>
@@ -131,46 +140,59 @@
     .help { margin-top:.4rem; color:#8A7D6E; font-size:.72rem; line-height:1.45; }
     .small-btn { border:1px solid #C89B3C; border-radius:.65rem; color:#8B5A2B; background:#FFFDF8; padding:.55rem .75rem; font-size:.8rem; font-weight:700; transition:.15s; white-space:nowrap; }
     .small-btn:hover { background:#F3E6C7; }
+    .small-btn:disabled { opacity:.5; cursor:not-allowed; }
     .danger-btn { border:1px solid #FECACA; border-radius:.6rem; color:#B91C1C; background:#FFF7F7; padding:.48rem .65rem; font-size:.75rem; font-weight:700; transition:.15s; }
     .danger-btn:hover { background:#FEE2E2; }
     .tier-editor { border:1px solid #D1C5B5; border-radius:1rem; overflow:hidden; }
     .tier-editor-head { background:#F8F5EF; padding:1rem 1.15rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; }
     .step-editor { border:1px solid #E1C77D; border-radius:1rem; padding:1rem; background:#FFFDF8; }
+    .tier-rule-row { display:grid; grid-template-columns:2fr 1.4fr 1fr auto; gap:.75rem; align-items:end; border:1px solid #E1C77D; border-radius:.9rem; padding:1rem; background:#FFFDF8; }
+    @media (max-width:900px) { .tier-rule-row { grid-template-columns:1fr; } }
+    .rewards-tab { padding:.75rem 1.1rem; font-size:.85rem; font-weight:700; color:#8A7D6E; border-bottom:2px solid transparent; margin-bottom:-1px; transition:.15s; white-space:nowrap; }
+    .rewards-tab:hover { color:#5A4C3A; }
+    .rewards-tab.active { color:#8B5A2B; border-bottom-color:#C89B3C; }
+    .rewards-panel { display:none; }
+    .rewards-panel.active { display:block; }
   </style>
 
   <script type="module">
     import { supabase, checkAuth } from '/admin/js/supabase-client.js';
+    import { initRewardsSettingsTab } from '/admin/js/rewards-settings.js';
+    import { initRewardsMembersTab } from '/admin/js/rewards-members.js';
+    import { initRewardsGlowDaysTab } from '/admin/js/rewards-glow-days.js';
+    import { initRewardsReferralsTab } from '/admin/js/rewards-referrals.js';
+    import { initRewardsVipTab } from '/admin/js/rewards-vip.js';
 
     const DEFAULT_PROGRAM = {
       enabled: true,
       name: 'Glow & Go Inner Circle',
       hero: {
-        eyebrow: 'ForYou Skin Bar Rewards',
-        title: 'Glow more.\nGet <em>more</em> back.',
-        description: 'The Glow & Go Inner Circle is our thank-you for choosing your skin. Earn Glow Credits, unlock special rewards, and rise through every level of your routine.',
+        eyebrow: 'Join the Glow. Get Rewarded.',
+        title: 'Join the Glow.\nGet <em>Rewarded</em>.',
+        description: 'The Glow & Go Inner Circle is our free rewards programme, created to thank you for choosing ForYou Skin Bar. Join free and get 100 Glow Credits instantly. Earn more when you shop, refer friends, celebrate your birthday, leave reviews, and more.',
         imageUrl: 'assets/products/gift_set.png',
-        primaryLabel: 'Become a Member',
-        primaryHref: 'https://wa.me/18763094374?text=Hi%20For%20You%20Skin%20Bar!%20I%20would%20like%20to%20join%20the%20Glow%20%26%20Go%20Inner%20Circle.',
+        primaryLabel: 'Join Free',
+        primaryHref: 'customer-login.html',
         secondaryLabel: 'Explore Rewards',
-        proof: ['Free to join', 'Made for your glow', 'Jamaican handmade skincare']
+        proof: ['Free to join', '100 Glow Credits just for joining', 'Jamaican handmade skincare']
       },
       steps: [
-        { number:'01', icon:'fa-user-plus', title:'Sign Up', description:'Join the Inner Circle to begin collecting Glow Credits with your favourite skincare essentials.' },
-        { number:'02', icon:'fa-sparkles', title:'Earn Glow Credits', description:'Collect credits through purchases and special community moments built into the programme.' },
-        { number:'03', icon:'fa-gift', title:'Redeem Rewards', description:'Turn your Glow Credits into savings, treats, and elevated skin-care moments.' }
+        { number:'01', icon:'fa-sparkles', title:'Join', description:'Sign up for the Glow & Go Inner Circle for free and get 100 Glow Credits instantly. No membership fee, no complicated sign-up.' },
+        { number:'02', icon:'fa-bag-shopping', title:'Shop', description:'Earn Glow Credits every time you shop — 1 Glow Credit for every J$100 spent. The more you shop, the more you earn.' },
+        { number:'03', icon:'fa-gift', title:'Get Rewarded', description:'Turn your Glow Credits into savings toward your next eligible purchase. 100 Glow Credits = J$100 off, and it keeps going from there.' }
       ],
       tiers: [
-        { name:'Radiant Rookie', rank:'Level One', icon:'fa-seedling', threshold:'0 total earned Glow Credits required', summary:'Your glow journey starts here. Earn as you shop and unlock your first rewards.', perks:['Earn 1 Glow Credit for every $1 spent','Start enjoying rewards as soon as you join'], earnRules:[{title:'Purchase a product',description:'Get 1 Glow Credit for every $1 spent'},{title:'Sign up to the site',description:'Get 10 Glow Credits'},{title:'Celebrate a birthday',description:'Get 50 Glow Credits'},{title:'Follow on social media',description:'Get 50 Glow Credits'}], rewards:[{title:'Shine On',points:'2,500 Glow Credits',description:'$50 discount'},{title:'Glow Getter',points:'7,500 Glow Credits',description:'5% off orders over $5,000'}] },
-        { name:'Glowing Insider', rank:'Level Two', icon:'fa-sun', threshold:'20,000 total earned Glow Credits required', summary:'Your commitment is showing. Enjoy stronger earning power and more generous rewards.', perks:['Earn 2× more Glow Credits','Unlock rewards worth up to 15% off'], earnRules:[{title:'Purchase a product',description:'Get 2 Glow Credits for every $1 spent'},{title:'Sign up to the site',description:'Get 15 Glow Credits'},{title:'Celebrate a birthday',description:'Get 100 Glow Credits'},{title:'Follow on social media',description:'Get 50 Glow Credits'}], rewards:[{title:'Sparkle Surprise',points:'15,000 Glow Credits',description:'$350 off orders over $8,500'},{title:'Glowing Gratification',points:'20,000 Glow Credits',description:'$500 off orders over $13,000'},{title:'Glow & Glam Goodie',points:'30,000 Glow Credits',description:'15% off orders over $15,000'}] },
-        { name:'Luminous VIP', rank:'Level Three', icon:'fa-crown', threshold:'50,000 total earned Glow Credits required', summary:'Our brightest circle. Your loyalty unlocks premium treats made for your next-level glow.', perks:['Earn 3× more Glow Credits','Receive a free pair of exfoliation gloves','Unlock rewards worth up to 20% off'], earnRules:[{title:'Purchase a product',description:'Get 3 Glow Credits for every $1 spent'},{title:'Sign up to the site',description:'Get 25 Glow Credits'},{title:'Celebrate a birthday',description:'Get 250 Glow Credits'},{title:'Follow on social media',description:'Get 50 Glow Credits'}], rewards:[{title:'Luminous Surprise',points:'40,000 Glow Credits',description:'$300 off a specific category'},{title:'Brilliance Bonus',points:'55,000 Glow Credits',description:'100% off a specific product'},{title:'Luminous Renewal',points:'65,000 Glow Credits',description:'$400 off a specific product'},{title:'Luminary Luxe',points:'70,000 Glow Credits',description:'20% off orders over $15,500'}] }
+        { name:'Radiant Rookie', rank:'Welcome to the Inner Circle', icon:'fa-seedling', threshold:'Join for free — everyone starts here', summary:'As a Radiant Rookie, you get 100 Glow Credits when you join, 1 Glow Credit for every J$100 spent, birthday rewards, member-only offers, access to Glow Days, and opportunities to earn bonus Glow Credits.', perks:['100 Glow Credits when you join','1 Glow Credit for every J$100 spent','Birthday rewards','Member-only offers','Access to special Glow Days','Opportunities to earn bonus Glow Credits'], earnRules:[{title:'Join for free',description:'Get 100 Glow Credits instantly'},{title:'Shop with us',description:'Get 1 Glow Credit for every J$100 spent'},{title:'Celebrate your birthday',description:'Get 100 Glow Credits'},{title:'Leave a review',description:'Get 200 Glow Credits'},{title:'Take the skin quiz',description:'Get 200 Glow Credits'},{title:'Refer a friend',description:'Get Glow Credits when they shop'}], rewards:[{title:'Shine On',points:'100 Glow Credits',description:'J$100 off your next eligible purchase'},{title:'Glow Getter',points:'250 Glow Credits',description:'J$250 off your next eligible purchase'}] },
+        { name:'Glowing Insider', rank:'Reach J$10,000 in lifetime purchases', icon:'fa-sun', threshold:'J$10,000 in lifetime purchases required', summary:'Your glow is getting stronger. As a Glowing Insider, you get everything in Radiant Rookie, plus 1.5X Glow Credits on purchases, bigger birthday rewards, insider-only offers, early access to new products, exclusive member promotions, and special bonus-credit opportunities.', perks:['1.5X Glow Credits on purchases','Bigger birthday rewards','Insider-only offers','Early access to selected new products','Exclusive member promotions','Special bonus-credit opportunities'], earnRules:[{title:'Shop with us',description:'Get 1.5 Glow Credits for every J$100 spent'},{title:'Celebrate your birthday',description:'Get a bigger birthday reward'},{title:'Leave a review',description:'Get 200 Glow Credits'},{title:'Take the skin quiz',description:'Get 200 Glow Credits'},{title:'Refer a friend',description:'Get Glow Credits when they shop'}], rewards:[{title:'Sparkle Surprise',points:'500 Glow Credits',description:'J$500 off your next eligible purchase'},{title:'Glowing Gratification',points:'1,000 Glow Credits',description:'J$1,000 off your next eligible purchase'}] },
+        { name:'Luminous VIP', rank:'Reach J$25,000 in lifetime purchases', icon:'fa-crown', threshold:'J$25,000 in lifetime purchases required', summary:'You have reached your ultimate glow. As a Luminous VIP, you get everything in Glowing Insider, plus 2X Glow Credits on purchases, a VIP birthday gift, VIP-only offers, first access to selected new products and limited releases, exclusive VIP promotions, 1 free serum and 1 free toner every six months, and extra opportunities to earn bonus Glow Credits.', perks:['2X Glow Credits on purchases','VIP birthday gift','VIP-only offers','First access to selected new products and limited releases','Exclusive VIP promotions','1 free serum and 1 free toner, semi-annually','Extra opportunities to earn bonus Glow Credits'], earnRules:[{title:'Shop with us',description:'Get 2 Glow Credits for every J$100 spent'},{title:'Celebrate your birthday',description:'Get a VIP birthday gift'},{title:'Leave a review',description:'Get 200 Glow Credits'},{title:'Take the skin quiz',description:'Get 200 Glow Credits'},{title:'Refer a friend',description:'Get Glow Credits when they shop'}], rewards:[{title:'Luminous Surprise',points:'1,000 Glow Credits',description:'J$1,000 off your next eligible purchase'},{title:'Semi-annual product reward',points:'Automatic at this tier',description:'1 free serum and 1 free toner every six months'}] }
       ],
-      cta: { title:'Your routine deserves a little extra glow.', description:'Join the Glow & Go Inner Circle today and make every skincare moment count.', label:'Join the Inner Circle', href:'https://wa.me/18763094374?text=Hi%20For%20You%20Skin%20Bar!%20I%20would%20like%20to%20join%20the%20Glow%20%26%20Go%20Inner%20Circle.' },
-      terms:'Glow Credits, tier thresholds, rewards, and eligibility are subject to the active programme terms. Rewards cannot be exchanged for cash and may be changed, paused, or withdrawn by For You Skin Bar at any time.'
+      cta: { title:'Your glow. Your rewards. Your inner circle.', description:'Join the Glow & Go Inner Circle today — free to join, 100 Glow Credits instantly, and more ways to earn every time you shop.', label:'Join Free', href:'customer-login.html' },
+      terms:'The Glow & Go Inner Circle is a rewards programme offered by ForYou Skin Bar. Membership is free. 100 Glow Credits always equals J$100 off — Glow Credits have no cash value beyond this fixed rate and cannot be exchanged for cash. Glow Credits expire 6 months after they are earned. Glow Credits are removed if the related order is returned or refunded. Glow Credits cannot be earned on orders using a discount code, and Glow Credits, referral rewards, and promotional discount codes cannot be combined on the same order. There are no minimum purchase requirements to redeem a reward and no product or service exclusions. Tier status (Radiant Rookie, Glowing Insider, Luminous VIP) is based on lifetime purchases and is permanent once reached. Referral rewards: your friend receives 20% off their first eligible purchase, and you receive Glow Credits once they complete that purchase — referral rewards and Glow Credits cannot be combined on the same order. Birthday rewards (100 Glow Credits) are added automatically once your birthday is on file with your account. Luminous VIP members receive 1 free serum and 1 free toner every six months while they remain at that tier. ForYou Skin Bar reserves the right to modify, suspend, or terminate the rewards programme or individual rewards with reasonable notice. Glow Credits earned through fraudulent, abusive, or otherwise prohibited activity may be removed.'
     };
 
     let program = clone(DEFAULT_PROGRAM);
     const $ = (id) => document.getElementById(id);
-    const clone = (value) => JSON.parse(JSON.stringify(value));
+    function clone(value) { return JSON.parse(JSON.stringify(value)); }
     const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const lines = (value) => String(value || '').split('\n').map(v => v.trim()).filter(Boolean);
     const valueOf = (id) => $(id).value.trim();
@@ -222,13 +244,13 @@
         <div class="tier-editor-head"><div><p class="text-xs font-bold tracking-widest uppercase text-sage-700">Tier ${index + 1}</p><h3 class="font-bold text-stone-800 tier-name-head">${escapeHtml(tier.name || 'New Tier')}</h3></div><button type="button" class="danger-btn remove-tier"><i class="fas fa-trash mr-1"></i>Remove Tier</button></div>
         <div class="p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div><label class="label">Tier name</label><input class="input tier-name" value="${escapeHtml(tier.name || '')}"></div>
-          <div><label class="label">Rank label</label><input class="input tier-rank" value="${escapeHtml(tier.rank || '')}" placeholder="Level One"></div>
+          <div><label class="label">Rank label</label><input class="input tier-rank" value="${escapeHtml(tier.rank || '')}" placeholder="Reach J$10,000 in lifetime purchases"></div>
           <div><label class="label">Font Awesome icon</label><input class="input tier-icon" value="${escapeHtml(tier.icon || 'fa-sparkles')}" placeholder="fa-crown"></div>
-          <div><label class="label">Tier threshold</label><input class="input tier-threshold" value="${escapeHtml(tier.threshold || '')}" placeholder="20,000 total earned Glow Credits required"></div>
+          <div><label class="label">Tier threshold wording</label><input class="input tier-threshold" value="${escapeHtml(tier.threshold || '')}" placeholder="J$10,000 in lifetime purchases required"></div>
           <div class="lg:col-span-2"><label class="label">Tier summary</label><textarea class="input min-h-20 tier-summary">${escapeHtml(tier.summary || '')}</textarea></div>
           <div class="lg:col-span-2"><label class="label">Level benefits</label><textarea class="input min-h-28 tier-perks" placeholder="One benefit per line">${escapeHtml((tier.perks || []).join('\n'))}</textarea><p class="help">One benefit per line.</p></div>
-          <div><label class="label">Ways to earn</label><textarea class="input min-h-44 tier-rules" placeholder="Purchase a product | Get 1 Glow Credit for every $1 spent">${escapeHtml(ruleLines(tier.earnRules))}</textarea><p class="help">One item per line: <strong>Title | Description</strong></p></div>
-          <div><label class="label">Rewards</label><textarea class="input min-h-44 tier-rewards" placeholder="Shine On | 2,500 Glow Credits | $50 discount">${escapeHtml(rewardLines(tier.rewards))}</textarea><p class="help">One item per line: <strong>Title | Points | Description</strong></p></div>
+          <div><label class="label">Ways to earn (wording)</label><textarea class="input min-h-44 tier-rules" placeholder="Shop with us | Get 1 Glow Credit for every J$100 spent">${escapeHtml(ruleLines(tier.earnRules))}</textarea><p class="help">One item per line: <strong>Title | Description</strong></p></div>
+          <div><label class="label">Featured rewards (wording)</label><textarea class="input min-h-44 tier-rewards" placeholder="Shine On | 100 Glow Credits | J$100 off">${escapeHtml(rewardLines(tier.rewards))}</textarea><p class="help">One item per line: <strong>Title | Points | Description</strong></p></div>
         </div>
       </article>`;
     }
@@ -319,10 +341,11 @@
       window.clearTimeout(showToast.timer);
       showToast.timer = window.setTimeout(() => { toast.classList.add('translate-y-24','opacity-0'); toast.classList.remove('translate-y-0','opacity-100'); }, 3800);
     }
+    window.showRewardsToast = showToast;
 
     async function loadProgram() {
       const { data, error } = await supabase.from('store_settings').select('value').eq('key', 'loyalty_program').maybeSingle();
-      if (error) { showToast('Could not load loyalty settings: ' + error.message, 'error'); return; }
+      if (error) { showToast('Could not load loyalty page content: ' + error.message, 'error'); return; }
       program = parseSaved(data?.value);
       fillStaticFields(); renderDynamicEditors();
     }
@@ -330,27 +353,39 @@
     async function saveProgram() {
       collectStaticFields(); collectDynamicFields();
       if (!program.name) { showToast('Please enter a programme name.', 'error'); return; }
-      const buttons = [$('saveBtn'), $('saveBottomBtn')];
-      buttons.forEach(button => { button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving…'; });
+      const button = $('saveBottomBtn');
+      button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving…';
       try {
         const { error } = await supabase.from('store_settings').upsert({ key:'loyalty_program', value:program }, { onConflict:'key' });
         if (error) throw error;
-        showToast('Loyalty program saved. The live page is updated.');
+        showToast('Page content saved. The live page is updated.');
       } catch (error) {
-        showToast('Unable to save loyalty program: ' + error.message, 'error');
+        showToast('Unable to save page content: ' + error.message, 'error');
       } finally {
-        buttons.forEach(button => { button.disabled = false; button.innerHTML = '<i class="fas fa-save mr-2"></i>Save Loyalty Program'; });
+        button.disabled = false; button.innerHTML = '<i class="fas fa-save mr-2"></i>Save Page Content';
       }
     }
 
     $('addStepBtn').addEventListener('click', () => { collectStaticFields(); collectDynamicFields(); program.steps.push({number:String(program.steps.length + 1).padStart(2,'0'),icon:'fa-sparkles',title:'New Step',description:''}); renderDynamicEditors(); });
     $('addTierBtn').addEventListener('click', () => { collectStaticFields(); collectDynamicFields(); program.tiers.push({name:'New Glow Level',rank:`Level ${program.tiers.length + 1}`,icon:'fa-sparkles',threshold:'',summary:'',perks:[],earnRules:[],rewards:[]}); renderDynamicEditors(); });
-    $('saveBtn').addEventListener('click', saveProgram);
     $('saveBottomBtn').addEventListener('click', saveProgram);
     $('restoreDefaultsBtn').addEventListener('click', () => { if (confirm('Restore the original loyalty page content? Unsaved edits will be replaced.')) { program = clone(DEFAULT_PROGRAM); fillStaticFields(); renderDynamicEditors(); showToast('Original content restored. Save to publish it.'); } });
     $('logoutBtn').addEventListener('click', async (event) => { event.preventDefault(); await supabase.auth.signOut(); window.location.href = '/admin/login.html'; });
 
-    (async () => { await checkAuth(); await loadProgram(); })();
+    document.querySelectorAll('[data-rewards-tab]').forEach((button) => button.addEventListener('click', () => {
+      document.querySelectorAll('[data-rewards-tab]').forEach((b) => b.classList.toggle('active', b === button));
+      document.querySelectorAll('.rewards-panel').forEach((panel) => panel.classList.toggle('active', panel.id === `rewardsPanel-${button.dataset.rewardsTab}`));
+    }));
+
+    (async () => {
+      await checkAuth();
+      await loadProgram();
+      initRewardsSettingsTab();
+      initRewardsMembersTab();
+      initRewardsGlowDaysTab();
+      initRewardsReferralsTab();
+      initRewardsVipTab();
+    })();
   </script>
 </body>
 </html>

@@ -14,6 +14,7 @@ const {
   templateVariablesFor
 } = require('./email-templates');
 const { installSeoRoutes } = require('./seo-middleware');
+const loyaltyEngine = require('./loyalty-engine');
 
 const app = express();
 const PORT = process.env.PORT || 5500;
@@ -892,6 +893,7 @@ async function reconcileCheckoutSessionPayment(orderRef, paymentReference, sourc
   if (!order) order = await materializePaidCheckoutSession(checkoutSession);
 
   if (order.payment_status !== 'paid') {
+    const previousPaymentStatus = order.payment_status;
     const paymentNote = [
       `[Fygaro Payment Confirmed - ${source === 'webhook' ? 'Webhook' : 'Admin Reconciliation'}]`,
       `Reference: ${paymentReference}`,
@@ -911,6 +913,7 @@ async function reconcileCheckoutSessionPayment(orderRef, paymentReference, sourc
       .single();
     if (updateError) throw updateError;
     order = updatedOrder;
+    await loyaltyEngine.handlePaymentStatusChange(order.id, previousPaymentStatus, 'paid');
   }
 
   const { error: checkoutUpdateError } = await supabaseAdmin
@@ -1295,59 +1298,91 @@ app.get('/api/storefront-config', async (req, res) => {
   }
 });
 
-app.post('/api/validate-discount', async (req, res) => {
-  try {
-    const { code, subtotal } = req.body;
-    if (!code) throw new Error('Code is required');
+// Shared by /api/validate-discount (live preview) and order creation (authoritative check).
+// Recognizes three kinds of code: a normal store discount_codes row, a customer-locked
+// Glow Credits redemption code, or another customer's referral_code (20% off, first paid
+// order only). `identity` is the checkout email/phone so customer-locked codes can be
+// verified without trusting the client.
+async function resolveDiscountForCheckout(rawCode, subtotal, identity = {}) {
+  const code = String(rawCode || '').trim().toUpperCase();
+  if (!code) throw new Error('Code is required');
 
-    const { data: discountData, error } = await supabaseAdmin
-      .from('discount_codes')
-      .select('*')
-      .eq('code', code.toUpperCase())
-      .eq('active', true)
-      .single();
+  const { data: discountData, error } = await supabaseAdmin
+    .from('discount_codes')
+    .select('*')
+    .eq('code', code)
+    .eq('active', true)
+    .maybeSingle();
+  if (error) throw new Error(`Database error: ${error.message}`);
 
-    if (error) {
-      console.error('Supabase Error:', error);
-      throw new Error(`Database error: ${error.message} (Check Railway environment variables)`);
-    }
-
-    if (!discountData) {
-      throw new Error('Invalid or inactive discount code');
-    }
-
+  if (discountData) {
     const now = new Date();
     const startsAt = discountData.starts_at ? new Date(discountData.starts_at) : null;
     const endsAt = discountData.ends_at ? new Date(discountData.ends_at) : null;
 
-    if (discountData.usage_limit && discountData.used_count >= discountData.usage_limit) {
-      throw new Error('Discount code has reached its usage limit');
-    }
-    if (startsAt && startsAt > now) {
-      throw new Error('Discount code is not active yet');
-    }
-    if (endsAt && endsAt < now) {
-      throw new Error('Discount code has expired');
-    }
+    if (discountData.usage_limit && discountData.used_count >= discountData.usage_limit) throw new Error('Discount code has reached its usage limit');
+    if (startsAt && startsAt > now) throw new Error('Discount code is not active yet');
+    if (endsAt && endsAt < now) throw new Error('Discount code has expired');
     if (discountData.minimum_subtotal && (subtotal || 0) < discountData.minimum_subtotal) {
-      throw new Error(`This code requires a minimum order of J$${discountData.minimum_subtotal.toLocaleString()}`);
+      throw new Error(`This code requires a minimum order of J$${Number(discountData.minimum_subtotal).toLocaleString()}`);
+    }
+    if (discountData.customer_id) {
+      const { data: owner } = await supabaseAdmin.from('customers').select('email, phone').eq('id', discountData.customer_id).maybeSingle();
+      const ownerEmail = String(owner?.email || '').trim().toLowerCase();
+      const ownerPhone = String(owner?.phone || '').trim();
+      const checkoutEmail = String(identity.email || '').trim().toLowerCase();
+      const checkoutPhone = String(identity.phone || '').trim();
+      const matches = (ownerEmail && checkoutEmail && ownerEmail === checkoutEmail) || (ownerPhone && checkoutPhone && ownerPhone === checkoutPhone);
+      if (!matches) throw new Error('This code belongs to a different account.');
     }
 
     let discountAmount = 0;
-    if (['percent', 'percentage'].includes(discountData.discount_type)) {
+    if (discountData.discount_type === 'free_shipping') {
+      discountAmount = 0;
+    } else if (['percent', 'percentage'].includes(discountData.discount_type)) {
       discountAmount = (subtotal || 0) * (Number(discountData.discount_value) / 100);
     } else {
       discountAmount = Number(discountData.discount_value);
     }
     if (subtotal && discountAmount > subtotal) discountAmount = subtotal;
 
-    res.status(200).json({
-      valid: true,
-      code: discountData.code,
-      discountType: discountData.discount_type,
-      discountValue: Number(discountData.discount_value),
-      discountAmount: discountAmount
-    });
+    return {
+      code: discountData.code, discountType: discountData.discount_type, discountValue: Number(discountData.discount_value),
+      discountAmount, freeShipping: discountData.discount_type === 'free_shipping', kind: discountData.kind || 'promo'
+    };
+  }
+
+  // Not a store discount code — see if it's a customer's referral code.
+  const referrer = await loyaltyEngine.findReferralOwner(code);
+  if (referrer) {
+    const checkoutEmail = String(identity.email || '').trim().toLowerCase();
+    if (checkoutEmail && String(referrer.email || '').trim().toLowerCase() === checkoutEmail) {
+      throw new Error('You cannot use your own referral code.');
+    }
+    let existingCustomerId = identity.customerId || null;
+    if (!existingCustomerId && checkoutEmail) {
+      const { data: existingCustomer } = await supabaseAdmin.from('customers').select('id').ilike('email', checkoutEmail).maybeSingle();
+      existingCustomerId = existingCustomer?.id || null;
+    }
+    if (existingCustomerId) {
+      const alreadyPurchased = await loyaltyEngine.customerHasPaidOrder(existingCustomerId);
+      if (alreadyPurchased) throw new Error('Referral codes are only valid on your first order.');
+    }
+    const policy = await loyaltyEngine.loadPolicy();
+    const percent = Number(policy.referralFriendDiscountPercent) || 20;
+    let discountAmount = (subtotal || 0) * (percent / 100);
+    if (subtotal && discountAmount > subtotal) discountAmount = subtotal;
+    return { code, discountType: 'percent', discountValue: percent, discountAmount, freeShipping: false, kind: 'referral_welcome', referrerId: referrer.id };
+  }
+
+  throw new Error('Invalid or inactive discount code');
+}
+
+app.post('/api/validate-discount', async (req, res) => {
+  try {
+    const { code, subtotal, email, phone } = req.body;
+    const result = await resolveDiscountForCheckout(code, subtotal, { email, phone });
+    res.status(200).json({ valid: true, ...result });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -1638,37 +1673,17 @@ app.post('/api/create-order', async (req, res) => {
     let discountAmount = 0;
     let appliedDiscountCode = null;
     let freeShippingDiscount = false;
+    let referralOwnerId = null;
 
     if (discountCode) {
-      const { data: discountData } = await supabaseAdmin
-        .from('discount_codes')
-        .select('*')
-        .eq('code', discountCode.toUpperCase())
-        .eq('active', true)
-        .single();
-
-      if (discountData) {
-        const now = new Date();
-        const startsAt = discountData.starts_at ? new Date(discountData.starts_at) : null;
-        const endsAt = discountData.ends_at ? new Date(discountData.ends_at) : null;
-        
-        let isValid = true;
-        if (discountData.usage_limit && discountData.used_count >= discountData.usage_limit) isValid = false;
-        if (startsAt && startsAt > now) isValid = false;
-        if (endsAt && endsAt < now) isValid = false;
-        if (discountData.minimum_subtotal && subtotal < discountData.minimum_subtotal) isValid = false;
-
-        if (isValid) {
-          if (discountData.discount_type === 'free_shipping') {
-            freeShippingDiscount = true;
-          } else if (['percent', 'percentage'].includes(discountData.discount_type)) {
-            discountAmount = subtotal * (Number(discountData.discount_value) / 100);
-          } else {
-            discountAmount = Number(discountData.discount_value);
-          }
-          if (discountAmount > subtotal) discountAmount = subtotal;
-          appliedDiscountCode = discountData.code;
-        }
+      try {
+        const resolved = await resolveDiscountForCheckout(discountCode, subtotal, { email: customer.email, phone: customer.phone });
+        discountAmount = resolved.discountAmount;
+        freeShippingDiscount = resolved.freeShipping;
+        appliedDiscountCode = resolved.code;
+        if (resolved.kind === 'referral_welcome') referralOwnerId = resolved.referrerId;
+      } catch (discountError) {
+        console.warn('[Checkout] Discount code re-validation failed, ignoring code:', discountError.message);
       }
     }
 
@@ -1755,6 +1770,11 @@ app.post('/api/create-order', async (req, res) => {
       }).eq('id', customerId);
     }
 
+    if (referralOwnerId && referralOwnerId !== customerId) {
+      // Only links if not already referred by someone else — first referral wins.
+      await supabaseAdmin.from('customers').update({ referred_by_customer_id: referralOwnerId }).eq('id', customerId).is('referred_by_customer_id', null);
+    }
+
     let formattedAddress = shipping.addressLine1;
     if (shipping.addressLine2) formattedAddress += `, ${shipping.addressLine2}`;
     if (shipping.city) formattedAddress += `, ${shipping.city}`;
@@ -1762,43 +1782,22 @@ app.post('/api/create-order', async (req, res) => {
     if (shipping.stateProvince) formattedAddress += `, ${shipping.stateProvince}`;
     if (shipping.country) formattedAddress += `, ${shipping.country}`;
 
-    let pointsEarned = Math.floor(subtotalAfterDiscount);
+    // This is only a pre-payment estimate shown nowhere customer-facing today — the real
+    // award (with Glow Day bonuses, discount-code exclusion, etc.) happens in
+    // loyaltyEngine.awardPurchaseCredits() once payment is confirmed. Kept using the same
+    // engine so the estimate can't drift from the real rules.
+    let pointsEarned = 0;
     try {
-        const { data: customerData } = await supabaseAdmin.from('customers').select('lifetime_earned_points').eq('id', customerId).maybeSingle();
-        const lifetimePoints = customerData ? (Number(customerData.lifetime_earned_points) || 0) : 0;
-        
-        const { data: settingsRows } = await supabaseAdmin.from('store_settings').select('key, value').in('key', ['loyalty_program', 'loyalty_point_policy']);
-        const settings = (settingsRows || []).reduce((all, row) => ({ ...all, [row.key]: row.value }), {});
-        
-        const policy = settings.loyalty_point_policy;
-        let policyObj = {};
-        if (typeof policy === 'string') { try { policyObj = JSON.parse(policy); } catch(e){} } else if (policy) { policyObj = policy; }
-        
-        const pointsPerJmd = typeof policyObj.pointsPerJmd === 'number' ? policyObj.pointsPerJmd : 1;
-        const tierMultipliers = Array.isArray(policyObj.tierMultipliers) ? policyObj.tierMultipliers : [1, 2, 3];
-
-        const prog = settings.loyalty_program;
-        let progObj = {};
-        if (typeof prog === 'string') { try { progObj = JSON.parse(prog); } catch(e){} } else if (prog) { progObj = prog; }
-        
-        const tiers = Array.isArray(progObj.tiers) ? progObj.tiers : [];
-        let tierIndex = 0;
-        
-        for (let i = 0; i < tiers.length; i++) {
-            let threshold = 0;
-            if (tiers[i].minimumLifetimePoints !== undefined) threshold = Number(tiers[i].minimumLifetimePoints);
-            else if (tiers[i].requiredPoints !== undefined) threshold = Number(tiers[i].requiredPoints);
-            else {
-                const match = String(tiers[i].threshold || '').replace(/,/g, '').match(/\d+(?:\.\d+)?/);
-                if (match) threshold = Number(match[0]);
-            }
-            if (!isNaN(threshold) && lifetimePoints >= threshold) tierIndex = i;
-        }
-        
-        const multiplier = typeof tiers[tierIndex]?.pointsMultiplier === 'number' ? tiers[tierIndex].pointsMultiplier : (tierMultipliers[tierIndex] || 1);
-        pointsEarned = Math.floor(subtotalAfterDiscount * pointsPerJmd * multiplier);
+      if (!appliedDiscountCode) {
+        const [rewardsPolicy, customerRow] = await Promise.all([
+          loyaltyEngine.loadPolicy(),
+          supabaseAdmin.from('customers').select('lifetime_purchase_jmd').eq('id', customerId).maybeSingle()
+        ]);
+        const tier = loyaltyEngine.tierFor(customerRow?.data?.lifetime_purchase_jmd || 0, rewardsPolicy);
+        pointsEarned = Math.floor(subtotal * rewardsPolicy.creditsPerJmdSpent * tier.multiplier);
+      }
     } catch (e) {
-        console.error("Error calculating loyalty multiplier", e);
+      console.error('Error estimating loyalty credits', e);
     }
 
     const { error: checkoutSessionError } = await supabaseAdmin
@@ -2139,6 +2138,10 @@ app.patch('/api/admin/orders/:id/status', async (req, res) => {
       .single();
     if (updateError) throw updateError;
 
+    if (field === 'payment_status' && currentOrder.payment_status !== value) {
+      await loyaltyEngine.handlePaymentStatusChange(orderId, currentOrder.payment_status, value);
+    }
+
     let emailStatus = 'not_required';
     if (field === 'status' && value === 'shipped' && currentOrder.status !== 'shipped') {
       const emailResult = await sendShippingUpdateEmail(orderId);
@@ -2206,6 +2209,85 @@ app.patch('/api/admin/orders/:id/tracking', async (req, res) => {
   } catch (error) {
     console.error('[Admin Order Tracking]', error.message);
     return res.status(error.status || 500).json({ error: error.message || 'Unable to update shipment tracking.' });
+  }
+});
+
+// ── Glow & Go Rewards — admin ──
+app.get('/api/admin/rewards/members', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 25));
+    const offset = Math.max(0, Number(req.query.offset) || 0);
+    const result = await loyaltyEngine.listMembers({ search: req.query.search || '', limit, offset });
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('[Admin Rewards Members]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to load members.' });
+  }
+});
+
+app.get('/api/admin/rewards/members/:id/ledger', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50));
+    const offset = Math.max(0, Number(req.query.offset) || 0);
+    const result = await loyaltyEngine.listLedger(req.params.id, { limit, offset });
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('[Admin Rewards Ledger]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to load this member’s ledger.' });
+  }
+});
+
+app.post('/api/admin/rewards/adjust', async (req, res) => {
+  try {
+    const admin = await requireAdmin(req);
+    const customerId = String(req.body?.customerId || '').trim();
+    if (!customerId) return res.status(400).json({ error: 'Choose a member first.' });
+    const amount = Number(req.body?.amount);
+    if (!Number.isFinite(amount) || amount === 0) return res.status(400).json({ error: 'Enter a non-zero amount.' });
+    const note = String(req.body?.note || '').trim().slice(0, 300) || null;
+    const balance = await loyaltyEngine.manualAdjust({ customerId, amount, note, adminUserId: admin.id });
+    return res.status(200).json({ success: true, balance });
+  } catch (error) {
+    console.error('[Admin Rewards Adjust]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to adjust this member’s credits.' });
+  }
+});
+
+app.post('/api/admin/rewards/vip-rewards/generate', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const result = await loyaltyEngine.generateVipRewardsForCurrentPeriod();
+    return res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    console.error('[Admin Rewards VIP Generate]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to generate VIP rewards.' });
+  }
+});
+
+app.post('/api/admin/rewards/run-daily-jobs', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const { error } = await supabaseAdmin.rpc('glow_run_daily_jobs');
+    if (error) throw error;
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('[Admin Rewards Daily Jobs]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to run the rewards maintenance job.' });
+  }
+});
+
+app.post('/api/admin/reviews/:id/approve', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const { error: updateError } = await supabaseAdmin.from('product_reviews').update({ approved: true }).eq('id', req.params.id);
+    if (updateError) throw updateError;
+    const result = await loyaltyEngine.awardReviewCredits(req.params.id);
+    return res.status(200).json({ success: true, creditsAwarded: result?.amount || 0 });
+  } catch (error) {
+    console.error('[Admin Review Approve]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to approve this review.' });
   }
 });
 
@@ -2395,6 +2477,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
     ].join(' ');
 
     // Mark order as paid
+    const previousPaymentStatus = order.payment_status;
     const { error: updateErr } = await supabaseAdmin
       .from('orders')
       .update({
@@ -2407,6 +2490,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
       .eq('id', order.id);
 
     if (updateErr) throw updateErr;
+    await loyaltyEngine.handlePaymentStatusChange(order.id, previousPaymentStatus, 'paid');
 
     await supabaseAdmin.from('payment_checkout_sessions').update({
       status: 'paid',

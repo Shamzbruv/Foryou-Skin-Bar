@@ -92,6 +92,7 @@
                         <th class="p-4">Rating</th>
                         <th class="p-4">Review</th>
                         <th class="p-4">Approved</th>
+                        <th class="p-4">Glow Credits</th>
                         <th class="p-4 w-24 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -139,18 +140,21 @@
             const { data, error } = await supabase.from('product_reviews').select('*').order('created_at', { ascending: false });
             
             if (error) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-red-500">Error: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-red-500">Error: ${error.message}</td></tr>`;
                 return;
             }
             
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-stone-500">No reviews found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-stone-500">No reviews found.</td></tr>`;
                 return;
             }
-            
+
             tbody.innerHTML = data.map(r => {
                 const statusClass = r.approved ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
                 const statusText = r.approved ? 'Approved' : 'Pending';
+                const creditCell = !r.customer_id
+                    ? '<span class="text-stone-400 text-xs">No linked account</span>'
+                    : (r.credit_awarded ? '<span class="text-sage-700 text-xs font-semibold"><i class="fas fa-sparkles mr-1"></i>Awarded</span>' : '<span class="text-stone-400 text-xs">Pending approval</span>');
                 return `
                 <tr class="hover:bg-stone-50 transition">
                     <td class="p-4 font-bold text-stone-800">${r.customer_name}</td>
@@ -158,6 +162,7 @@
                     <td class="p-4 text-amber-500">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</td>
                     <td class="p-4 text-stone-600 truncate max-w-xs">${r.review_text}</td>
                     <td class="p-4"><span class="px-2 py-1 text-xs font-semibold rounded-full uppercase ${statusClass}">${statusText}</span></td>
+                    <td class="p-4">${creditCell}</td>
                     <td class="p-4 text-right">
                         ${!r.approved ? `<button class="text-green-600 hover:text-green-800 font-medium text-sm mr-3" onclick="window.approveReview('${r.id}')"><i class="fas fa-check"></i></button>` : ''}
                         <button class="text-red-500 hover:text-red-700 font-medium text-sm" onclick="window.deleteReview('${r.id}')"><i class="fas fa-trash"></i></button>
@@ -168,13 +173,20 @@
         }
 
         window.approveReview = async (id) => {
-            if(!confirm("Approve this review for display?")) return;
-            const { error } = await supabase.from('product_reviews').update({ approved: true }).eq('id', id);
-            if (error) {
-                showToast(error.message, 'error');
-            } else {
-                showToast('Review approved');
+            if(!confirm("Approve this review for display? Glow Credits will be awarded automatically if it's linked to a customer account.")) return;
+            try {
+                const { data: sessionData } = await supabase.auth.getSession();
+                const accessToken = sessionData?.session?.access_token;
+                const response = await fetch(`/api/admin/reviews/${encodeURIComponent(id)}/approve`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.error || 'Unable to approve this review.');
+                showToast(result.creditsAwarded ? `Review approved — ${result.creditsAwarded} Glow Credits awarded.` : 'Review approved');
                 loadReviews();
+            } catch (error) {
+                showToast(error.message, 'error');
             }
         };
 

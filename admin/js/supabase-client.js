@@ -107,12 +107,7 @@ if (window.location.pathname.endsWith('/admin/products.html')) {
     });
 }
 
-// Adds the configurable customer points policy to the Loyalty Program editor.
-if (window.location.pathname.endsWith('/admin/loyalty.html')) {
-    import('/admin/js/loyalty-policy-style.js').catch((error) => {
-        console.warn('Customer points policy styles could not be loaded.', error);
-    });
-    import('/admin/js/loyalty-policy-manager.js').catch((error) => {
-        console.warn('Customer points policy editor could not be loaded.', error);
-    });
-}
+// Note: the old customer points policy widget (loyalty-policy-manager.js /
+// loyalty-policy-style.js) has been retired. admin/loyalty.html now has a built-in
+// "Programme Rules" tab (admin/js/rewards-settings.js) that is the single source of truth
+// for Glow Credits math, replacing pointsPerJmd/tierMultipliers.

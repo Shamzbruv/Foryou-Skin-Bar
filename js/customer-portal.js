@@ -121,7 +121,11 @@
               </button>
             </div>` : ''}
         </div>
-        ${Number(order.pointsEarned || 0) > 0 ? `<span class="order-credit"><i class="fas fa-sparkles mr-1"></i>+${formatNumber(order.pointsEarned)} ${escapeHtml(portalData.loyalty.creditLabel)}</span>` : '<span class="order-credit text-stone-500">Credits apply after payment is confirmed</span>'}
+        ${order.paymentStatus !== 'paid'
+          ? '<span class="order-credit text-stone-500">Credits apply after payment is confirmed</span>'
+          : Number(order.pointsEarned || 0) > 0
+            ? `<span class="order-credit"><i class="fas fa-sparkles mr-1"></i>+${formatNumber(order.pointsEarned)} ${escapeHtml(portalData.loyalty.creditLabel)}</span>`
+            : `<span class="order-credit text-stone-500">No ${escapeHtml(portalData.loyalty.creditLabel)} on this order</span>`}
       </div>
     </article>`;
   }
@@ -131,18 +135,26 @@
       return `<div class="account-empty"><i class="fas fa-gift"></i><h3>Rewards are coming soon.</h3><p>Keep enjoying your routine while the next reward collection is prepared.</p></div>`;
     }
 
-    return loyalty.rewards.map((reward) => {
-      const requestText = `Hi Foryou Skin Bar! I would like help with the ${reward.title} reward in my customer account.`;
-      const requestHref = `https://wa.me/18763094374?text=${encodeURIComponent(requestText)}`;
-      return `<article class="account-card reward-account-card">
-        <span class="reward-tier">${escapeHtml(reward.tierName)}</span>
+    return loyalty.rewards.map((reward) => `<article class="account-card reward-account-card">
         <h3>${escapeHtml(reward.title)}</h3>
         <p>${escapeHtml(reward.description || 'A special Inner Circle reward.')}</p>
-        <div class="reward-points">${escapeHtml(reward.points || 'See reward details')}</div>
-        <span class="reward-state ${reward.eligible ? '' : 'locked'}">${reward.eligible ? 'Ready to claim' : 'Keep earning to unlock'}</span>
-        ${reward.eligible ? `<a class="reward-request" href="${requestHref}" target="_blank" rel="noopener">Request this reward <i class="fas fa-arrow-right ml-1"></i></a>` : ''}
-      </article>`;
-    }).join('');
+        <div class="reward-points">${escapeHtml(reward.points || 'See reward details')} ${escapeHtml(loyalty.creditLabel || 'Glow Credits')}</div>
+        <span class="reward-state ${reward.eligible ? '' : 'locked'}">${reward.eligible ? 'Ready to redeem' : 'Keep earning to unlock'}</span>
+        ${reward.eligible
+          ? `<button class="reward-request redeem-credits-btn" type="button" data-redeem-credits="${reward.requiredPoints}"><i class="fas fa-sparkles mr-1"></i>Redeem now</button>`
+          : ''}
+      </article>`).join('');
+  }
+
+  function referralCardMarkup(loyalty) {
+    return `<article class="account-card" style="margin-bottom:1.5rem;">
+      <p class="account-eyebrow">Refer a friend</p>
+      <h2>Share your glow, earn ${escapeHtml(String(loyalty.referralCredits ?? 200))} ${escapeHtml(loyalty.creditLabel || 'Glow Credits')}</h2>
+      <p class="mt-2 text-sm text-stone-600">Your friend gets ${escapeHtml(String(loyalty.referralFriendDiscountPercent ?? 20))}% off their first order. You get ${escapeHtml(String(loyalty.referralCredits ?? 200))} ${escapeHtml(loyalty.creditLabel || 'Glow Credits')} once they complete it — enter your code in the discount box at checkout.</p>
+      <div id="referralCodeBox" class="mt-4 flex flex-wrap items-center gap-3">
+        <button id="loadReferralCodeBtn" class="account-outline" type="button"><i class="fas fa-gift"></i>Get my referral code</button>
+      </div>
+    </article>`;
   }
 
   function notificationStorageKey() {
@@ -206,8 +218,9 @@
     const orders = data.orders || [];
     const currentTier = loyalty.currentTier || { name: 'Glow Member', rank: 'Your level', threshold: 0, multiplier: 1 };
     const nextTier = loyalty.nextTier;
+    const lifetimeSpend = Number(loyalty.lifetimePurchaseJmd || 0);
     const progress = nextTier
-      ? Math.min(100, Math.max(0, ((Number(loyalty.lifetimeEarned || 0) - Number(currentTier.threshold || 0)) / Math.max(1, Number(nextTier.threshold || 0) - Number(currentTier.threshold || 0))) * 100))
+      ? Math.min(100, Math.max(0, ((lifetimeSpend - Number(currentTier.threshold || 0)) / Math.max(1, Number(nextTier.threshold || 0) - Number(currentTier.threshold || 0))) * 100))
       : 100;
     const firstName = String(profile.fullName || '').trim().split(/\s+/)[0] || 'Glow friend';
     const recentOrders = orders.slice(0, 3);
@@ -248,7 +261,7 @@
                 <div class="loyalty-points">${formatNumber(loyalty.pointsBalance)}</div><div class="loyalty-label">${escapeHtml(loyalty.creditLabel || 'Glow Credits')} available</div>
                 <span class="loyalty-tier-pill"><i class="fas fa-sparkles"></i>${escapeHtml(currentTier.rank || 'Inner Circle member')} · ${Number(currentTier.multiplier || 1)}× earning</span>
                 <div class="progress-track"><div class="progress-bar" style="width:${progress}%"></div></div>
-                <p class="loyalty-next">${nextTier ? `${formatNumber(loyalty.pointsToNextTier)} more ${escapeHtml(loyalty.creditLabel || 'Glow Credits')} until ${escapeHtml(nextTier.name)}.` : 'You have reached the highest glow level.'}</p>
+                <p class="loyalty-next">${nextTier ? `${formatCurrency(loyalty.spendToNextTierJmd)} more in lifetime purchases until ${escapeHtml(nextTier.name)}.` : 'You have reached the highest glow level.'}</p>
               </aside>
             </div>
           </section>
@@ -261,6 +274,8 @@
           <section class="account-view" data-account-view="rewards">
             <div class="account-section-head"><div><p class="account-eyebrow">${escapeHtml(loyalty.creditLabel || 'Glow Credits')} & benefits</p><h2 class="text-3xl text-stone-800">Your glow rewards</h2></div><a href="loyalty.html" class="account-link">Explore programme <i class="fas fa-arrow-right ml-1"></i></a></div>
             <div class="account-card account-section mb-4"><h2>${formatNumber(loyalty.pointsBalance)} ${escapeHtml(loyalty.creditLabel || 'Glow Credits')} available</h2><p class="mt-3 text-sm text-stone-600">${escapeHtml(loyalty.calculationNote || '')}</p></div>
+            ${referralCardMarkup(loyalty)}
+            <div id="redeemMessage" class="auth-message" role="status"></div>
             <div class="rewards-grid">${rewardsMarkup(loyalty)}</div>
           </section>
 
@@ -273,6 +288,8 @@
                   <div class="field"><label for="profileEmail">Email address</label><input id="profileEmail" value="${escapeHtml(profile.email || '')}" type="email" disabled></div>
                   <div class="field"><label for="profilePhone">Phone number</label><input id="profilePhone" value="${escapeHtml(profile.phone || '')}" autocomplete="tel"></div>
                   <div class="field"><label for="profileWhatsapp">WhatsApp number</label><input id="profileWhatsapp" value="${escapeHtml(profile.whatsapp || '')}" autocomplete="tel"></div>
+                  <div class="field"><label for="profileDob">Birthday</label><input id="profileDob" value="${escapeHtml(profile.dateOfBirth || '')}" type="date" autocomplete="bday"></div>
+                  <p class="text-xs text-stone-500 mt-1">Add your birthday to receive a birthday Glow Credits reward every year.</p>
               </section>
               <section class="account-card profile-card">
                 <p class="account-eyebrow">Shipping Address</p><h2>Your default delivery address.</h2><p>Save time at checkout by keeping this updated.</p>
@@ -381,6 +398,7 @@
               fullName: document.getElementById('profileName').value.trim(),
               phone: document.getElementById('profilePhone').value.trim(),
               whatsapp: document.getElementById('profileWhatsapp').value.trim(),
+              dateOfBirth: document.getElementById('profileDob').value.trim(),
               country: document.getElementById('profileCountry').value.trim(),
               addressLine1: document.getElementById('profileAddress1').value.trim(),
               addressLine2: document.getElementById('profileAddress2').value.trim(),
@@ -396,6 +414,49 @@
         showProfileMessage(error.message || 'We could not save your details.', 'error');
       } finally {
         setButtonBusy(button, false);
+      }
+    });
+
+    const showRedeemMessage = (text, type = 'success') => {
+      const target = document.getElementById('redeemMessage');
+      if (!target) return;
+      target.textContent = text;
+      target.className = `auth-message visible ${type}`;
+    };
+    document.querySelectorAll('.redeem-credits-btn').forEach((button) => button.addEventListener('click', async () => {
+      const credits = Number(button.dataset.redeemCredits);
+      if (!credits) return;
+      const original = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      try {
+        const result = await portalFetch('/api/rewards/redeem', { method: 'POST', body: JSON.stringify({ credits }) });
+        await loadPortal();
+        switchTab('rewards');
+        showRedeemMessage(`Success! Use code ${result.code} at checkout for ${formatCurrency(result.cashValueJmd)} off — valid until ${formatDate(result.validUntil)}.`, 'success');
+      } catch (error) {
+        showRedeemMessage(error.message || 'Unable to redeem right now.', 'error');
+        button.disabled = false;
+        button.innerHTML = original;
+      }
+    }));
+
+    document.getElementById('loadReferralCodeBtn')?.addEventListener('click', async (event) => {
+      const button = event.currentTarget;
+      const box = document.getElementById('referralCodeBox');
+      setButtonBusy(button, true);
+      try {
+        const result = await portalFetch('/api/rewards/referral-code');
+        box.innerHTML = `<code class="referral-code-value">${escapeHtml(result.referralCode)}</code><button id="copyReferralCodeBtn" class="account-outline" type="button"><i class="fas fa-copy"></i>Copy</button>`;
+        document.getElementById('copyReferralCodeBtn')?.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(result.referralCode);
+            showRedeemMessage('Referral code copied — share it with a friend!', 'success');
+          } catch (_) { showRedeemMessage(`Your referral code is ${result.referralCode}`, 'success'); }
+        });
+      } catch (error) {
+        setButtonBusy(button, false);
+        showRedeemMessage(error.message || 'Unable to load your referral code.', 'error');
       }
     });
 

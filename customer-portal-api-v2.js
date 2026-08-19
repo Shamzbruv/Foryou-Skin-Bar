@@ -3,6 +3,7 @@ const expressModulePath = require.resolve('express');
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const WebSocket = require('ws');
+const loyaltyEngine = require('./loyalty-engine');
 
 const nativeExpress = express;
 const db = createClient(
@@ -11,109 +12,28 @@ const db = createClient(
   { realtime: { transport: WebSocket } }
 );
 
-const DEFAULT_POLICY = {
-  creditLabel: 'Glow Credits',
-  pointsPerJmd: 1,
-  tierMultipliers: [1, 2, 3],
-  includeHistoricPaidOrders: true,
-  historyStartDate: ''
-};
-
 const number = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
-const object = (value) => {
-  if (typeof value === 'string') { try { return JSON.parse(value); } catch (_) { return {}; } }
-  return value && typeof value === 'object' ? value : {};
-};
 
-function policyFrom(value) {
-  const source = object(value);
-  const multipliers = Array.isArray(source.tierMultipliers) ? source.tierMultipliers.map((item) => Math.max(0, number(item, 1))) : DEFAULT_POLICY.tierMultipliers;
-  return {
-    ...DEFAULT_POLICY,
-    ...source,
-    pointsPerJmd: Math.max(0, number(source.pointsPerJmd, DEFAULT_POLICY.pointsPerJmd)),
-    tierMultipliers: multipliers.length ? multipliers : DEFAULT_POLICY.tierMultipliers,
-    includeHistoricPaidOrders: source.includeHistoricPaidOrders !== false,
-    historyStartDate: typeof source.historyStartDate === 'string' ? source.historyStartDate : ''
-  };
-}
-
-function thresholdFor(tier, index) {
-  const explicit = number(tier?.minimumLifetimePoints ?? tier?.requiredPoints, NaN);
-  if (Number.isFinite(explicit)) return Math.max(0, explicit);
-  const match = String(tier?.threshold || '').replace(/,/g, '').match(/\d+(?:\.\d+)?/);
-  return match ? Math.max(0, number(match[0])) : (index === 0 ? 0 : Number.MAX_SAFE_INTEGER);
-}
-
-function rewardPoints(reward) {
-  const match = String(reward?.points || '').replace(/,/g, '').match(/\d+(?:\.\d+)?/);
-  return match ? Math.max(0, number(match[0])) : null;
-}
-
-function programmeFrom(value, policy) {
-  const source = object(value);
-  const tiers = (Array.isArray(source.tiers) ? source.tiers : []).map((tier, index) => ({
-    name: String(tier.name || `Level ${index + 1}`),
-    rank: String(tier.rank || `Level ${index + 1}`),
-    threshold: thresholdFor(tier, index),
-    multiplier: Math.max(0, number(tier.pointsMultiplier, policy.tierMultipliers[index] ?? 1)),
-    summary: String(tier.summary || ''),
-    rewards: (Array.isArray(tier.rewards) ? tier.rewards : []).map((reward) => ({
-      title: String(reward.title || 'Reward'),
-      points: String(reward.points || ''),
-      requiredPoints: rewardPoints(reward),
-      description: String(reward.description || '')
-    }))
-  })).sort((left, right) => left.threshold - right.threshold);
-
-  return {
-    name: String(source.name || 'Glow & Go Inner Circle'),
-    hero: object(source.hero),
-    tiers: tiers.length ? tiers : [{ name: 'Radiant Rookie', rank: 'Level One', threshold: 0, multiplier: 1, summary: '', rewards: [] }]
-  };
-}
-
-function eligible(order, policy) {
-  if (order.payment_status !== 'paid' || ['cancelled', 'refunded'].includes(order.status)) return false;
-  if (!policy.includeHistoricPaidOrders && policy.historyStartDate) {
-    const start = new Date(`${policy.historyStartDate}T00:00:00`);
-    if (Number.isFinite(start.valueOf()) && new Date(order.created_at) < start) return false;
+// Builds the account-page loyalty summary from the ledger engine (loyalty-engine.js), the
+// single source of truth for balance/tier math shared with the admin dashboard. Marketing
+// copy (tier rank label + summary) is layered in from the Page Content editor when present,
+// purely for nicer wording — never for the numbers themselves.
+async function loyaltySummaryFor(customer, programmeCopy) {
+  const policy = await loyaltyEngine.loadPolicy();
+  if (!customer) {
+    const tier = loyaltyEngine.tierFor(0, policy);
+    return { policy, tier, balance: 0, lifetimeEarned: 0, lifetimePurchaseJmd: 0 };
   }
-  return true;
-}
-
-function loyaltyFor(customer, orders, programme, policy) {
-  let balance = customer ? number(customer.loyalty_points_balance) : 0;
-  let lifetime = customer ? number(customer.lifetime_earned_points) : 0;
-  let spend = 0;
-  const pointsByOrder = new Map();
-
-  [...orders].sort((left, right) => new Date(left.created_at) - new Date(right.created_at)).forEach((order) => {
-    pointsByOrder.set(order.id, number(order.points_earned));
-    if (!eligible(order, policy)) return;
-    const orderSpend = Math.max(0, number(order.subtotal_jmd, number(order.grand_total_jmd)));
-    spend += orderSpend;
-  });
-
-  const tierIndex = programme.tiers.reduce((selected, tier, index) => lifetime >= tier.threshold ? index : selected, 0);
-  const currentTier = programme.tiers[tierIndex] || programme.tiers[0];
-  const nextTier = programme.tiers[tierIndex + 1] || null;
-  const rewards = programme.tiers.slice(0, tierIndex + 1).flatMap((tier) => tier.rewards.map((reward) => ({
-    ...reward,
-    tierName: tier.name,
-    eligible: reward.requiredPoints !== null && balance >= reward.requiredPoints
-  })));
-
+  const balance = await loyaltyEngine.getBalance(customer.id);
+  const tier = loyaltyEngine.tierFor(customer.lifetime_purchase_jmd, policy);
+  const copyTiers = Array.isArray(programmeCopy?.tiers) ? programmeCopy.tiers : [];
+  const copyTier = copyTiers[tier.index] || {};
   return {
-    creditLabel: String(policy.creditLabel || 'Glow Credits'),
-    pointsBalance: balance,
-    lifetimeEarned: lifetime,
-    eligibleSpend: spend,
-    currentTier,
-    nextTier,
-    pointsToNextTier: nextTier ? Math.max(0, nextTier.threshold - lifetime) : 0,
-    rewards,
-    pointsByOrder
+    policy, tier, balance,
+    lifetimeEarned: number(customer.lifetime_earned_points),
+    lifetimePurchaseJmd: number(customer.lifetime_purchase_jmd),
+    rank: copyTier.rank || tier.name,
+    summary: copyTier.summary || `Earning ${tier.multiplier}× ${policy.creditLabel} on every eligible purchase.`
   };
 }
 
@@ -160,7 +80,7 @@ async function authenticatedUser(req) {
 
 async function customerForEmail(email, user = null) {
   if (!email) return null;
-  const customerFields = 'id, full_name, email, phone, whatsapp, created_at, loyalty_points_balance, lifetime_earned_points, default_country, default_address_line1, default_address_line2, default_city, default_parish, default_state_province, default_postal_code, customer_origin, was_imported, imported_at, account_user_id, account_created_at';
+  const customerFields = 'id, full_name, email, phone, whatsapp, created_at, loyalty_points_balance, lifetime_earned_points, lifetime_purchase_jmd, date_of_birth, referral_code, quiz_bonus_awarded_at, default_country, default_address_line1, default_address_line2, default_city, default_parish, default_state_province, default_postal_code, customer_origin, was_imported, imported_at, account_user_id, account_created_at';
   const { data, error } = await db.from('customers').select(customerFields).ilike('email', email).order('created_at', { ascending: true }).limit(1);
   if (error) throw error;
   
@@ -177,10 +97,13 @@ async function customerForEmail(email, user = null) {
       account_user_id: user.id,
       account_created_at: user.created_at
     }).select(customerFields).single();
-    
-    if (!insertError && newData) return newData;
+
+    if (!insertError && newData) {
+      try { await loyaltyEngine.awardSignupBonusIfEligible(newData.id); } catch (err) { console.warn('[Glow Rewards] Signup bonus failed:', err.message); }
+      return newData;
+    }
   }
-  
+
   if (data?.[0] && user && (data[0].account_user_id !== user.id || data[0].customer_origin !== 'account')) {
     const { data: linkedCustomer, error: linkError } = await db.from('customers').update({
       account_user_id: user.id,
@@ -188,7 +111,10 @@ async function customerForEmail(email, user = null) {
       customer_origin: 'account',
       updated_at: new Date().toISOString()
     }).eq('id', data[0].id).select(customerFields).single();
-    if (!linkError && linkedCustomer) return linkedCustomer;
+    if (!linkError && linkedCustomer) {
+      try { await loyaltyEngine.awardSignupBonusIfEligible(linkedCustomer.id); } catch (err) { console.warn('[Glow Rewards] Signup bonus failed:', err.message); }
+      return linkedCustomer;
+    }
   }
 
   return data?.[0] || null;
@@ -223,12 +149,12 @@ async function dashboardFor(user) {
     cancellationRequests = requestRows || [];
   }
 
-  const { data: settingsRows, error: settingsError } = await db.from('store_settings').select('key, value').in('key', ['loyalty_program', 'loyalty_point_policy', 'policy_updates']);
+  const { data: settingsRows, error: settingsError } = await db.from('store_settings').select('key, value').in('key', ['loyalty_program', 'policy_updates']);
   if (settingsError) throw settingsError;
   const settings = (settingsRows || []).reduce((all, row) => ({ ...all, [row.key]: row.value }), {});
-  const policy = policyFrom(settings.loyalty_point_policy);
-  const programme = programmeFrom(settings.loyalty_program, policy);
-  const loyalty = loyaltyFor(customer, orders, programme, policy);
+  let programmeCopy = settings.loyalty_program;
+  if (typeof programmeCopy === 'string') { try { programmeCopy = JSON.parse(programmeCopy); } catch (_) { programmeCopy = null; } }
+  const loyalty = await loyaltySummaryFor(customer, programmeCopy);
 
   const itemsByOrder = items.reduce((all, item) => {
     if (!all[item.order_id]) all[item.order_id] = [];
@@ -265,7 +191,7 @@ async function dashboardFor(user) {
       shippingTotalJmd: number(order.shipping_total_jmd),
       grandTotalJmd: number(order.grand_total_jmd),
       createdAt: order.created_at,
-      pointsEarned: loyalty.pointsByOrder.get(order.id) || 0,
+      pointsEarned: number(order.points_earned),
       cancellationRequest: cancellationByOrder[order.id] ? {
         id: cancellationByOrder[order.id].id,
         status: cancellationByOrder[order.id].status,
@@ -296,21 +222,35 @@ async function dashboardFor(user) {
     },
     summary: {
       orderCount: responseOrders.length,
-      paidOrderCount: orders.filter((order) => eligible(order, policy)).length,
+      paidOrderCount: orders.filter((order) => order.payment_status === 'paid').length,
       totalOrderSpend: orders.reduce((total, order) => total + Math.max(0, number(order.grand_total_jmd)), 0),
       recentOrder: responseOrders[0] || null
     },
     loyalty: {
-      creditLabel: loyalty.creditLabel,
-      pointsBalance: loyalty.pointsBalance,
+      creditLabel: loyalty.policy.creditLabel,
+      pointsBalance: loyalty.balance,
       lifetimeEarned: loyalty.lifetimeEarned,
-      eligibleSpend: loyalty.eligibleSpend,
-      currentTier: loyalty.currentTier,
-      nextTier: loyalty.nextTier,
-      pointsToNextTier: loyalty.pointsToNextTier,
-      rewards: loyalty.rewards,
-      calculationNote: `Credits are calculated from eligible paid orders at ${policy.pointsPerJmd} ${loyalty.creditLabel} per J$1 spent, with your active tier multiplier applied.`,
-      rewardsContactUrl: String(programme.hero.primaryHref || 'https://wa.me/18763094374')
+      lifetimePurchaseJmd: loyalty.lifetimePurchaseJmd,
+      currentTier: {
+        name: loyalty.tier.name, rank: loyalty.rank || loyalty.tier.name, summary: loyalty.summary || '',
+        threshold: loyalty.tier.threshold, multiplier: loyalty.tier.multiplier
+      },
+      nextTier: loyalty.tier.nextThreshold != null ? { name: loyalty.tier.nextName, threshold: loyalty.tier.nextThreshold } : null,
+      spendToNextTierJmd: loyalty.tier.nextThreshold != null ? Math.max(0, loyalty.tier.nextThreshold - loyalty.lifetimePurchaseJmd) : 0,
+      redemptionDenominations: loyalty.policy.redemptionDenominations,
+      creditToJmdRatio: loyalty.policy.creditToJmdRatio,
+      rewards: loyalty.policy.redemptionDenominations.map((credits) => ({
+        title: `${credits.toLocaleString()} ${loyalty.policy.creditLabel}`,
+        points: String(credits),
+        requiredPoints: credits,
+        description: `J$${(credits * loyalty.policy.creditToJmdRatio).toLocaleString()} off your next eligible order`,
+        eligible: loyalty.balance >= credits
+      })),
+      expirationMonths: loyalty.policy.expirationMonths,
+      referralCredits: loyalty.policy.referralCredits,
+      referralFriendDiscountPercent: loyalty.policy.referralFriendDiscountPercent,
+      calculationNote: `${loyalty.policy.creditLabel} are earned on eligible paid orders (1 credit per J$100 spent, no discount code applied) at your active tier's earning rate, and expire ${loyalty.policy.expirationMonths} months after they're earned.`,
+      rewardsContactUrl: String(programmeCopy?.hero?.primaryHref || 'https://wa.me/18763094374')
     },
     notifications: policyUpdatesFrom(settings.policy_updates),
     orders: responseOrders
@@ -336,11 +276,13 @@ function register(app) {
       const parish = String(req.body?.parish || '').trim().slice(0, 100);
       const stateProvince = String(req.body?.stateProvince || '').trim().slice(0, 100);
       const postalCode = String(req.body?.postalCode || '').trim().slice(0, 40);
+      const dateOfBirthRaw = String(req.body?.dateOfBirth || '').trim();
+      const dateOfBirth = /^\d{4}-\d{2}-\d{2}$/.test(dateOfBirthRaw) ? dateOfBirthRaw : null;
       let customer = await customerForEmail(user.email, user);
-      const record = { 
-        full_name: fullName, 
-        phone: phone || null, 
-        whatsapp: whatsapp || null, 
+      const record = {
+        full_name: fullName,
+        phone: phone || null,
+        whatsapp: whatsapp || null,
         default_country: country || null,
         default_address_line1: addressLine1 || null,
         default_address_line2: addressLine2 || null,
@@ -348,8 +290,9 @@ function register(app) {
         default_parish: parish || null,
         default_state_province: stateProvince || null,
         default_postal_code: postalCode || null,
-        updated_at: new Date().toISOString() 
+        updated_at: new Date().toISOString()
       };
+      if (dateOfBirth) record.date_of_birth = dateOfBirth;
       if (customer) {
         const { data, error } = await db.from('customers').update(record).eq('id', customer.id).select('id').single();
         if (error) throw error;
@@ -359,13 +302,47 @@ function register(app) {
       }
       customer = await customerForEmail(user.email);
       await db.auth.admin.updateUserById(user.id, { user_metadata: { ...user.user_metadata, full_name: customer.full_name, phone: customer.phone || '' } });
-      return res.status(200).json({ profile: { 
-        fullName: customer.full_name, email: user.email, phone: customer.phone || '', whatsapp: customer.whatsapp || '', 
+      return res.status(200).json({ profile: {
+        fullName: customer.full_name, email: user.email, phone: customer.phone || '', whatsapp: customer.whatsapp || '',
         country: customer.default_country || 'Jamaica', addressLine1: customer.default_address_line1 || '', addressLine2: customer.default_address_line2 || '',
         city: customer.default_city || '', parish: customer.default_parish || '', stateProvince: customer.default_state_province || '', postalCode: customer.default_postal_code || '',
-        joinedAt: customer.created_at || user.created_at 
+        dateOfBirth: customer.date_of_birth || '',
+        joinedAt: customer.created_at || user.created_at
       } });
     } catch (error) { return res.status(error.status || 500).json({ error: error.message || 'Unable to update your profile.' }); }
+  });
+
+  // Glow & Go rewards: redeem credits, fetch/generate a referral code, and award the
+  // one-time skin quiz bonus. All reuse the same authenticated-customer pattern above.
+  app.post('/api/rewards/redeem', nativeExpress.json(), async (req, res) => {
+    try {
+      const user = await authenticatedUser(req);
+      const customer = await customerForEmail(user.email, user);
+      if (!customer) return res.status(404).json({ error: 'We could not find your customer account.' });
+      const credits = Number(req.body?.credits);
+      const result = await loyaltyEngine.redeemCredits(customer.id, credits);
+      return res.status(200).json({ success: true, ...result });
+    } catch (error) { return res.status(error.status || 500).json({ error: error.message || 'Unable to redeem Glow Credits right now.' }); }
+  });
+
+  app.get('/api/rewards/referral-code', async (req, res) => {
+    try {
+      const user = await authenticatedUser(req);
+      const customer = await customerForEmail(user.email, user);
+      if (!customer) return res.status(404).json({ error: 'We could not find your customer account.' });
+      const code = await loyaltyEngine.getOrCreateReferralCode(customer.id);
+      return res.status(200).json({ referralCode: code });
+    } catch (error) { return res.status(error.status || 500).json({ error: error.message || 'Unable to load your referral code.' }); }
+  });
+
+  app.post('/api/rewards/quiz-complete', nativeExpress.json(), async (req, res) => {
+    try {
+      const user = await authenticatedUser(req);
+      const customer = await customerForEmail(user.email, user);
+      if (!customer) return res.status(200).json({ awarded: false });
+      const result = await loyaltyEngine.awardQuizCreditsIfEligible(customer.id);
+      return res.status(200).json({ awarded: !!result, amount: result?.amount || 0 });
+    } catch (error) { return res.status(error.status || 500).json({ error: error.message || 'Unable to record your quiz bonus.' }); }
   });
 }
 

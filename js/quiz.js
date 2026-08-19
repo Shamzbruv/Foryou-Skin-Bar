@@ -407,12 +407,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (total) total.textContent = `Total Routine Value: ${window.currencyManager?.formatJmd(totalValue) || `J$${totalValue.toLocaleString()}`}`;
   }
 
+  // Best-effort: award the one-time Glow Credits quiz bonus if the shopper is signed in.
+  // Silently does nothing for guests — the bonus only applies to identified accounts.
+  async function awardQuizGlowCreditsIfSignedIn() {
+    try {
+      if (!window.supabase) return;
+      const { data } = await window.supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) return;
+      await fetch('/api/rewards/quiz-complete', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    } catch (_) { /* non-critical */ }
+  }
+
   async function generateResults() {
     steps.forEach(saveStepAnswers);
     quizContainer.classList.add('hidden');
     quizResults.classList.remove('hidden');
     quizResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
     if (window.trackEvent) window.trackEvent('quiz_complete', answers);
+    awardQuizGlowCreditsIfSignedIn();
 
     const grid = document.getElementById('routineGrid');
     if (grid) {
