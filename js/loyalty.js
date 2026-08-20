@@ -3,86 +3,87 @@
     enabled: true,
     name: 'Glow & Go Inner Circle',
     hero: {
-      eyebrow: 'ForYou Skin Bar Rewards',
-      title: 'Glow more.\nGet <em>more</em> back.',
-      description: 'The Glow & Go Inner Circle is our thank-you for choosing your skin. Earn Glow Credits, unlock special rewards, and rise through every level of your routine.',
+      eyebrow: 'Join the Glow. Get Rewarded.',
+      title: 'Join the Glow.\nGet <em>Rewarded</em>.',
+      description: 'The Glow & Go Inner Circle is our free rewards programme, created to thank you for choosing ForYou Skin Bar. Join free and get 100 Glow Credits instantly. Earn more when you shop, refer friends, celebrate your birthday, leave reviews, and more.',
       imageUrl: 'assets/products/gift_set.png',
-      primaryLabel: 'Become a Member',
-      primaryHref: 'https://wa.me/18763094374?text=Hi%20For%20You%20Skin%20Bar!%20I%20would%20like%20to%20join%20the%20Glow%20%26%20Go%20Inner%20Circle.',
+      primaryLabel: 'Join Free',
+      primaryHref: 'customer-login.html',
       secondaryLabel: 'Explore Rewards',
-      proof: ['Free to join', 'Made for your glow', 'Jamaican handmade skincare']
+      proof: ['Free to join', '100 Glow Credits just for joining', 'Jamaican handmade skincare']
     },
     steps: [
-      { number: '01', icon: 'fa-user-plus', title: 'Sign Up', description: 'Join the Inner Circle to begin collecting Glow Credits with your favourite skincare essentials.' },
-      { number: '02', icon: 'fa-sparkles', title: 'Earn Glow Credits', description: 'Collect credits through purchases and special community moments built into the programme.' },
-      { number: '03', icon: 'fa-gift', title: 'Redeem Rewards', description: 'Turn your Glow Credits into savings, treats, and elevated skin-care moments.' }
+      { number: '01', icon: 'fa-sparkles', title: 'Join', description: 'Sign up for the Glow & Go Inner Circle for free and get 100 Glow Credits instantly. No membership fee, no complicated sign-up.' },
+      { number: '02', icon: 'fa-bag-shopping', title: 'Shop', description: 'Earn Glow Credits every time you shop — 1 Glow Credit for every J$100 spent. The more you shop, the more you earn.' },
+      { number: '03', icon: 'fa-gift', title: 'Get Rewarded', description: 'Turn your Glow Credits into savings toward your next eligible purchase. 100 Glow Credits = J$100 off, and it keeps going from there.' }
     ],
     tiers: [
       {
         name: 'Radiant Rookie',
-        threshold: '0 total earned Glow Credits required',
-        rank: 'Level One',
+        threshold: 'Join for free — everyone starts here',
+        rank: 'Welcome to the Inner Circle',
         icon: 'fa-seedling',
-        summary: 'Your glow journey starts here. Earn as you shop and unlock your first rewards.',
-        perks: ['Earn 1 Glow Credit for every $1 spent', 'Start enjoying rewards as soon as you join'],
+        summary: 'As a Radiant Rookie, you get 100 Glow Credits when you join, 1 Glow Credit for every J$100 spent, birthday rewards, member-only offers, access to Glow Days, and opportunities to earn bonus Glow Credits.',
+        perks: ['100 Glow Credits when you join', '1 Glow Credit for every J$100 spent', 'Birthday rewards', 'Member-only offers', 'Access to special Glow Days', 'Opportunities to earn bonus Glow Credits'],
         earnRules: [
-          { title: 'Purchase a product', description: 'Get 1 Glow Credit for every $1 spent' },
-          { title: 'Sign up to the site', description: 'Get 10 Glow Credits' },
-          { title: 'Celebrate a birthday', description: 'Get 50 Glow Credits' },
-          { title: 'Follow on social media', description: 'Get 50 Glow Credits' }
+          { title: 'Join for free', description: 'Get 100 Glow Credits instantly' },
+          { title: 'Shop with us', description: 'Get 1 Glow Credit for every J$100 spent' },
+          { title: 'Celebrate your birthday', description: 'Get 100 Glow Credits' },
+          { title: 'Leave a review', description: 'Get 200 Glow Credits' },
+          { title: 'Take the skin quiz', description: 'Get 200 Glow Credits' },
+          { title: 'Refer a friend', description: 'Get Glow Credits when they shop' }
         ],
         rewards: [
-          { title: 'Shine On', points: '2,500 Glow Credits', description: '$50 discount' },
-          { title: 'Glow Getter', points: '7,500 Glow Credits', description: '5% off orders over $5,000' }
+          { title: 'Shine On', points: '100 Glow Credits', description: 'J$100 off your next eligible purchase' },
+          { title: 'Glow Getter', points: '250 Glow Credits', description: 'J$250 off your next eligible purchase' }
         ]
       },
       {
         name: 'Glowing Insider',
-        threshold: '20,000 total earned Glow Credits required',
-        rank: 'Level Two',
+        threshold: 'J$10,000 in lifetime purchases required',
+        rank: 'Reach J$10,000 in lifetime purchases',
         icon: 'fa-sun',
-        summary: 'Your commitment is showing. Enjoy stronger earning power and more generous rewards.',
-        perks: ['Earn 2× more Glow Credits', 'Unlock rewards worth up to 15% off'],
+        summary: 'Your glow is getting stronger. As a Glowing Insider, you get everything in Radiant Rookie, plus 1.5X Glow Credits on purchases, bigger birthday rewards, insider-only offers, early access to new products, exclusive member promotions, and special bonus-credit opportunities.',
+        perks: ['1.5X Glow Credits on purchases', 'Bigger birthday rewards', 'Insider-only offers', 'Early access to selected new products', 'Exclusive member promotions', 'Special bonus-credit opportunities'],
         earnRules: [
-          { title: 'Purchase a product', description: 'Get 2 Glow Credits for every $1 spent' },
-          { title: 'Sign up to the site', description: 'Get 15 Glow Credits' },
-          { title: 'Celebrate a birthday', description: 'Get 100 Glow Credits' },
-          { title: 'Follow on social media', description: 'Get 50 Glow Credits' }
+          { title: 'Shop with us', description: 'Get 1.5 Glow Credits for every J$100 spent' },
+          { title: 'Celebrate your birthday', description: 'Get a bigger birthday reward' },
+          { title: 'Leave a review', description: 'Get 200 Glow Credits' },
+          { title: 'Take the skin quiz', description: 'Get 200 Glow Credits' },
+          { title: 'Refer a friend', description: 'Get Glow Credits when they shop' }
         ],
         rewards: [
-          { title: 'Sparkle Surprise', points: '15,000 Glow Credits', description: '$350 off orders over $8,500' },
-          { title: 'Glowing Gratification', points: '20,000 Glow Credits', description: '$500 off orders over $13,000' },
-          { title: 'Glow & Glam Goodie', points: '30,000 Glow Credits', description: '15% off orders over $15,000' }
+          { title: 'Sparkle Surprise', points: '500 Glow Credits', description: 'J$500 off your next eligible purchase' },
+          { title: 'Glowing Gratification', points: '1,000 Glow Credits', description: 'J$1,000 off your next eligible purchase' }
         ]
       },
       {
         name: 'Luminous VIP',
-        threshold: '50,000 total earned Glow Credits required',
-        rank: 'Level Three',
+        threshold: 'J$25,000 in lifetime purchases required',
+        rank: 'Reach J$25,000 in lifetime purchases',
         icon: 'fa-crown',
-        summary: 'Our brightest circle. Your loyalty unlocks premium treats made for your next-level glow.',
-        perks: ['Earn 3× more Glow Credits', 'Receive a free pair of exfoliation gloves', 'Unlock rewards worth up to 20% off'],
+        summary: 'You have reached your ultimate glow. As a Luminous VIP, you get everything in Glowing Insider, plus 2X Glow Credits on purchases, a VIP birthday gift, VIP-only offers, first access to selected new products and limited releases, exclusive VIP promotions, 1 free serum and 1 free toner every six months, and extra opportunities to earn bonus Glow Credits.',
+        perks: ['2X Glow Credits on purchases', 'VIP birthday gift', 'VIP-only offers', 'First access to selected new products and limited releases', 'Exclusive VIP promotions', '1 free serum and 1 free toner, semi-annually', 'Extra opportunities to earn bonus Glow Credits'],
         earnRules: [
-          { title: 'Purchase a product', description: 'Get 3 Glow Credits for every $1 spent' },
-          { title: 'Sign up to the site', description: 'Get 25 Glow Credits' },
-          { title: 'Celebrate a birthday', description: 'Get 250 Glow Credits' },
-          { title: 'Follow on social media', description: 'Get 50 Glow Credits' }
+          { title: 'Shop with us', description: 'Get 2 Glow Credits for every J$100 spent' },
+          { title: 'Celebrate your birthday', description: 'Get a VIP birthday gift' },
+          { title: 'Leave a review', description: 'Get 200 Glow Credits' },
+          { title: 'Take the skin quiz', description: 'Get 200 Glow Credits' },
+          { title: 'Refer a friend', description: 'Get Glow Credits when they shop' }
         ],
         rewards: [
-          { title: 'Luminous Surprise', points: '40,000 Glow Credits', description: '$300 off a specific category' },
-          { title: 'Brilliance Bonus', points: '55,000 Glow Credits', description: '100% off a specific product' },
-          { title: 'Luminous Renewal', points: '65,000 Glow Credits', description: '$400 off a specific product' },
-          { title: 'Luminary Luxe', points: '70,000 Glow Credits', description: '20% off orders over $15,500' }
+          { title: 'Luminous Surprise', points: '1,000 Glow Credits', description: 'J$1,000 off your next eligible purchase' },
+          { title: 'Semi-annual product reward', points: 'Automatic at this tier', description: '1 free serum and 1 free toner every six months' }
         ]
       }
     ],
     cta: {
-      title: 'Your routine deserves a little extra glow.',
-      description: 'Join the Glow & Go Inner Circle today and make every skincare moment count.',
-      label: 'Join the Inner Circle',
-      href: 'https://wa.me/18763094374?text=Hi%20For%20You%20Skin%20Bar!%20I%20would%20like%20to%20join%20the%20Glow%20%26%20Go%20Inner%20Circle.'
+      title: 'Your glow. Your rewards. Your inner circle.',
+      description: 'Join the Glow & Go Inner Circle today — free to join, 100 Glow Credits instantly, and more ways to earn every time you shop.',
+      label: 'Join Free',
+      href: 'customer-login.html'
     },
-    terms: 'Glow Credits, tier thresholds, rewards, and eligibility are subject to the active programme terms. Rewards cannot be exchanged for cash and may be changed, paused, or withdrawn by For You Skin Bar at any time.'
+    terms: 'The Glow & Go Inner Circle is a rewards programme offered by ForYou Skin Bar. Membership is free. 100 Glow Credits always equals J$100 off — Glow Credits have no cash value beyond this fixed rate and cannot be exchanged for cash. Glow Credits expire 6 months after they are earned. Glow Credits are removed if the related order is returned or refunded. Glow Credits cannot be earned on orders using a discount code, and Glow Credits, referral rewards, and promotional discount codes cannot be combined on the same order. There are no minimum purchase requirements to redeem a reward and no product or service exclusions. Tier status (Radiant Rookie, Glowing Insider, Luminous VIP) is based on lifetime purchases and is permanent once reached. Referral rewards: your friend receives 20% off their first eligible purchase, and you receive Glow Credits once they complete that purchase — referral rewards and Glow Credits cannot be combined on the same order. Birthday rewards (100 Glow Credits) are added automatically once your birthday is on file with your account. Luminous VIP members receive 1 free serum and 1 free toner every six months while they remain at that tier. ForYou Skin Bar reserves the right to modify, suspend, or terminate the rewards programme or individual rewards with reasonable notice. Glow Credits earned through fraudulent, abusive, or otherwise prohibited activity may be removed.'
   };
 
   const iconFallback = ['fa-seedling', 'fa-sun', 'fa-crown'];
