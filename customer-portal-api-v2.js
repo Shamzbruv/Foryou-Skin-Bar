@@ -335,6 +335,43 @@ function register(app) {
     } catch (error) { return res.status(error.status || 500).json({ error: error.message || 'Unable to load your referral code.' }); }
   });
 
+  // Submits a product/general review. If the shopper is signed in, their account is linked
+  // automatically (no email field on the review form needed) so approving it in admin can
+  // award the review Glow Credits bonus. Guests can still submit — it just won't be linked
+  // to an account, so credits can only be added manually for those.
+  app.post('/api/reviews/submit', nativeExpress.json(), async (req, res) => {
+    try {
+      const productId = req.body?.productId ? String(req.body.productId).trim() : null;
+      const rating = Math.round(Number(req.body?.rating));
+      const reviewText = String(req.body?.reviewText || '').trim().slice(0, 2000);
+      let customerName = String(req.body?.customerName || '').trim().slice(0, 120);
+
+      if (!Number.isFinite(rating) || rating < 1 || rating > 5) return res.status(400).json({ error: 'Choose a rating between 1 and 5.' });
+      if (!reviewText) return res.status(400).json({ error: 'Please write your review.' });
+
+      let customerId = null;
+      try {
+        const user = await authenticatedUser(req);
+        const customer = await customerForEmail(user.email, user);
+        if (customer) {
+          customerId = customer.id;
+          if (!customerName) customerName = customer.full_name || user.email;
+        }
+      } catch (_) { /* no/expired session -> submit as a guest, that's fine */ }
+
+      if (!customerName) return res.status(400).json({ error: 'Please add your name.' });
+
+      const { error } = await db.from('product_reviews').insert({
+        product_id: productId, customer_id: customerId, customer_name: customerName,
+        rating, review_text: reviewText, approved: false
+      });
+      if (error) throw error;
+      return res.status(200).json({ success: true, linkedToAccount: !!customerId });
+    } catch (error) {
+      return res.status(error.status || 500).json({ error: error.message || 'Unable to submit your review.' });
+    }
+  });
+
   app.post('/api/rewards/quiz-complete', nativeExpress.json(), async (req, res) => {
     try {
       const user = await authenticatedUser(req);

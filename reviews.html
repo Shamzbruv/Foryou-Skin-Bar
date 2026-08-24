@@ -248,22 +248,27 @@
         if (!name || !text || !rating) return;
 
         try {
-          const { error } = await supabase.from('product_reviews').insert({
-            product_id: null, // General review
-            customer_name: name,
-            rating: rating,
-            review_text: text,
-            approved: false // Admin must approve
+          const { data: sessionData } = await supabase.auth.getSession();
+          const accessToken = sessionData?.session?.access_token;
+          const response = await fetch('/api/reviews/submit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+            },
+            body: JSON.stringify({ productId: null, customerName: name, rating, reviewText: text })
           });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'Unable to submit your review.');
 
-          if (error) throw error;
-
-          msg.innerText = 'Thank you! Your review was submitted and will appear once approved.';
+          msg.innerText = result.linkedToAccount
+            ? 'Thank you! Your review was submitted and will appear once approved — your Glow Credits will be added then.'
+            : 'Thank you! Your review was submitted and will appear once approved. Sign in to your account next time so your review credits are added automatically.';
           msg.className = 'text-sm font-medium text-green-600 mt-4 block p-3 bg-green-50 rounded-lg border border-green-100';
           form.reset();
         } catch (err) {
           console.error(err);
-          msg.innerText = 'Error submitting review. Please try again.';
+          msg.innerText = err.message || 'Error submitting review. Please try again.';
           msg.className = 'text-sm font-medium text-red-600 mt-4 block p-3 bg-red-50 rounded-lg border border-red-100';
         } finally {
           btn.disabled = false;

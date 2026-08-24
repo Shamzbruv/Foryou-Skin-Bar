@@ -846,21 +846,26 @@
             if (!name || !text || !rating) return;
 
             try {
-              const { error } = await window.supabase.from('product_reviews').insert({
-                product_id: product.id,
-                customer_name: name,
-                rating: rating,
-                review_text: text,
-                approved: false // Admin must approve
+              const { data: sessionData } = await window.supabase.auth.getSession();
+              const accessToken = sessionData?.session?.access_token;
+              const response = await fetch('/api/reviews/submit', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+                },
+                body: JSON.stringify({ productId: product.id, customerName: name, rating, reviewText: text })
               });
+              const result = await response.json().catch(() => ({}));
+              if (!response.ok) throw new Error(result.error || 'Unable to submit your review.');
 
-              if (error) throw error;
-
-              msg.innerText = 'Review submitted! It will appear once approved.';
+              msg.innerText = result.linkedToAccount
+                ? 'Review submitted! It will appear once approved, and your Glow Credits will be added then.'
+                : 'Review submitted! It will appear once approved. Sign in to your account next time so your review credits are added automatically.';
               msg.className = 'text-sm font-medium text-green-600 mt-2 block';
               form.reset();
             } catch (err) {
-              msg.innerText = 'Error submitting review. Please try again.';
+              msg.innerText = err.message || 'Error submitting review. Please try again.';
               msg.className = 'text-sm font-medium text-red-600 mt-2 block';
             } finally {
               btn.disabled = false;
