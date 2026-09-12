@@ -287,15 +287,6 @@
               Foryou Skin Journal provides general skincare education, not a diagnosis or personal treatment plan. Persistent, painful, changing, or scarring concerns should be assessed by a qualified healthcare professional.
             </aside>
 
-            ${relatedPosts.length ? `
-              <section class="max-w-4xl mx-auto mt-16 pt-10 border-t border-stone-200" aria-labelledby="relatedReadingTitle">
-                <p class="text-xs font-bold uppercase tracking-widest text-amber-800 mb-2">Guided Learning</p>
-                <h2 id="relatedReadingTitle" class="serif-heading text-3xl md:text-4xl text-stone-800 mb-7">Continue reading</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  ${relatedPosts.map(related => `<article class="border border-stone-200 bg-white rounded-md overflow-hidden"><a href="blog-post.html?slug=${encodeURIComponent(related.slug)}"><img src="${related.image}" alt="" class="w-full aspect-[16/10] object-cover"><div class="p-4"><p class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-2">${related.category}</p><h3 class="serif-heading text-xl leading-tight text-stone-900">${related.title}</h3></div></a></article>`).join('')}
-                </div>
-              </section>` : ''}
-            
             <div class="max-w-2xl mx-auto mt-16 pt-8 border-t border-amber-900/10 text-center">
               <h3 class="serif-heading text-2xl mb-4">Share this article</h3>
               <div class="flex justify-center gap-4">
@@ -338,6 +329,15 @@
                 <p class="text-stone-500 py-5">Loading comments...</p>
               </div>
             </section>
+
+            ${relatedPosts.length ? `
+              <section class="max-w-4xl mx-auto mt-16 pt-10 border-t border-stone-200" aria-labelledby="relatedReadingTitle">
+                <p class="text-xs font-bold uppercase tracking-widest text-amber-800 mb-2">Guided Learning</p>
+                <h2 id="relatedReadingTitle" class="serif-heading text-3xl md:text-4xl text-stone-800 mb-7">Continue reading</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  ${relatedPosts.map(related => `<article class="border border-stone-200 bg-white rounded-md overflow-hidden"><a href="blog-post.html?slug=${encodeURIComponent(related.slug)}"><img src="${related.image}" alt="" class="w-full aspect-[16/10] object-cover"><div class="p-4"><p class="text-xs font-bold uppercase tracking-wider text-amber-800 mb-2">${related.category}</p><h3 class="serif-heading text-xl leading-tight text-stone-900">${related.title}</h3></div></a></article>`).join('')}
+                </div>
+              </section>` : ''}
           </div>
         `;
 
