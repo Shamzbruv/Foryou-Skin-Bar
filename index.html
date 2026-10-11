@@ -753,6 +753,7 @@
         } else {
           grid.innerHTML = filtered.map(p => renderProductCard(p)).join('');
           grid.scrollTo({ left: 0, behavior: "smooth" });
+          window.ForyouAnalytics?.viewItemList(filtered, activeFilter === 'all' ? 'Home featured' : `Home - ${activeFilter}`, 'home_featured');
         }
       }
 
@@ -782,6 +783,7 @@
       window.quickView = function(id) {
         const p = products.find(p => p.id === id);
         if (!p) return;
+        window.ForyouAnalytics?.viewItem(p, { listName: 'Home quick view' });
         document.getElementById("quickViewBody").innerHTML = `
           <div>
             <img src="${p.image || 'https://placehold.co/600x400/F5EDE1/8B5A2B?text=Product'}" class="rounded-xl mb-3 w-full max-h-80 object-cover" alt="${p.name}">

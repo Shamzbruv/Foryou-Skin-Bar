@@ -364,6 +364,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           value: Number(data.discountValue)
         };
 
+        window.ForyouAnalytics?.applyCoupon(data.code, true);
         discountMessage.innerText = `Discount applied: ${data.code}`;
         discountMessage.className = 'text-sm mt-2 font-medium text-green-400';
         discountCodeInput.disabled = true;
@@ -371,6 +372,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         renderOrderSummary();
       } catch (err) {
+        window.ForyouAnalytics?.applyCoupon(code, false);
         discountMessage.innerText = err.message || 'Invalid code.';
         discountMessage.className = 'text-sm mt-2 font-medium text-red-400';
         applyDiscountBtn.innerHTML = 'Apply';
@@ -471,6 +473,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           throw new Error("Supabase client is not initialized.");
         }
 
+        // Analytics: shipping details are complete. Also pass along the Google Analytics
+        // identifiers so the server can credit the purchase to this visit (used for the
+        // server-side purchase backup, since payment itself happens on Fygaro's site).
+        const analyticsIds = await (window.ForyouAnalytics ? window.ForyouAnalytics.getIdentifiers(900) : Promise.resolve(null)).catch(() => null);
+        if (analyticsIds && (analyticsIds.clientId || analyticsIds.sessionId)) payload.analytics = analyticsIds;
+        window.ForyouAnalytics?.addShippingInfo(cart, { coupon: payload.discountCode, shippingTier: data.deliveryMethod, discount: getDiscountAmount() });
+
         const response = await fetch('/api/create-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -487,6 +496,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (result.fygaro_url) {
           // ── Fygaro redirect flow ──
+          window.ForyouAnalytics?.addPaymentInfo(cart, { coupon: payload.discountCode, paymentType: 'Fygaro', discount: getDiscountAmount() });
           sessionStorage.setItem('foryou_pending_payment', JSON.stringify({
             orderNumber,
             fygaroUrl: result.fygaro_url,
@@ -527,6 +537,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
       } catch (err) {
         console.error(err);
+        window.ForyouAnalytics?.send('checkout_error', { error_message: String(err.message || 'unknown').slice(0, 100) });
         errorMessage.innerText = 'Something went wrong while submitting your order. Please try again or contact us on WhatsApp. (' + err.message + ')';
         errorMessage.classList.remove('hidden');
         submitBtn.innerHTML = originalBtnText;
@@ -538,4 +549,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initial render
   toggleCountryFields();
   renderOrderSummary();
+
+  // GA4: the visitor has reached checkout with items in their cart
+  window.ForyouAnalytics?.beginCheckout(cart);
 });

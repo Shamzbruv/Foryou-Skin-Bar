@@ -345,6 +345,18 @@
         };
       }
 
+      // Reports which products the visitor was shown (GA4 view_item_list). Debounced so
+      // typing in the search box or flicking through filters doesn't send one event per keystroke.
+      let listViewTimer = null;
+      function scheduleListView(list) {
+        if (!window.ForyouAnalytics) return;
+        window.clearTimeout(listViewTimer);
+        listViewTimer = window.setTimeout(() => {
+          const listName = activeConcern ? `Shop - ${activeConcern}` : (activeCategory !== 'All' ? `Shop - ${activeCategory}` : 'Shop');
+          window.ForyouAnalytics.viewItemList(list, listName, 'shop');
+        }, 700);
+      }
+
       function renderProducts() {
         const products = window.productsData;
         let filtered = [...products];
@@ -427,6 +439,8 @@
             return '';
           }
         }).join('');
+
+        scheduleListView(filtered);
       }
 
       // Sort
@@ -454,11 +468,16 @@
 
       if (searchInput) {
         searchInput.value = urlParams.get('search') || '';
+        let searchTrackTimer = null;
         searchInput.addEventListener('input', (e) => {
           searchQuery = e.target.value.toLowerCase().trim();
-          
+
+          // Report the search once the visitor pauses typing (GA4 search)
+          window.clearTimeout(searchTrackTimer);
+          searchTrackTimer = window.setTimeout(() => window.ForyouAnalytics?.search(searchQuery), 1200);
+
           // Update the main shop grid live
-          renderProducts(); 
+          renderProducts();
           
           if (!searchQuery) {
             searchResults.classList.add('hidden');

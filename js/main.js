@@ -197,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = true;
         try {
           if (window.trackEvent) window.trackEvent('newsletter_signup', { email });
+          window.ForyouAnalytics?.generateLead('newsletter');
           const response = await fetch('/api/newsletter/subscribe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -273,6 +274,7 @@ window.handleAddToCart = async function(id, btnElement) {
 
 // Open WhatsApp with a custom message
 window.openWhatsApp = function(message) {
+  window.ForyouAnalytics?.whatsappClick(window.location.pathname);
   const url = `https://wa.me/18763094374?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
 };

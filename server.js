@@ -15,6 +15,7 @@ const {
 } = require('./email-templates');
 const { installSeoRoutes } = require('./seo-middleware');
 const loyaltyEngine = require('./loyalty-engine');
+const analyticsServer = require('./analytics-server');
 
 const app = express();
 const PORT = process.env.PORT || 5500;
@@ -914,6 +915,7 @@ async function reconcileCheckoutSessionPayment(orderRef, paymentReference, sourc
     if (updateError) throw updateError;
     order = updatedOrder;
     await loyaltyEngine.handlePaymentStatusChange(order.id, previousPaymentStatus, 'paid');
+    analyticsServer.handlePaymentStatusChange(order.id, previousPaymentStatus, 'paid');
   }
 
   const { error: checkoutUpdateError } = await supabaseAdmin
@@ -1800,32 +1802,42 @@ app.post('/api/create-order', async (req, res) => {
       console.error('Error estimating loyalty credits', e);
     }
 
-    const { error: checkoutSessionError } = await supabaseAdmin
+    const checkoutSessionRow = {
+      checkout_reference: orderNumber,
+      customer_id: customerId,
+      customer_data: customer,
+      shipping_data: {
+        ...shipping,
+        formattedAddress,
+        deliveryMethod,
+        deliveryService,
+        shippingStatus
+      },
+      cart_data: validatedCart,
+      subtotal_jmd: subtotal,
+      discount_code: appliedDiscountCode,
+      discount_total_jmd: discountAmount,
+      shipping_total_jmd: shippingCost,
+      grand_total_jmd: total,
+      payment_currency: paymentCurrency,
+      payment_amount: paymentAmount,
+      exchange_rate_jmd_per_usd: isInternational ? shippingRules.usdToJmdRate : null,
+      customer_region: customerRegion,
+      points_earned: pointsEarned,
+      status: 'pending'
+    };
+    // Google Analytics ids from the checkout page, so the sale can be credited to the right visit later.
+    const analyticsIds = analyticsServer.sanitizeIds(payload.analytics);
+    if (analyticsIds) checkoutSessionRow.analytics_data = { ...analyticsIds, capturedAt: new Date().toISOString() };
+
+    let { error: checkoutSessionError } = await supabaseAdmin
       .from('payment_checkout_sessions')
-      .insert({
-        checkout_reference: orderNumber,
-        customer_id: customerId,
-        customer_data: customer,
-        shipping_data: {
-          ...shipping,
-          formattedAddress,
-          deliveryMethod,
-          deliveryService,
-          shippingStatus
-        },
-        cart_data: validatedCart,
-        subtotal_jmd: subtotal,
-        discount_code: appliedDiscountCode,
-        discount_total_jmd: discountAmount,
-        shipping_total_jmd: shippingCost,
-        grand_total_jmd: total,
-        payment_currency: paymentCurrency,
-        payment_amount: paymentAmount,
-        exchange_rate_jmd_per_usd: isInternational ? shippingRules.usdToJmdRate : null,
-        customer_region: customerRegion,
-        points_earned: pointsEarned,
-        status: 'pending'
-      });
+      .insert(checkoutSessionRow);
+    if (checkoutSessionError && checkoutSessionRow.analytics_data && /analytics_data/.test(checkoutSessionError.message || '')) {
+      // The analytics column is not there (migration not applied): never block a sale over tracking data.
+      delete checkoutSessionRow.analytics_data;
+      ({ error: checkoutSessionError } = await supabaseAdmin.from('payment_checkout_sessions').insert(checkoutSessionRow));
+    }
     if (checkoutSessionError) throw checkoutSessionError;
 
     // There is deliberately no orders row until Fygaro confirms payment.
@@ -2140,6 +2152,7 @@ app.patch('/api/admin/orders/:id/status', async (req, res) => {
 
     if (field === 'payment_status' && currentOrder.payment_status !== value) {
       await loyaltyEngine.handlePaymentStatusChange(orderId, currentOrder.payment_status, value);
+      analyticsServer.handlePaymentStatusChange(orderId, currentOrder.payment_status, value);
     }
 
     let emailStatus = 'not_required';
@@ -2275,6 +2288,18 @@ app.post('/api/admin/rewards/run-daily-jobs', async (req, res) => {
   } catch (error) {
     console.error('[Admin Rewards Daily Jobs]', error.message);
     return res.status(error.status || 500).json({ error: error.message || 'Unable to run the rewards maintenance job.' });
+  }
+});
+
+// Sends a harmless "mp_test" event to Google Analytics so the server-side tracking setup can be verified
+// (it appears in GA4 > Reports > Realtime). Admin only.
+app.post('/api/admin/analytics/test', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    return res.status(200).json(await analyticsServer.sendTestEvent());
+  } catch (error) {
+    console.error('[Admin Analytics Test]', error.message);
+    return res.status(error.status || 500).json({ error: error.message || 'Unable to send the analytics test event.' });
   }
 });
 
@@ -2491,6 +2516,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
 
     if (updateErr) throw updateErr;
     await loyaltyEngine.handlePaymentStatusChange(order.id, previousPaymentStatus, 'paid');
+    analyticsServer.handlePaymentStatusChange(order.id, previousPaymentStatus, 'paid');
 
     await supabaseAdmin.from('payment_checkout_sessions').update({
       status: 'paid',
@@ -2629,7 +2655,7 @@ app.get('/api/orders/payment-status', async (req, res) => {
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
-      .select('id, order_number, status, payment_status, delivery_service, shipping_address, subtotal_jmd, discount_total_jmd, shipping_total_jmd, grand_total_jmd, payment_currency, payment_amount, exchange_rate_jmd_per_usd, customer_region')
+      .select('id, order_number, status, payment_status, delivery_service, shipping_address, subtotal_jmd, discount_total_jmd, shipping_total_jmd, grand_total_jmd, payment_currency, payment_amount, exchange_rate_jmd_per_usd, customer_region, discount_code')
       .eq('order_number', ref)
       .maybeSingle();
 
@@ -2671,11 +2697,21 @@ app.get('/api/orders/payment-status', async (req, res) => {
 
     const { data: items, error: itemsError } = await supabaseAdmin
       .from('order_items')
-      .select('product_name, quantity, unit_price_jmd, line_total_jmd')
+      .select('product_id, product_name, variant_name, quantity, unit_price_jmd, line_total_jmd')
       .eq('order_id', order.id);
     if (itemsError) throw itemsError;
 
-    return res.status(200).json({ order, items: items || [] });
+    // Google Analytics: the thank-you page sends this exact `purchase` event once the order is paid.
+    let analytics = null;
+    if (order.payment_status === 'paid') {
+      try {
+        analytics = { purchase: await analyticsServer.purchaseEventFor(order, items || []) };
+      } catch (analyticsError) {
+        console.warn('[Payment Status] Could not build the analytics purchase event:', analyticsError.message);
+      }
+    }
+
+    return res.status(200).json({ order, items: items || [], analytics });
   } catch (err) {
     console.error('[Payment Status] API Error:', err);
     return res.status(500).json({ error: 'Unable to load payment status.' });

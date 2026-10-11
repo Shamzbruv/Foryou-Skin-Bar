@@ -356,6 +356,7 @@
         if (error) throw error;
         
         if(window.trackEvent) window.trackEvent('contact_submit', { type: data.type });
+        window.ForyouAnalytics?.generateLead('contact_form');
         alert('Thank you! Your message has been sent to our team.');
         
         // Optional WhatsApp follow-up
@@ -397,6 +398,7 @@
         if (error) throw error;
 
         if(window.trackEvent) window.trackEvent('custom_order_request', { type: data.eventType });
+        window.ForyouAnalytics?.generateLead('custom_order');
         alert('Thank you! Your custom order request has been received. We will contact you soon.');
 
         // Optional WhatsApp follow-up

@@ -431,6 +431,7 @@
       button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
       try {
         const result = await portalFetch('/api/rewards/redeem', { method: 'POST', body: JSON.stringify({ credits }) });
+        window.ForyouAnalytics?.send('redeem_glow_credits', { credits });
         await loadPortal();
         switchTab('rewards');
         showRedeemMessage(`Success! Use code ${result.code} at checkout for ${formatCurrency(result.cashValueJmd)} off — valid until ${formatDate(result.validUntil)}.`, 'success');

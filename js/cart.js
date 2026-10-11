@@ -42,13 +42,18 @@ class CartManager {
       });
     }
     this.save();
+    this.track(() => window.ForyouAnalytics.addToCart(
+      window.ForyouAnalytics.itemFromProduct(product, { variantName, price, quantity: qtyToAdd })
+    ));
     this.openDrawer();
     this.showAddedFeedback();
   }
 
   removeItem(id) {
+    const removed = this.items.find(i => i.id === id);
     this.items = this.items.filter(i => i.id !== id);
     this.save();
+    if (removed) this.track(() => window.ForyouAnalytics.removeFromCart(window.ForyouAnalytics.itemFromCartItem(removed)));
   }
 
   updateQty(id, qty) {
@@ -58,8 +63,25 @@ class CartManager {
     }
     const item = this.items.find(i => i.id === id);
     if (item) {
+      const delta = qty - item.qty;
       item.qty = qty;
       this.save();
+      if (delta !== 0) {
+        this.track(() => {
+          const changed = window.ForyouAnalytics.itemFromCartItem({ ...item, qty: Math.abs(delta) });
+          if (delta > 0) window.ForyouAnalytics.addToCart(changed);
+          else window.ForyouAnalytics.removeFromCart(changed);
+        });
+      }
+    }
+  }
+
+  // Analytics must never be able to break the cart.
+  track(callback) {
+    try {
+      if (window.ForyouAnalytics) callback();
+    } catch (error) {
+      console.warn('Analytics event skipped:', error);
     }
   }
 
@@ -110,7 +132,10 @@ class CartManager {
     const closeCartBtn = document.getElementById('closeCartBtn');
 
     if (cartIconBtn) {
-      cartIconBtn.addEventListener('click', () => this.openDrawer());
+      cartIconBtn.addEventListener('click', () => {
+        this.openDrawer();
+        this.track(() => window.ForyouAnalytics.viewCart(this.items));
+      });
     }
     if (closeCartBtn) {
       closeCartBtn.addEventListener('click', () => this.closeDrawer());

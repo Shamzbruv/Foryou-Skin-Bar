@@ -725,7 +725,11 @@
               </div>
             </div>
           `).join('');
+          window.ForyouAnalytics?.viewItemList(related, 'Related products', 'related_products');
         }
+
+        // GA4: this visitor is looking at this product (default variant, as displayed)
+        window.ForyouAnalytics?.viewItem(product);
 
         const script = document.createElement('script');
         script.type = 'application/ld+json';

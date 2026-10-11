@@ -219,6 +219,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-public-client.js?v=5"></script>
+  <script src="js/analytics.js"></script>
   <script>
     const WHATSAPP_NUMBER = '18763094374';
 
@@ -246,10 +247,23 @@
       });
     }
 
-    function renderConfirmed(order, items) {
+    // GA4 purchase: sent once per order. The server builds the event (same structure its
+    // own server-side backup uses); if that is missing we fall back to building it here.
+    function trackPurchase(order, items, analytics) {
+      try {
+        if (!window.ForyouAnalytics) return;
+        const event = (analytics && analytics.purchase) || window.ForyouAnalytics.buildPurchaseEvent(order, items);
+        window.ForyouAnalytics.purchase(event);
+      } catch (error) {
+        console.warn('Purchase analytics skipped:', error);
+      }
+    }
+
+    function renderConfirmed(order, items, analytics) {
       show('confirmedState');
       localStorage.removeItem('foryou_cart');
       sessionStorage.removeItem('foryou_pending_payment');
+      trackPurchase(order, items, analytics);
 
       document.getElementById('confirmedOrderNumber').textContent = order.order_number;
 
@@ -348,7 +362,7 @@
           const order = payload.order;
 
           if (order.payment_status === 'paid') {
-            renderConfirmed(order, payload.items || []);
+            renderConfirmed(order, payload.items || [], payload.analytics);
           } else {
             // Payment not yet confirmed by webhook
             if (attempts < maxAttempts) {

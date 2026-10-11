@@ -66,6 +66,7 @@
     try {
       const { error } = await window.supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      window.ForyouAnalytics?.login('email');
       window.location.assign(accountDestination());
     } catch (error) {
       showMessage(error.message || 'We could not sign you in. Please try again.', 'error');
@@ -99,6 +100,7 @@
         }
       });
       if (error) throw error;
+      window.ForyouAnalytics?.signUp('email');
       if (data && data.session) {
         window.location.assign(accountDestination());
         return;
