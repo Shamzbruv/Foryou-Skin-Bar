@@ -232,6 +232,21 @@
         </div>
     </div>
 
+    <div id="cancelUnpaidModal" role="dialog" aria-modal="true" aria-labelledby="cancelUnpaidTitle" class="fixed inset-0 bg-black/50 hidden z-[70] flex items-center justify-center p-4">
+        <form id="cancelUnpaidForm" class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h2 id="cancelUnpaidTitle" class="text-xl font-bold text-stone-900">Cancel unpaid entry</h2>
+            <p id="cancelUnpaidReference" class="mt-2 font-semibold"></p>
+            <p class="mt-2 text-sm text-stone-600">Keeps the record and emails the customer. Verify that no payment was collected in Fygaro or offline before cancelling.</p>
+            <label for="cancelUnpaidReason" class="mt-4 block text-sm font-semibold">Reason shown to customer</label>
+            <textarea id="cancelUnpaidReason" required minlength="3" maxlength="500" rows="3" class="mt-2 w-full rounded border border-stone-300 p-3">Payment not received</textarea>
+            <p id="cancelUnpaidError" class="hidden mt-3 text-sm text-red-700"></p>
+            <div class="mt-5 flex justify-end gap-3">
+                <button type="button" id="keepUnpaidBtn" class="rounded border px-4 py-2" onclick="window.closeCancelUnpaidModal()">Keep entry</button>
+                <button type="submit" id="cancelUnpaidSubmit" class="rounded bg-amber-800 px-4 py-2 font-semibold text-white disabled:opacity-60">Cancel &amp; notify</button>
+            </div>
+        </form>
+    </div>
+
     <!-- Cleanup Confirmation Modal -->
     <div id="deleteOrderModal" class="fixed inset-0 bg-black/50 hidden z-[60] flex items-center justify-center p-4">
         <div class="w-full max-w-md rounded-xl bg-white shadow-xl">
@@ -258,6 +273,7 @@
         let allProducts = [];
         let moSelectedProducts = [];
         let pendingDelete = null;
+        let pendingCancellation = null;
         const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({
             '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
         }[char]));
@@ -310,6 +326,7 @@
                     <p class="text-sm text-red-900 bg-red-50 p-3 rounded-lg border border-red-100 whitespace-pre-wrap">${escapeHtml(order.admin_notes)}</p>
                     ` : ''}
 
+                    ${canCancelOrder(order) ? `<button type="button" class="mt-5 rounded border border-amber-800 px-4 py-2 text-sm font-semibold text-amber-900" onclick="window.openCancelUnpaidModal('order', '${order.id}')">Cancel &amp; notify customer</button>` : ''}
                     <h3 class="font-bold text-stone-800 mb-3 mt-6 border-b pb-2">Update Status</h3>
                     <div class="flex flex-col gap-3">
                         <div>
@@ -330,7 +347,7 @@
                                 <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
                                 <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                                 <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
-                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                ${order.status === 'cancelled' ? '<option value="cancelled" selected>Cancelled</option>' : ''}
                             </select>
                         </div>
                     </div>
@@ -349,6 +366,58 @@
                 </div>
             `;
         }
+
+        function canCancelOrder(order) {
+            return ['unpaid', 'awaiting_confirmation'].includes(order.payment_status)
+                && !['shipped', 'delivered', 'cancelled', 'refunded'].includes(order.status)
+                && !['shipped', 'delivered', 'picked_up'].includes(order.fulfillment_status);
+        }
+        window.openCancelUnpaidModal = function(kind, reference) {
+            pendingCancellation = { kind, reference };
+            document.getElementById('cancelUnpaidReference').textContent = kind === 'order'
+                ? currentOrders.find(o => o.id === reference)?.order_number || reference : reference;
+            document.getElementById('cancelUnpaidReason').value = 'Payment not received';
+            document.getElementById('cancelUnpaidError').classList.add('hidden');
+            document.getElementById('cancelUnpaidModal').classList.remove('hidden');
+            document.getElementById('cancelUnpaidReason').focus();
+        };
+        window.closeCancelUnpaidModal = function() {
+            if (document.getElementById('cancelUnpaidSubmit').disabled) return;
+            document.getElementById('cancelUnpaidModal').classList.add('hidden');
+            pendingCancellation = null;
+        };
+        document.getElementById('cancelUnpaidForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!pendingCancellation) return;
+            const button = document.getElementById('cancelUnpaidSubmit');
+            const errorBox = document.getElementById('cancelUnpaidError');
+            button.disabled = true;
+            errorBox.classList.add('hidden');
+            try {
+                const { data } = await supabase.auth.getSession();
+                if (!data?.session?.access_token) throw new Error('Your session has expired. Sign in again.');
+                const { kind, reference } = pendingCancellation;
+                const response = await fetch(`/api/admin/unpaid-sales/${kind}/${encodeURIComponent(reference)}/cancel`, {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${data.session.access_token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: document.getElementById('cancelUnpaidReason').value.trim() })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Unable to cancel this entry.');
+                const messages = { sent: 'The customer email was sent.', queued: 'The customer email is queued. Check Email Logs for delivery.',
+                    pending_setup: 'The email is saved, but email delivery needs configuration. Contact the customer separately.',
+                    failed: 'The notification failed. Contact the customer separately and check Email Logs.',
+                    no_email: 'No customer email address is available. Contact the customer separately.',
+                    already_requested: 'This entry was already cancelled. No duplicate email was sent.' };
+                button.disabled = false;
+                window.closeCancelUnpaidModal();
+                document.getElementById('orderModal').classList.add('hidden');
+                alert(`Cancelled. The record has been kept. ${messages[result.email_status] || ''}`);
+                await loadOrders();
+            } catch (error) {
+                errorBox.textContent = error.message;
+                errorBox.classList.remove('hidden');
+            } finally { button.disabled = false; }
+        });
 
         window.updateOrderStatus = async function(orderId, field, value) {
             try {
@@ -472,7 +541,7 @@
                     .from('payment_checkout_sessions')
                     .select('id, checkout_reference, customer_data, shipping_data, cart_data, grand_total_jmd, status, created_at, updated_at')
                     .is('order_id', null)
-                    .in('status', ['pending', 'failed'])
+                    .in('status', ['pending', 'failed', 'cancelled'])
                     .order('created_at', { ascending: false })
             ]);
 
@@ -486,8 +555,8 @@
 
             currentOrders = ordersResult.data || [];
             currentCheckoutSessions = checkoutsResult.data || [];
-            document.getElementById('pendingCheckoutsCount').textContent = currentCheckoutSessions.length;
-            document.getElementById('pendingCheckoutsNotice').classList.toggle('hidden', currentCheckoutSessions.length === 0);
+            document.getElementById('pendingCheckoutsCount').textContent = currentCheckoutSessions.filter(s => s.status !== 'cancelled').length;
+            document.getElementById('pendingCheckoutsNotice').classList.toggle('hidden', !currentCheckoutSessions.some(s => s.status !== 'cancelled'));
 
             const rows = [
                 ...currentOrders.map(order => ({ type: 'order', created_at: order.created_at, data: order })),
@@ -508,11 +577,12 @@
                             <td class="p-4 text-sm text-stone-500">${new Date(checkout.created_at).toLocaleDateString()}</td>
                             <td class="p-4 text-sm">${escapeHtml(checkout.customer_data?.fullName || 'Unknown')}</td>
                             <td class="p-4 text-sm font-medium">${formatCurrency(checkout.grand_total_jmd)}</td>
-                            <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-900">Awaiting confirmation</span></td>
-                            <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-900">Checkout saved</span></td>
+                            <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-900">${checkout.status === 'cancelled' ? 'Unpaid' : 'Awaiting confirmation'}</span></td>
+                            <td class="p-4"><span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(checkout.status)}">${checkout.status === 'cancelled' ? 'Cancelled' : 'Checkout saved'}</span>${checkout.cancellation_reason ? `<p class="mt-1 text-xs text-stone-500">${escapeHtml(checkout.cancellation_reason)}</p>` : ''}</td>
                             <td class="p-4">
                                 <div class="flex items-center gap-2">
-                                    <button class="bg-amber-800 text-white hover:bg-amber-900 px-3 py-1.5 rounded text-sm font-medium transition" onclick="window.openCheckoutReviewModal('${escapeHtml(checkout.checkout_reference)}')">Review payment</button>
+                                    ${checkout.status !== 'cancelled' ? `<button class="bg-amber-800 text-white hover:bg-amber-900 px-3 py-1.5 rounded text-sm font-medium transition" onclick="window.openCheckoutReviewModal('${escapeHtml(checkout.checkout_reference)}')">Review payment</button>
+                                    <button type="button" class="rounded border border-amber-800 px-3 py-1.5 text-sm font-semibold text-amber-900" onclick="window.openCancelUnpaidModal('checkout', '${escapeHtml(checkout.checkout_reference)}')">Cancel &amp; notify</button>` : ''}
                                     <button type="button" class="flex h-9 w-9 items-center justify-center rounded bg-red-50 text-red-700 hover:bg-red-100" title="Delete saved checkout" aria-label="Delete saved checkout ${escapeHtml(checkout.checkout_reference)}" onclick="window.openDeleteOrderModal('checkout', '${escapeHtml(checkout.checkout_reference)}', '${escapeHtml(checkout.checkout_reference)}')"><i class="fas fa-trash"></i></button>
                                 </div>
                             </td>
@@ -532,6 +602,7 @@
                         <td class="p-4">
                             <div class="flex items-center gap-2">
                                 <button class="bg-blue-50 text-amber-800 hover:bg-blue-100 px-3 py-1.5 rounded text-sm font-medium transition" onclick="window.openOrderModal('${o.id}')">View / Edit</button>
+                                ${canCancelOrder(o) ? `<button type="button" class="rounded border border-amber-800 px-3 py-1.5 text-sm font-semibold text-amber-900" onclick="window.openCancelUnpaidModal('order', '${o.id}')">Cancel &amp; notify</button>` : ''}
                                 ${o.payment_status === 'unpaid' && o.status === 'cancelled' ? `
                                     <button type="button" class="flex h-9 w-9 items-center justify-center rounded bg-red-50 text-red-700 hover:bg-red-100" title="Delete cancelled order" aria-label="Delete cancelled order ${escapeHtml(o.order_number)}" onclick="window.openDeleteOrderModal('order', '${o.id}', '${escapeHtml(o.order_number)}')"><i class="fas fa-trash"></i></button>
                                 ` : ''}
@@ -569,6 +640,7 @@
                 if (!response.ok) throw new Error(payload.error || 'Unable to confirm this payment.');
 
                 window.closeCheckoutReviewModal();
+                if (payload.requires_review) alert('Payment recorded for a cancelled order. Review payment / refund before fulfilment.');
                 await loadOrders();
             } catch (error) {
                 errorBox.textContent = error.message;

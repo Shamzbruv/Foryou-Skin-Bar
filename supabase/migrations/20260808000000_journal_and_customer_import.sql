@@ -180,3 +180,8 @@ set consent_status = case when is_active then 'subscribed' else 'unsubscribed' e
     updated_at = coalesce(updated_at, created_at);
 
 create index if not exists idx_newsletter_customer on public.newsletter_subscribers (customer_id);
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.customer_import_history to service_role;
+grant select, insert, update, delete on public.customer_import_history to authenticated;

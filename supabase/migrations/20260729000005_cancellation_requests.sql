@@ -88,3 +88,8 @@ where template_key = 'payment_confirmed'
   and body_html not like '%{{{cancellation_action}}}%';
 
 notify pgrst, 'reload schema';
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.order_cancellation_requests to service_role;
+grant select, insert, update, delete on public.order_cancellation_requests to authenticated;

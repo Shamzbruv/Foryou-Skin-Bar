@@ -73,3 +73,16 @@ on public.discount_category_rules for all using (public.is_admin()) with check (
 
 create policy "Admins can view and manage discount redemptions"
 on public.discount_redemptions for all using (public.is_admin()) with check (public.is_admin());
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.inventory_movements to service_role;
+grant select, insert, update, delete on public.inventory_movements to authenticated;
+grant select, insert, update, delete on public.discounts to service_role;
+grant select, insert, update, delete on public.discounts to authenticated;
+grant select, insert, update, delete on public.discount_product_rules to service_role;
+grant select, insert, update, delete on public.discount_product_rules to authenticated;
+grant select, insert, update, delete on public.discount_category_rules to service_role;
+grant select, insert, update, delete on public.discount_category_rules to authenticated;
+grant select, insert, update, delete on public.discount_redemptions to service_role;
+grant select, insert, update, delete on public.discount_redemptions to authenticated;

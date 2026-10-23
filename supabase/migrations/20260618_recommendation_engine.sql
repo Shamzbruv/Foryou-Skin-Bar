@@ -64,3 +64,15 @@ create policy "Admins can manage recommendation profiles"
 on product_recommendation_profiles for all
 using (public.is_admin())
 with check (public.is_admin());
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.ingredient_rules to service_role;
+grant select, insert, update, delete on public.ingredient_rules to authenticated;
+grant select, insert, update, delete on public.product_recommendation_profiles to service_role;
+grant select, insert, update, delete on public.product_recommendation_profiles to authenticated;
+grant select, insert, update, delete on public.product_ingredients to service_role;
+grant select, insert, update, delete on public.product_ingredients to authenticated;
+grant select on public.ingredient_rules to anon;
+grant select on public.product_recommendation_profiles to anon;
+grant select on public.product_ingredients to anon;

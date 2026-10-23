@@ -138,3 +138,23 @@ on public.product_tag_links for select using (true);
 
 create policy "Admins can manage tag links"
 on public.product_tag_links for all using (public.is_admin()) with check (public.is_admin());
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.profiles to service_role;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.categories to service_role;
+grant select, insert, update, delete on public.categories to authenticated;
+grant select, insert, update, delete on public.products to service_role;
+grant select, insert, update, delete on public.products to authenticated;
+grant select, insert, update, delete on public.product_images to service_role;
+grant select, insert, update, delete on public.product_images to authenticated;
+grant select, insert, update, delete on public.product_tags to service_role;
+grant select, insert, update, delete on public.product_tags to authenticated;
+grant select, insert, update, delete on public.product_tag_links to service_role;
+grant select, insert, update, delete on public.product_tag_links to authenticated;
+grant select on public.categories to anon;
+grant select on public.products to anon;
+grant select on public.product_images to anon;
+grant select on public.product_tags to anon;
+grant select on public.product_tag_links to anon;
