@@ -50,3 +50,15 @@ alter table public.product_reviews enable row level security;
 create policy "Allow public read access on approved product_reviews" on public.product_reviews for select using (approved = true);
 create policy "Allow full access to service role on product_reviews" on public.product_reviews for all using (true);
 
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.product_concerns to service_role;
+grant select, insert, update, delete on public.product_concerns to authenticated;
+grant select, insert, update, delete on public.discount_codes to service_role;
+grant select, insert, update, delete on public.discount_codes to authenticated;
+grant select, insert, update, delete on public.product_reviews to service_role;
+grant select, insert, update, delete on public.product_reviews to authenticated;
+grant select on public.product_concerns to anon;
+grant select on public.discount_codes to anon;
+grant select, insert on public.product_reviews to anon;

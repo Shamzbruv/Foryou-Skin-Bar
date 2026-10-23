@@ -819,7 +819,8 @@ async function materializePaidCheckoutSession(session) {
     customer_region: session.customer_region || (isJamaicaCountry(shipping.country) ? 'domestic' : 'international'),
     points_earned: session.points_earned,
     payment_method: 'Fygaro',
-    status: 'pending',
+    status: session.status === 'cancelled' ? 'cancelled' : 'pending',
+    admin_notes: session.status === 'cancelled' ? `Payment received after cancellation. Review payment / refund before fulfilment. Reason: ${session.cancellation_reason || 'Unpaid checkout cancelled'}` : null,
     payment_status: 'awaiting_confirmation',
     fulfillment_status: 'unfulfilled'
   }).select('id,order_number,status,payment_status,grand_total_jmd,payment_currency,payment_amount,customer_id,delivery_service,admin_notes').single();
@@ -932,6 +933,17 @@ async function reconcileCheckoutSessionPayment(orderRef, paymentReference, sourc
   return order;
 }
 
+async function notifyPaymentAfterCancellation(order) {
+  const { data: customer } = await supabaseAdmin.from('customers').select('email').eq('id', order.customer_id).maybeSingle();
+  for (const recipient of [...new Set([customer?.email, OWNER_EMAIL].filter(Boolean))]) {
+    await queueEmail({ orderId: order.id, recipient, emailType: 'payment_after_cancellation', templateKey: null,
+      subject: `Payment review required - ${order.order_number}`,
+      html: `<p>A payment was received for cancelled order <strong>${escapeHtml(order.order_number)}</strong>.</p><p>The order remains cancelled. The store must review the payment and arrange the next step or any refund before fulfilment. No refund has been processed automatically.</p>`,
+      metadata: { order_number: order.order_number, requires_review: true }
+    });
+  }
+}
+
 async function requireAdmin(req) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
@@ -962,6 +974,10 @@ async function requireAdmin(req) {
 
   return userData.user;
 }
+
+require('./unpaid-cancellations').registerUnpaidCancellations(app, {
+  db: supabaseAdmin, requireAdmin, queueEmail, escapeHtml
+});
 
 // ── API Routes ──
 
@@ -2070,6 +2086,10 @@ app.post('/api/admin/payment-checkouts/:reference/confirm', async (req, res) => 
     }
 
     const order = await reconcileCheckoutSessionPayment(orderRef, paymentReference, 'admin');
+    if (order.status === 'cancelled') {
+      await notifyPaymentAfterCancellation(order);
+      return res.json({ success: true, order, requires_review: true });
+    }
     const { data: customer } = await supabaseAdmin
       .from('customers')
       .select('full_name,email')
@@ -2132,6 +2152,10 @@ app.patch('/api/admin/orders/:id/status', async (req, res) => {
     };
     if (!allowedValues[field]?.includes(value)) {
       return res.status(400).json({ error: 'Select a valid order status.' });
+    }
+
+    if (field === 'status' && value === 'cancelled') {
+      return res.status(400).json({ error: 'Use Cancel & notify to record a cancellation reason and notify the customer.' });
     }
 
     const { data: currentOrder, error: fetchError } = await supabaseAdmin
@@ -2503,7 +2527,7 @@ app.post('/api/fygaro-webhook', async (req, res) => {
 
     // Mark order as paid
     const previousPaymentStatus = order.payment_status;
-    const { error: updateErr } = await supabaseAdmin
+    const { data: paidOrder, error: updateErr } = await supabaseAdmin
       .from('orders')
       .update({
         payment_status: 'paid',
@@ -2512,9 +2536,12 @@ app.post('/api/fygaro-webhook', async (req, res) => {
         admin_notes: order.admin_notes ? `${paymentNote}\n\n${order.admin_notes}` : paymentNote,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', order.id);
+      .eq('id', order.id)
+      .select('id,order_number,status,payment_status,grand_total_jmd,payment_currency,payment_amount,customer_id,delivery_service,admin_notes')
+      .single();
 
     if (updateErr) throw updateErr;
+    order = paidOrder;
     await loyaltyEngine.handlePaymentStatusChange(order.id, previousPaymentStatus, 'paid');
     analyticsServer.handlePaymentStatusChange(order.id, previousPaymentStatus, 'paid');
 
@@ -2526,6 +2553,10 @@ app.post('/api/fygaro-webhook', async (req, res) => {
     }).eq('checkout_reference', orderRef);
 
     console.log(`[Fygaro Webhook] Order ${orderRef} marked as PAID.`);
+    if (order.status === 'cancelled') {
+      await notifyPaymentAfterCancellation(order);
+      return res.json({ received: true, action: 'payment_after_cancellation', order: orderRef });
+    }
 
     // Fetch customer details for confirmation email
     const { data: customer } = await supabaseAdmin

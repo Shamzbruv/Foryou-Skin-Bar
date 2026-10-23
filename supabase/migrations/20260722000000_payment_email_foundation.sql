@@ -45,3 +45,8 @@ create policy "Admins can view checkout sessions"
 
 grant select on public.payment_checkout_sessions to authenticated;
 grant all on public.payment_checkout_sessions to service_role;
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.payment_checkout_sessions to service_role;
+grant select on public.payment_checkout_sessions to authenticated;

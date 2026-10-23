@@ -210,3 +210,15 @@ BEGIN
   PERFORM public.glow_generate_vip_rewards_if_due();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.glow_credit_transactions to service_role;
+grant select, insert, update, delete on public.glow_credit_transactions to authenticated;
+grant select, insert, update, delete on public.glow_days to service_role;
+grant select, insert, update, delete on public.glow_days to authenticated;
+grant select, insert, update, delete on public.glow_referrals to service_role;
+grant select, insert, update, delete on public.glow_referrals to authenticated;
+grant select, insert, update, delete on public.glow_vip_product_rewards to service_role;
+grant select, insert, update, delete on public.glow_vip_product_rewards to authenticated;
+grant select on public.glow_days to anon;

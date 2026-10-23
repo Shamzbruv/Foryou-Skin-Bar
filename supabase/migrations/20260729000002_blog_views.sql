@@ -67,3 +67,8 @@ $$;
 
 revoke all on function public.register_blog_view(uuid, uuid) from public;
 grant execute on function public.register_blog_view(uuid, uuid) to anon, authenticated;
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.blog_views to service_role;
+grant select on public.blog_views to authenticated;

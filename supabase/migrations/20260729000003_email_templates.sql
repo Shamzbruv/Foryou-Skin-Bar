@@ -36,3 +36,8 @@ on public.email_templates
 for all
 using (public.is_admin())
 with check (public.is_admin());
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.email_templates to service_role;
+grant select, insert, update, delete on public.email_templates to authenticated;

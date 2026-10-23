@@ -74,3 +74,15 @@ on public.order_items for all using (public.is_admin()) with check (public.is_ad
 
 create policy "Admins can view and manage order status history"
 on public.order_status_history for all using (public.is_admin()) with check (public.is_admin());
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.customers to service_role;
+grant select, insert, update, delete on public.customers to authenticated;
+grant select, insert, update, delete on public.orders to service_role;
+grant select, insert, update, delete on public.orders to authenticated;
+grant select, insert, update, delete on public.order_items to service_role;
+grant select, insert, update, delete on public.order_items to authenticated;
+grant select, insert, update, delete on public.order_status_history to service_role;
+grant select, insert, update, delete on public.order_status_history to authenticated;
+grant insert on public.customers to anon;

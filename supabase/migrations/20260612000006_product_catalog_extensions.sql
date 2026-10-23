@@ -75,3 +75,12 @@ on public.product_info_sections for select using (
 drop policy if exists "Admins can manage product info sections" on public.product_info_sections;
 create policy "Admins can manage product info sections"
 on public.product_info_sections for all using (public.is_admin()) with check (public.is_admin());
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.product_variants to service_role;
+grant select, insert, update, delete on public.product_variants to authenticated;
+grant select, insert, update, delete on public.product_info_sections to service_role;
+grant select, insert, update, delete on public.product_info_sections to authenticated;
+grant select on public.product_variants to anon;
+grant select on public.product_info_sections to anon;

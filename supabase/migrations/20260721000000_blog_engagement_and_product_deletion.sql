@@ -156,3 +156,12 @@ $$;
 revoke all on function public.toggle_blog_like(uuid, uuid) from public;
 grant execute on function public.toggle_blog_like(uuid, uuid) to anon, authenticated;
 
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.blog_comments to service_role;
+grant select, insert, update, delete on public.blog_comments to authenticated;
+grant select, insert, update, delete on public.blog_likes to service_role;
+grant select, insert, update, delete on public.blog_likes to authenticated;
+grant select, insert on public.blog_comments to anon;
+grant select on public.blog_likes to anon;

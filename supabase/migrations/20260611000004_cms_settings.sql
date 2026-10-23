@@ -163,3 +163,33 @@ on public.quiz_recommendation_rules for select using (is_active = true);
 
 create policy "Admins can manage quiz rules"
 on public.quiz_recommendation_rules for all using (public.is_admin()) with check (public.is_admin());
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.blog_posts to service_role;
+grant select, insert, update, delete on public.blog_posts to authenticated;
+grant select, insert, update, delete on public.pages to service_role;
+grant select, insert, update, delete on public.pages to authenticated;
+grant select, insert, update, delete on public.store_settings to service_role;
+grant select, insert, update, delete on public.store_settings to authenticated;
+grant select, insert, update, delete on public.newsletter_subscribers to service_role;
+grant select, insert, update, delete on public.newsletter_subscribers to authenticated;
+grant select, insert, update, delete on public.contact_messages to service_role;
+grant select, insert, update, delete on public.contact_messages to authenticated;
+grant select, insert, update, delete on public.custom_order_requests to service_role;
+grant select, insert, update, delete on public.custom_order_requests to authenticated;
+grant select, insert, update, delete on public.quiz_questions to service_role;
+grant select, insert, update, delete on public.quiz_questions to authenticated;
+grant select, insert, update, delete on public.quiz_options to service_role;
+grant select, insert, update, delete on public.quiz_options to authenticated;
+grant select, insert, update, delete on public.quiz_recommendation_rules to service_role;
+grant select, insert, update, delete on public.quiz_recommendation_rules to authenticated;
+grant select on public.blog_posts to anon;
+grant select on public.pages to anon;
+grant select on public.store_settings to anon;
+grant insert on public.newsletter_subscribers to anon;
+grant insert on public.contact_messages to anon;
+grant insert on public.custom_order_requests to anon;
+grant select on public.quiz_questions to anon;
+grant select on public.quiz_options to anon;
+grant select on public.quiz_recommendation_rules to anon;

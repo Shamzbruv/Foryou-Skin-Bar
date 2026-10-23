@@ -71,3 +71,8 @@ CREATE TABLE IF NOT EXISTS public.email_logs (
 ALTER TABLE public.email_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Admins can view email logs" ON public.email_logs;
 CREATE POLICY "Admins can view email logs" ON public.email_logs FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.email_logs to service_role;
+grant select, insert, update, delete on public.email_logs to authenticated;

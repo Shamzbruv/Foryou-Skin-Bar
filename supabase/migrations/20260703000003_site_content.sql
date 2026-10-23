@@ -33,3 +33,9 @@ CREATE POLICY "Allow authenticated updates to site_content"
     ON public.site_content FOR ALL
     USING (auth.role() = 'authenticated')
     WITH CHECK (auth.role() = 'authenticated');
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+grant select, insert, update, delete on public.site_content to service_role;
+grant select, insert, update, delete on public.site_content to authenticated;
+grant select on public.site_content to anon;

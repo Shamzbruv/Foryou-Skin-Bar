@@ -54,3 +54,15 @@ create table email_logs (
   error_message text,
   created_at timestamptz default now()
 );
+
+
+-- Explicit Data API access: do not rely on automatic grants after October 30, 2026.
+alter table public.orders enable row level security;
+grant select, insert, update, delete on public.orders to service_role;
+grant select, insert, update, delete on public.orders to authenticated;
+alter table public.order_items enable row level security;
+grant select, insert, update, delete on public.order_items to service_role;
+grant select, insert, update, delete on public.order_items to authenticated;
+alter table public.email_logs enable row level security;
+grant select, insert, update, delete on public.email_logs to service_role;
+grant select, insert, update, delete on public.email_logs to authenticated;
